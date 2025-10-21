@@ -142,6 +142,8 @@ cat >> /etc/hosts << EOF
 127.0.0.1      ${HOSTNAME} 
 EOF
 
+[ ! -e /usr/bin/run-parts ] || sed -i 's|(run-parts |(/usr/bin/run-parts |g' /etc/profile
+
 # 
 # Enable system services
 #

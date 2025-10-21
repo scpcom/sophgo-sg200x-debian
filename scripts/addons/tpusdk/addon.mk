@@ -57,7 +57,7 @@ $(BUILDDIR)/tpusdk-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out TPU SDK for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b develop $(GIT_CLONE_OPTS) --shallow-submodules https://github.com/scpcom/LicheeSG-Nano-Build.git $(BUILDDIR)/tpusdk
-	@cd $(BUILDDIR)/tpusdk && git checkout 9c3052b
+	@cd $(BUILDDIR)/tpusdk && git checkout df4ccf2
 	@cd $(BUILDDIR)/tpusdk && git rm -r buildroot freertos fsbl isp_tuning linux_5.10 middleware opensbi osdrv ramdisk u-boot-2021.10
 	@cd $(BUILDDIR)/tpusdk && git submodule update --init --recursive --depth=1
 	@touch $@

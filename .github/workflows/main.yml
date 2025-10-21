@@ -84,10 +84,6 @@ jobs:
         run: |
           cd images/
           ls -lah
-          if [ -f ${{ matrix.boards }}_${{ matrix.storage }}.img ]; then
-              lz4 -9 -f ${{ matrix.boards }}_${{ matrix.storage }}.img ${{ matrix.boards }}-${{ matrix.variant }}_${{ matrix.storage }}.img.lz4
-              rm ${{ matrix.boards }}_${{ matrix.storage }}.img
-          fi
           tar czvf ${{ matrix.boards }}-${{ matrix.variant }}-${{ matrix.storage }}_debs.tar.gz *.deb
           rm *.deb
           echo "PACKAGE=${{ github.workspace }}/images/*" >> $GITHUB_ENV

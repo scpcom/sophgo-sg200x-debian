@@ -1,4 +1,4 @@
-FROM ubuntu:noble as builder
+FROM ubuntu:noble AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
 
@@ -18,7 +18,7 @@ RUN apt-get update \
         python-is-python3 python3-jinja2 pkg-config xxd \
         python3-setuptools  swig gnupg \
         systemd-container texinfo zlib1g-dev wget arch-test \
-        genimage joe lzip mc unzip zip \
+        genimage joe lz4 lzip mc unzip zip \
         fakeroot git kernel-wedge quilt ccache cmake flex bison \
         libssl-dev dh-exec rsync libelf-dev bc gcc-riscv64-unknown-elf \
         cpp-riscv64-linux-gnu binutils-riscv64-linux-gnu gcc-riscv64-linux-gnu \
@@ -27,8 +27,8 @@ RUN apt-get update \
 
 
 
-FROM builder as build_image
+FROM builder AS build_image
 WORKDIR /builder
 ADD scripts/ /builder/
 
-CMD /bin/bash
+CMD ["/bin/bash"]
