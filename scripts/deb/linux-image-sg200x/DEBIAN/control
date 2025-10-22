@@ -5,6 +5,7 @@ Maintainer: @scpcom
 Installed-Size: 67
 Depends: linux-image-5.10.4-20241014-3+licheervnano
 Recommends: cvitek-osdrv-5.10.4-20241014-3+licheervnano
+Provides: linux-image-generic, linux-latest-modules-5.10.4-20241014-3+licheervnano, wireguard-modules (= 1.0.0)
 Section: admin
 Priority: optional
 Homepage: https://github.com/scpcom/linux/tree/licheervnano-merged-5.10.y

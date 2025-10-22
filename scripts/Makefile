@@ -289,6 +289,7 @@ $(BUILDDIR)/linux-package-stamp: $(BUILDDIR)/linux-compile-stamp
 	@sed -i 's/Package: linux-image-sg200x/Package: linux-headers-$(BOARD)-$(VARIANT)/' $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@sed -i 's/Depends: linux-image-.*/Depends: linux-headers-$(LINUXMETAVERSION)/' $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@sed -i  '/Recommends: .*/d' $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
+	@sed -i 's/Provides: linux-image-.*/Provides: linux-headers-generic/' $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION) linux-headers-$(BOARD)-$(VARIANT)_$(LINUXMETAVERSION)_$(KERNEL_DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)_$(LINUXMETAVERSION)_$(KERNEL_DEB_ARCH).deb /output/
 	@echo "$(COLOUR_GREEN)Packaging linux-image-sg200x for $(BOARD)$(END_COLOUR)"
@@ -302,6 +303,7 @@ $(BUILDDIR)/linux-package-stamp: $(BUILDDIR)/linux-compile-stamp
 	@sed -i 's/Package: linux-image-sg200x/Package: linux-image-$(BOARD)-$(VARIANT)/' $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@sed -i 's/Depends: linux-image-.*/Depends: linux-image-$(LINUXMETAVERSION)/' $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@sed -i 's/Recommends: cvitek-osdrv-.*/Recommends: cvitek-fsbl-$(BOARD_EXT), cvitek-osdrv-$(LINUXMETAVERSION)/' $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
+	@sed -i 's/linux-latest-modules-.*licheervnano,/linux-latest-modules-$(LINUXMETAVERSION),/' $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION) linux-image-$(BOARD)-$(VARIANT)_$(LINUXMETAVERSION)_$(KERNEL_DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)_$(LINUXMETAVERSION)_$(KERNEL_DEB_ARCH).deb /output/
 	@touch $@
@@ -367,6 +369,7 @@ $(BUILDDIR)/osdrv-package-stamp: $(BUILDDIR)/osdrv-compile-stamp
 	@sed -i 's/Package: linux-image-sg200x/Package: cvitek-osdrv-$(BOARD)-$(VARIANT)/' $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/DEBIAN/control
 	@sed -i 's/Depends: linux-image-.*/Depends: cvitek-osdrv-$(KERNELRELEASE)/' $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/DEBIAN/control
 	@sed -i 's/Recommends: cvitek-osdrv-.*/Recommends: linux-image-$(KERNELRELEASE)/' $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/DEBIAN/control
+	@sed -i  '/Provides: .*/d' $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/DEBIAN/control
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE) cvitek-osdrv-$(BOARD)-$(VARIANT)_$(OSDRVVERSION)-$(KERNELRELEASE)_$(KERNEL_DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)_$(OSDRVVERSION)-$(KERNELRELEASE)_$(KERNEL_DEB_ARCH).deb /output/
 	@touch $@
