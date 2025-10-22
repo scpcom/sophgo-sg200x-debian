@@ -694,8 +694,8 @@ $(BUILDDIR)/image-prepare-stamp:
 	@rm -rf /rootfs/
 	@-rm $(addon-targets)
 	@mkdir -p /rootfs/
-	@gpg --recv-key --keyserver keyserver.ubuntu.com 0E98404D386FA1D9
-	@gpg --export 0E98404D386FA1D9 > /etc/apt/trusted.gpg.d/debian-archive-keyring.gpg
+	@gpg --recv-key --keyserver keyserver.ubuntu.com 78DBA3BC47EF2265
+	@gpg --export 78DBA3BC47EF2265 > /etc/apt/trusted.gpg.d/debian-archive-keyring.gpg
 	@curl -v -L https://scpcom.github.io/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
 	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" trixie "/rootfs/" "deb http://deb.debian.org/debian/ trixie main" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://scpcom.github.io/deb stable sg200x $(BOARD)-$(VARIANT)"
 	@touch $@
