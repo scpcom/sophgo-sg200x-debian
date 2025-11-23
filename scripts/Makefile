@@ -93,6 +93,8 @@ CHIP=$(UBOOT_CHIP) \
 CVIBOARD=$(UBOOT_BOARD) \
 CROSS_COMPILE="$(SBL_CROSS_COMPILE_PATH)/bin/$(SBL_CROSS_COMPILE_PREFIX)"
 
+KERNEL_OUTPUT_DIR = $(BUILDDIR)/kernel/build/$(BOARD)-$(VARIANT)
+
 KERNEL_MAKE_OPTS = ARCH=$(KERNEL_ARCH) \
 CROSS_COMPILE="$(SDK_CROSS_COMPILE_KERNEL)" \
 KDEB_SOURCENAME=linux-$(BOARD) \
@@ -273,26 +275,26 @@ $(BUILDDIR)/linux-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp
 
 $(BUILDDIR)/linux-prepare-configure-stamp: $(BUILDDIR)/linux-prepare-patch-stamp
 	@echo "$(COLOUR_GREEN)Configuring Kernel for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/kernel && $(MAKE) -j$(NPROCS) O=$(BUILDDIR)/kernel/ $(KERNEL_MAKE_OPTS) ${BOARD}_defconfig
+	@cd $(BUILDDIR)/kernel && $(MAKE) -j$(NPROCS) O=$(KERNEL_OUTPUT_DIR)/ $(KERNEL_MAKE_OPTS) ${BOARD}_defconfig
 	@$(eval LV=$(shell cd $(BUILDDIR)/kernel && git log -1 --format="%at" | xargs -I{} date -d @{} +-%Y%m%d-${KERNELREV}))
-	@sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="$(LV)"/' $(BUILDDIR)/kernel/.config
+	@sed -i 's/CONFIG_LOCALVERSION=""/CONFIG_LOCALVERSION="$(LV)"/' $(KERNEL_OUTPUT_DIR)/.config
 	@touch $@
 
 $(BUILDDIR)/linux-compile-stamp: $(BUILDDIR)/linux-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building Kernel for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/kernel && KCFLAGS=-Wno-attribute-alias $(MAKE) -j$(NPROCS) O=$(BUILDDIR)/kernel/ $(KERNEL_MAKE_OPTS) bindeb-pkg
-	@cd $(BUILDDIR)/kernel && KCFLAGS=-Wno-attribute-alias $(MAKE) -j$(NPROCS) O=$(BUILDDIR)/kernel/ $(KERNEL_MAKE_OPTS) modules_install INSTALL_MOD_PATH=$(BUILDDIR)/kernel/modules headers_install INSTALL_HDR_PATH=$(BUILDDIR)/kernel/$(KERNEL_ARCH)/usr
-	@cp $(BUILDDIR)/*.deb /output/
+	@cd $(BUILDDIR)/kernel && KCFLAGS=-Wno-attribute-alias $(MAKE) -j$(NPROCS) O=$(KERNEL_OUTPUT_DIR)/ $(KERNEL_MAKE_OPTS) bindeb-pkg
+	@cd $(BUILDDIR)/kernel && KCFLAGS=-Wno-attribute-alias $(MAKE) -j$(NPROCS) O=$(KERNEL_OUTPUT_DIR)/ $(KERNEL_MAKE_OPTS) modules_install INSTALL_MOD_PATH=$(KERNEL_OUTPUT_DIR)/ko headers_install INSTALL_HDR_PATH=$(KERNEL_OUTPUT_DIR)/$(KERNEL_ARCH)/usr
+	@cp $(BUILDDIR)/kernel/build/*.deb /output/
 	@touch $@
 
 $(BUILDDIR)/linux-package-stamp: $(BUILDDIR)/linux-compile-stamp
 	@echo "$(COLOUR_GREEN)Packaging linux-headers-sg200x for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(BUILDDIR)/kernel/debian/control | cut -d ' ' -f 2))
-	@$(eval LINUXMETAVERSION=$(shell basename $(BUILDDIR)/kernel/debian/linux-headers/usr/share/doc/linux-headers-* | cut -d '-' -f 3-))
+	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
+	@$(eval LINUXMETAVERSION=$(shell basename $(KERNEL_OUTPUT_DIR)/debian/linux-headers/usr/share/doc/linux-headers-* | cut -d '-' -f 3-))
 	@mkdir -p $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)
 	@cp -r /builder/deb/linux-image-sg200x/* $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/
 	@mkdir -pv $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/usr/share/doc/linux-headers-$(BOARD)-$(VARIANT)/
-	@cp -p $(BUILDDIR)/kernel/debian/linux-headers/usr/share/doc/linux-headers-*/* $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/usr/share/doc/linux-headers-$(BOARD)-$(VARIANT)/
+	@cp -p $(KERNEL_OUTPUT_DIR)/debian/linux-headers/usr/share/doc/linux-headers-*/* $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/usr/share/doc/linux-headers-$(BOARD)-$(VARIANT)/
 	@sed -i 's/Architecture: riscv64/Architecture: $(KERNEL_DEB_ARCH)/' $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0-1/Version: $(LINUXMETAVERSION)/' $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@sed -i 's/Package: linux-image-sg200x/Package: linux-headers-$(BOARD)-$(VARIANT)/' $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
@@ -302,11 +304,11 @@ $(BUILDDIR)/linux-package-stamp: $(BUILDDIR)/linux-compile-stamp
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION) linux-headers-$(BOARD)-$(VARIANT)_$(LINUXMETAVERSION)_$(KERNEL_DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)_$(LINUXMETAVERSION)_$(KERNEL_DEB_ARCH).deb /output/
 	@echo "$(COLOUR_GREEN)Packaging linux-image-sg200x for $(BOARD)$(END_COLOUR)"
-	@$(eval LINUXMETAVERSION=$(shell basename $(BUILDDIR)/kernel/debian/linux-image/usr/share/doc/linux-image-* | cut -d '-' -f 3-))
+	@$(eval LINUXMETAVERSION=$(shell basename $(KERNEL_OUTPUT_DIR)/debian/linux-image/usr/share/doc/linux-image-* | cut -d '-' -f 3-))
 	@mkdir -p $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)
 	@cp -r /builder/deb/linux-image-sg200x/* $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/
 	@mkdir -pv $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/usr/share/doc/linux-image-$(BOARD)-$(VARIANT)/
-	@cp -p $(BUILDDIR)/kernel/debian/linux-image/usr/share/doc/linux-image-*/* $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/usr/share/doc/linux-image-$(BOARD)-$(VARIANT)/
+	@cp -p $(KERNEL_OUTPUT_DIR)/debian/linux-image/usr/share/doc/linux-image-*/* $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/usr/share/doc/linux-image-$(BOARD)-$(VARIANT)/
 	@sed -i 's/Architecture: riscv64/Architecture: $(KERNEL_DEB_ARCH)/' $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0-1/Version: $(LINUXMETAVERSION)/' $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
 	@sed -i 's/Package: linux-image-sg200x/Package: linux-image-$(BOARD)-$(VARIANT)/' $(BUILDDIR)/package/linux-image-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION)/DEBIAN/control
@@ -322,7 +324,7 @@ linux: $(BUILDDIR)/linux-package-stamp
 linux-clean:
 	@rm -rf $(BUILDDIR)/kernel
 	@rm -f $(BUILDDIR)/linux-*-stamp
-	@rm -f $(BUILDDIR)/linux-*.deb
+	@rm -f $(BUILDDIR)/kernel/build/linux-*.deb
 
 
 $(BUILDDIR)/osdrv-prepare-checkout-stamp:
@@ -334,7 +336,7 @@ $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 
 $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/osdrv-prepare-checkout-stamp $(BUILDDIR)/linux-compile-stamp
 	@echo "$(COLOUR_GREEN)Patching OSdrv for $(BOARD)$(END_COLOUR)"
-	$(call copy_ko_action, $(BUILDDIR)/kernel/modules)
+	$(call copy_ko_action, $(KERNEL_OUTPUT_DIR)/ko)
 	@$(foreach file, $(wildcard /configs/common/patches/osdrv/*.patch), cd $(BUILDDIR)/osdrv && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/osdrv/*.patch), cd $(BUILDDIR)/osdrv && git apply --ignore-whitespace $(file);)
 	@touch $@
@@ -345,13 +347,13 @@ $(BUILDDIR)/osdrv-prepare-configure-stamp: $(BUILDDIR)/osdrv-prepare-patch-stamp
 
 $(BUILDDIR)/osdrv-compile-stamp: $(BUILDDIR)/osdrv-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building OSdrv for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/osdrv && $(OSDRV_ENV) $(MAKE) $(KERNEL_MAKE_OPTS) KERNEL_DIR=$(BUILDDIR)/kernel INSTALL_DIR=$(BUILDDIR)/osdrv/ko all
+	@cd $(BUILDDIR)/osdrv && $(OSDRV_ENV) $(MAKE) $(KERNEL_MAKE_OPTS) KERNEL_DIR=$(KERNEL_OUTPUT_DIR) INSTALL_DIR=$(BUILDDIR)/osdrv/ko all
 	@touch $@
 
 $(BUILDDIR)/osdrv-package-stamp: $(BUILDDIR)/osdrv-compile-stamp
 	@echo "$(COLOUR_GREEN)Packaging OSdrv for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(BUILDDIR)/kernel/debian/control | cut -d ' ' -f 2))
-	@$(eval KERNELRELEASE=$(shell basename $(BUILDDIR)/kernel/debian/linux-headers/usr/share/doc/linux-headers-* | cut -d '-' -f 3-))
+	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
+	@$(eval KERNELRELEASE=$(shell basename $(KERNEL_OUTPUT_DIR)/debian/linux-headers/usr/share/doc/linux-headers-* | cut -d '-' -f 3-))
 	@mkdir -p $(BUILDDIR)/package/cvitek-osdrv-$(KERNELRELEASE)-$(OSDRVVERSION)
 	@cp -r /builder/deb/cvitek-osdrv/* $(BUILDDIR)/package/cvitek-osdrv-$(KERNELRELEASE)-$(OSDRVVERSION)/
 	@mkdir -pv $(BUILDDIR)/package/cvitek-osdrv-$(KERNELRELEASE)-$(OSDRVVERSION)/mnt/system/ko/$(KERNELRELEASE)/
@@ -372,7 +374,7 @@ $(BUILDDIR)/osdrv-package-stamp: $(BUILDDIR)/osdrv-compile-stamp
 	@mkdir -p $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)
 	@cp -r /builder/deb/linux-image-sg200x/* $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/
 	@mkdir -pv $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/usr/share/doc/cvitek-osdrv-$(BOARD)-$(VARIANT)/
-	@cp -p $(BUILDDIR)/kernel/debian/linux-image/usr/share/doc/linux-image-*/* $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/usr/share/doc/cvitek-osdrv-$(BOARD)-$(VARIANT)/
+	@cp -p $(KERNEL_OUTPUT_DIR)/debian/linux-image/usr/share/doc/linux-image-*/* $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/usr/share/doc/cvitek-osdrv-$(BOARD)-$(VARIANT)/
 	@sed -i 's/Architecture: riscv64/Architecture: $(KERNEL_DEB_ARCH)/' $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0-1/Version: $(OSDRVVERSION)-$(KERNELRELEASE)/' $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/DEBIAN/control
 	@sed -i 's/Package: linux-image-sg200x/Package: cvitek-osdrv-$(BOARD)-$(VARIANT)/' $(BUILDDIR)/package/cvitek-osdrv-$(BOARD)-$(VARIANT)-$(KERNELRELEASE)/DEBIAN/control
@@ -399,9 +401,9 @@ $(BUILDDIR)/middleware-prepare-checkout-stamp:
 
 $(BUILDDIR)/middleware-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/middleware-prepare-checkout-stamp $(BUILDDIR)/osdrv-compile-stamp
 	@echo "$(COLOUR_GREEN)Patching Middleware for $(BOARD)$(END_COLOUR)"
-	mkdir -pv $(BUILDDIR)/kernel/$(KERNEL_ARCH)/usr/include/linux/
-	$(call copy_header_action, $(BUILDDIR)/kernel/$(KERNEL_ARCH)/usr/include)
-	@[ "$(KERNEL_ARCH)" = "$(ARCH)" ] || ln -s $(KERNEL_ARCH) $(BUILDDIR)/kernel/$(ARCH)
+	mkdir -pv $(KERNEL_OUTPUT_DIR)/$(KERNEL_ARCH)/usr/include/linux/
+	$(call copy_header_action, $(KERNEL_OUTPUT_DIR)/$(KERNEL_ARCH)/usr/include)
+	@[ "$(KERNEL_ARCH)" = "$(ARCH)" ] || ln -s $(KERNEL_ARCH) $(KERNEL_OUTPUT_DIR)/$(ARCH)
 	@$(foreach file, $(wildcard /configs/common/patches/middleware/*.patch), cd $(BUILDDIR)/middleware && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/middleware/*.patch), cd $(BUILDDIR)/middleware && git apply --ignore-whitespace $(file);)
 	sed -i 's|$$(ROOT_DIR)/../host-tools|/host-tools|g' $(BUILDDIR)/middleware/Makefile.param
@@ -422,14 +424,15 @@ $(BUILDDIR)/middleware-prepare-configure-stamp: $(BUILDDIR)/middleware-prepare-p
 
 $(BUILDDIR)/middleware-compile-stamp: $(BUILDDIR)/middleware-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building Middleware for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/middleware && $(MIDDLEWARE_ENV) $(MAKE) KERNEL_DIR=$(BUILDDIR)/kernel all
+	@cd $(BUILDDIR)/middleware && $(MIDDLEWARE_ENV) $(MAKE) KERNEL_DIR=$(KERNEL_OUTPUT_DIR) all
 	@mkdir -pv $(BUILDDIR)/middleware/install/system/
-	@cd $(BUILDDIR)/middleware && $(MIDDLEWARE_ENV) $(MAKE) KERNEL_DIR=$(BUILDDIR)/kernel install DESTDIR=$(BUILDDIR)/middleware/install/system
+	@cd $(BUILDDIR)/middleware && $(MIDDLEWARE_ENV) $(MAKE) KERNEL_DIR=$(KERNEL_OUTPUT_DIR) install DESTDIR=$(BUILDDIR)/middleware/install/system
 	@find $(BUILDDIR)/middleware/install/system -name "*.so*" -type f ! -path "*libtinyalsa.so" ! -path "*libaac*.so" ! -path "*libcvi_audio.so" ! -path "*libcvi_*ssp*.so" ! -path "*libcvi_*vqe*.so" ! -path "*libcvi_RES1.so" ! -path "*libcvi_VoiceEngine.so" ! -path "*libae.so" ! -path "*libaf.so" ! -path "*libawb.so" ! -path "*libisp_algo.so" -printf 'striping %p\n' -exec $(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)strip --strip-all {} \;
 	@find $(BUILDDIR)/middleware/install/system -executable -type f ! -name "*.sh" ! -path "*etc*" ! -path "*.ko" ! -path "*.so*" -printf 'striping %p\n' -exec $(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)strip --strip-all {} 2>/dev/null \;
 	@touch $@
 
 $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
+	@cd $(BUILDDIR)/kernel && [ "$(GIT_REF)" = "develop" ] || KCFLAGS=-Wno-attribute-alias $(MAKE) -j$(NPROCS) O=$(KERNEL_OUTPUT_DIR)/ $(KERNEL_MAKE_OPTS) clean
 	@echo "$(COLOUR_GREEN)Packaging Middleware for $(BOARD)$(END_COLOUR)"
 	@rm -rf $(BUILDDIR)/middleware/3rdparty/tmp/
 	@$(eval MV=$(shell cd $(BUILDDIR)/middleware && git log -1 --format="%at" | xargs -I{} date -d @{} +-%Y%m%d-${KERNELREV}))
@@ -720,7 +723,7 @@ $(BUILDDIR)/image-prepare-stamp:
 
 $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) $(BUILDDIR)/linux-package-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
 	@echo "$(COLOUR_GREEN)Packaging board-support-sg200x for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(BUILDDIR)/kernel/debian/control | cut -d ' ' -f 2))
+	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@mkdir -p $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)
 	@cp -r /builder/deb/board-support-sg200x/* $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/
 	@mkdir -pv $(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION)/usr/share/doc/board-support-$(BOARD)-$(VARIANT)/
@@ -753,7 +756,7 @@ $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) 
 
 $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/linux-package-stamp $(FSBL_TARGETS)
 	@echo "$(COLOUR_GREEN)Customizing Image for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(BUILDDIR)/kernel/debian/control | cut -d ' ' -f 2))
+	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@mkdir -p /rootfs/tmp/install/
 	@echo $(GIT_REF) > /rootfs/tmp/install/gitref
 	@echo $(BOARD) > /rootfs/tmp/install/hostname
