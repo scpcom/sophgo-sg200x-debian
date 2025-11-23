@@ -36,7 +36,7 @@ index 8093bbbe875c..1336c2d23bd6 100644
 +#define MAX_RESERVED_REGIONS	64
  
  #if defined(CONFIG_ARCH_CVITEK)
- struct reserved_mem_size_entry {
+ struct reserved_mem_addr_entry {
 @@ -69,7 +69,7 @@ void __init fdt_reserved_mem_save_node(unsigned long node, const char *uname,
  	}
  

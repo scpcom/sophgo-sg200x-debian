@@ -111,6 +111,7 @@ LicheeRV Nano
  - cvitek-fsbl-licheervnano-st7701-dxq5d0019-v0 (5 inch)
  - cvitek-fsbl-licheervnano-st7701-hd228001c31 (2.28 inch, hynitron cst3xx touchscreen)
  - cvitek-fsbl-licheervnano-st7701-hd228001c31-alt0 (2.28 inch)
+ - cvitek-fsbl-licheervnano-st7701-lhcm228ts003a (2.28 inch)
  - cvitek-fsbl-licheervnano-zct2133v1 (7 inch)
 
 Milk-V DuoS

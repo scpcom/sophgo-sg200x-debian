@@ -1,5 +1,5 @@
 #!/bin/busybox sh
-# kvmhwd Rev2.0
+# kvmhwd Rev2.1
 
 start_usb_dev(){
     . /etc/profile
@@ -9,8 +9,20 @@ start_usb_dev(){
     mkdir g0
     cd g0
 
-    echo 0x3346 > idVendor
-    echo 0x1009 > idProduct
+    # echo 0x3346 > idVendor
+    # echo 0x1009 > idProduct
+    if [ -e /boot/usb.vid ]
+    then
+        cat /boot/usb.vid > idVendor
+    else
+        echo 0x3346 > idVendor
+    fi
+    if [ -e /boot/usb.pid ]
+    then
+        cat /boot/usb.pid > idProduct
+    else
+        echo 0x1009 > idProduct
+    fi
     mkdir strings/0x409
     echo '0123456789ABCDEF' > strings/0x409/serialnumber
     echo 'sipeed' > strings/0x409/manufacturer
@@ -47,7 +59,7 @@ start_usb_dev(){
             echo 1 > functions/hid.GS0/wakeup_on_write
         fi
         echo 1 > functions/hid.GS0/protocol
-        echo 6 > functions/hid.GS0/report_length
+        echo 8 > functions/hid.GS0/report_length
         echo -ne \\x05\\x01\\x09\\x06\\xa1\\x01\\x05\\x07\\x19\\xe0\\x29\\xe7\\x15\\x00\\x25\\x01\\x75\\x01\\x95\\x08\\x81\\x02\\x95\\x01\\x75\\x08\\x81\\x03\\x95\\x05\\x75\\x01\\x05\\x08\\x19\\x01\\x29\\x05\\x91\\x02\\x95\\x01\\x75\\x03\\x91\\x03\\x95\\x06\\x75\\x08\\x15\\x00\\x25\\x65\\x05\\x07\\x19\\x00\\x29\\x65\\x81\\x00\\xc0 > functions/hid.GS0/report_desc
         ln -s functions/hid.GS0 configs/c.1
 
@@ -92,6 +104,7 @@ start_usb_dev(){
                     echo 1 > functions/mass_storage.disk0/lun.0/ro
                     echo 0 > functions/mass_storage.disk0/lun.0/cdrom
             fi
+            echo "NanoKVM USB Mass Storage0520" > functions/mass_storage.disk0/lun.0/inquiry_string
             disk=$(cat /boot/usb.disk0)
             if [ -z "${disk}" ]
             then

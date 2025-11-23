@@ -188,16 +188,23 @@ kvm_hw_init(){
     then
         echo "hw = alpha!"
         init_alpha_hw
+	[ -e /boot/kvm ] || echo "hw=alpha" > /boot/kvm
     fi
     if [ `grep -c "beta" $FIND_FILE` -ne '0' ]
     then
         echo "hw = beta!"
         init_beta_pcie_hw
+	[ -e /boot/kvm ] || echo "hw=beta" > /boot/kvm
     fi
     if [ `grep -c "pcie" $FIND_FILE` -ne '0' ]
     then
         echo "hw = pcie!"
         init_beta_pcie_hw
+	[ -e /boot/kvm ] || echo "hw=pcie" > /boot/kvm
+    fi
+    if [ -e /boot/kvm -a -e /etc/kvm/oled_exist ]
+    then
+        grep -q '^oled=' /boot/kvm || echo 'oled=exists' >> /boot/kvm
     fi
 }
 
@@ -221,8 +228,10 @@ case "$1" in
   start)
     kvm_hw_detect
     kvm_hw_init
+    /kvmapp/kvm_system/kvm_system --oled-show-string "Booting"
   ;;
   re-detect)
+    rm -f /boot/kvm
     rm /etc/kvm/hw
     kvm_hw_detect
     kvm_hw_init

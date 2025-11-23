@@ -1,0 +1,70 @@
+#!/bin/sh
+
+init_alpha_oled(){
+    Alpha_OLED_RST_Pin=371
+
+    devmem 0x030010D0 32 0x2  # I2C1_SCL
+    devmem 0x030010DC 32 0x2  # I2C1_SDA
+    devmem 0x030010D4 32 0x3  # GPIOE19 OLED_RST
+
+    echo ${Alpha_OLED_RST_Pin} > /sys/class/gpio/export  # OLED_RST
+    echo out > /sys/class/gpio/gpio${Alpha_OLED_RST_Pin}/direction
+    echo 1 > /sys/class/gpio/gpio${Alpha_OLED_RST_Pin}/value
+
+    rmmod /mnt/system/ko/i2c-gpio.ko
+    rmmod /mnt/system/ko/i2c-algo-bit.ko
+}
+
+init_beta_pcie_oled(){
+    #Alpha_OLED_RST_Pin=371
+    Beta_OLED_RST_Pin=502
+
+    rmmod spi_gpio
+    rmmod spi_bitbang
+
+    devmem 0x0300103C 32 0x3  # GPIOA15 I2C5_SCL (bitbang)
+    devmem 0x03001058 32 0x3  # GPIOA27 I2C5_SDA (bitbang)
+    devmem 0x03001050 32 0x3  # GPIOA22 OLED_RST
+
+    # beta/pcie hw
+    #echo ${Alpha_OLED_RST_Pin} > /sys/class/gpio/unexport  # OLED_RST
+    echo ${Beta_OLED_RST_Pin} > /sys/class/gpio/export  # Beta_OLED_RST_Pin
+    echo out > /sys/class/gpio/gpio${Beta_OLED_RST_Pin}/direction
+    echo 1 > /sys/class/gpio/gpio${Beta_OLED_RST_Pin}/value
+
+    rmmod /mnt/system/ko/i2c-gpio.ko
+    rmmod /mnt/system/ko/i2c-algo-bit.ko
+    insmod /mnt/system/ko/i2c-algo-bit.ko
+    insmod /mnt/system/ko/i2c-gpio.ko
+}
+
+kvm_oled_init(){
+    FIND_FILE="/etc/kvm/hw"
+    if [ `grep -c "alpha" $FIND_FILE` -ne '0' ]
+    then
+        echo "hw = alpha!"
+        init_alpha_oled
+    fi
+    if [ `grep -c "beta" $FIND_FILE` -ne '0' ]
+    then
+        echo "hw = beta!"
+        init_beta_pcie_oled
+    fi
+    if [ `grep -c "pcie" $FIND_FILE` -ne '0' ]
+    then
+        echo "hw = pcie!"
+        init_beta_pcie_oled
+    fi
+}
+
+if [ "$1" = "start" ]
+then
+    if [ -e /etc/kvm/hw -a -e /etc/kvm/oled_exist ]
+    then
+        kvm_oled_init
+
+        /kvmapp/kvm_system/kvm_system --oled-show-string "Boot..."
+    fi
+
+    echo "OK"
+fi

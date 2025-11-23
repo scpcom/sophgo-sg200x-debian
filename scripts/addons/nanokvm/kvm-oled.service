@@ -1,0 +1,14 @@
+[Unit]
+Description=KVM OLED
+Before=avahi-daemon.service
+Before=load-systemko.service
+Before=sensor-config.service
+Before=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=oneshot
+ExecStart=busybox sh /etc/init.d/S02kvmoled start
+
+[Install]
+WantedBy=multi-user.target

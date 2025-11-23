@@ -71,6 +71,9 @@ $(BUILDDIR)/maixapp-stamp: $(BUILDDIR)/buildroot-package-stamp
 	@for f in $(MAIXAPP_CLEANUP_LIBS) ; do \
 		rm -f $(MAIXAPP_PACKAGE_DIR)/maixapp/lib/$$f ; \
 	done
+	if [ -e $(MAIXAPP_PACKAGE_DIR)/maixapp/sys_conf.ini ]; then \
+		echo "/maixapp/sys_conf.ini" > $(MAIXAPP_PACKAGE_DIR)/DEBIAN/conffiles ; \
+	fi
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MAIXAPP_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0-1/Version: $(MAIXAPPVERSION)$(BV)/' $(MAIXAPP_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: maixapp-sg200x/Package: maixapp-$(BOARD)/' $(MAIXAPP_PACKAGE_DIR)/DEBIAN/control

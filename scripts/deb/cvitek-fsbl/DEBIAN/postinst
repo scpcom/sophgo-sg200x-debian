@@ -14,12 +14,15 @@ fi
 [ -e /etc/fw_env.config ] || echo '/boot/uboot.env	0x0000          0x20000' > /etc/fw_env.config
 [ -e /boot/uboot.env ] || mkenvimage -s 0x20000 -o /boot/uboot.env /etc/u-boot-initial-env
 [ -e /boot/board ] || echo "id=maixcam" > /boot/board
+grep -q '^name=' /boot/board || echo "name=MaixCAM" >> /boot/board
 if [ "X${panel}" != "X" ]; then
   if grep -q '^panel=' /boot/board ; then
     sed -i s/'^panel=.*'/'panel='${panel}/g /boot/board
   else
     echo "panel=${panel}" >> /boot/board
   fi
+  grep -q showlogo /boot/uboot.env || mkenvimage -s 0x20000 -o /boot/uboot.env /etc/u-boot-initial-env
+elif [ -e /kvmapp ]; then
   grep -q showlogo /boot/uboot.env || mkenvimage -s 0x20000 -o /boot/uboot.env /etc/u-boot-initial-env
 else
   ! grep -q showlogo /boot/uboot.env || mkenvimage -s 0x20000 -o /boot/uboot.env /etc/u-boot-initial-env
