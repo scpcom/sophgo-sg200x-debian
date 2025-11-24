@@ -67,7 +67,7 @@ $(BUILDDIR)/tpusdk-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stam
 	@cd $(BUILDDIR)/tpusdk && ./host/prepare-host.sh
 	@cd $(BUILDDIR)/tpusdk && ln -s ../../host-tools host-tools
 	@cd $(BUILDDIR)/tpusdk && mkdir -p linux_5.10/build
-	@cd $(BUILDDIR)/tpusdk && ln -s ../../../kernel linux_5.10/build/$(TPUSDK_BOARD_LINK)
+	@cd $(BUILDDIR)/tpusdk && ln -s $(KERNEL_OUTPUT_DIR) linux_5.10/build/$(TPUSDK_BOARD_LINK)
 	@cd $(BUILDDIR)/tpusdk && ln -s ../middleware middleware
 	@cd $(BUILDDIR)/tpusdk && ln -s ../osdrv osdrv
 	@cd $(BUILDDIR)/tpusdk && ln -s ../ramdisk ramdisk
