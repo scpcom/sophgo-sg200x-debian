@@ -8,6 +8,7 @@ ARCH=arm64
 DDR_CFG=ddr3_1866_x16
 ION_SIZE=74
 PANEL_TUNING_DEFAULT?=MIPI_panel_milkv_8hd
+PANEL_TUNING_EXTRA?=MIPI_panel_milkv_8hd_2lane MIPI_panel_milkv_st7796s
 PARTITION_FILE=partition_$(STORAGE_TYPE).xml
 
 PACKAGES += " hostapd udhcpd wireless-regdb wpasupplicant bluez"

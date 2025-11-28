@@ -118,6 +118,8 @@ Milk-V DuoS
 
  - cvitek-fsbl-duos (no LCD)
  - cvitek-fsbl-duos-milkv-8hd (8 inch)
+ - cvitek-fsbl-duos-milkv-8hd-2lane (8 inch)
+ - cvitek-fsbl-duos-milkv-st7796s (4 inch)
 
 Example if you have a st7701_hd228001c31 connected:
 ```
