@@ -3,7 +3,25 @@
 if [ "$1" = "start" ]
 then
 	. /etc/profile
-	if [ -e /boot/fb ]
+	fb=none
+	option=
+	[ ! -e /boot/fb ] || fb=$(cat /boot/fb)
+	if echo $fb | grep -q ' '
+	then
+		option=$(echo $fb | cut -d ' ' -f 2-)
+		fb=$(echo $fb | cut -d ' ' -f 1)
+	fi
+	for f in  /mnt/system/ko/fb_*.ko
+	do
+		b=$(basename $f | sed s/'\.ko$'/''/g)
+		[ $b = fb_${fb} ] || rmmod $b
+	done
+	if [ -e /mnt/system/ko/fb_${fb}.ko ]
+	then
+		echo "framebuffer enable"
+		[ X$option = X ] || rmmod fb_${fb}
+		insmod /mnt/system/ko/fb_${fb}.ko $option
+	elif [ -e /boot/fb ]
 	then
 		echo "framebuffer enable"
 		insmod /mnt/system/ko/soph_fb.ko

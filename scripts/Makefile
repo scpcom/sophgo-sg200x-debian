@@ -137,6 +137,7 @@ drivers/net/wireless \
 drivers/pwm \
 drivers/rtc \
 drivers/spi \
+drivers/staging/fbtft \
 drivers/video/backlight \
 fs/efivarfs \
 net/ipv4 \
@@ -259,7 +260,7 @@ $(BUILDDIR)/linux-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out Kernel for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) https://github.com/scpcom/linux.git $(BUILDDIR)/kernel
-	@cd $(BUILDDIR)/kernel && git checkout d6dcf66
+	@cd $(BUILDDIR)/kernel && git checkout 408990c
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/linux-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
