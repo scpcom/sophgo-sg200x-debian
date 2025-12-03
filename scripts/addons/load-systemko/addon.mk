@@ -1,6 +1,6 @@
 $(BUILDDIR)/load-systemko-stamp:
 	@echo "$(COLOUR_GREEN)Packaging load-systemko for $(BOARD)$(END_COLOUR)"
-	@$(eval LSKV=$(shell echo "-4"))
+	@$(eval LSKV=$(shell echo "-5"))
 	@mkdir -p $(BUILDDIR)/package/load-systemko-$(BOARD)-$(OSDRVVERSION)
 	@cp -r /builder/deb/load-systemko/* $(BUILDDIR)/package/load-systemko-$(BOARD)-$(OSDRVVERSION)/
 	@mkdir -pv $(BUILDDIR)/package/load-systemko-$(BOARD)-$(OSDRVVERSION)/etc/init.d/

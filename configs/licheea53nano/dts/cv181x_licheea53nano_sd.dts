@@ -147,7 +147,8 @@
 &spi2 {
 	status = "okay";
 
-        // /delete-node/ spidev@0;
+	/delete-node/ spidev@0;
+
         st7789: st7789@0{
 		compatible = "sitronix,st7789x";
 		reg = <0>;
