@@ -4,6 +4,7 @@ set -ex
 
 GITREF=$(cat /tmp/install/gitref)
 BOARD=$(cat /tmp/install/board)
+CHIP_VENDOR=$(cat /tmp/install/chip_vendor)
 VARIANT=$(cat /tmp/install/variant)
 HOSTNAME=$(cat /tmp/install/hostname)
 STORAGETYPE=$(cat /tmp/install/storage)
@@ -108,9 +109,9 @@ fi
 kernel_image=${lib_dir##*/}
 
 # set default dtb file, please verify your board version
-mkdir -p /boot/fdt/${kernel_image}/cvitek
+mkdir -p /boot/fdt/${kernel_image}/${CHIP_VENDOR}
 
-cp ${lib_dir}/cvitek/*.dtb /boot/fdt/${kernel_image}/cvitek/
+cp ${lib_dir}/${CHIP_VENDOR}/*.dtb /boot/fdt/${kernel_image}/${CHIP_VENDOR}/
 
 
 cat /boot/extlinux/extlinux.conf

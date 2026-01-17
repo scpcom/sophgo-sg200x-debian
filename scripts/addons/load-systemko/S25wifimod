@@ -3,10 +3,11 @@
 if [ "$1" = "start" ]
 then
 	. /etc/profile
+	aic8800_option=$(cat /proc/cmdline | tr ' ' '\n' | grep '^aic8800_bsp\.' | sed s/'^aic8800_bsp\.'/''/g | tail -1)
 	printf "load wifi kernel module: "
 	cd /mnt/system/ko/
 	insmod cfg80211.ko
-	insmod 3rd/aic8800_bsp.ko
+	insmod 3rd/aic8800_bsp.ko $aic8800_option
 	insmod 3rd/aic8800_fdrv.ko
 	insmod 3rd/8733bs.ko
 	echo "OK"
