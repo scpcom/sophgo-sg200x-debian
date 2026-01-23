@@ -1,6 +1,6 @@
 $(BUILDDIR)/device-key-stamp:
 	@echo "$(COLOUR_GREEN)Packaging device-key for $(BOARD)$(END_COLOUR)"
-	@$(eval DEVICEKEYVERSION=$(shell echo "1.0.0"))
+	@$(eval DEVICEKEYVERSION=$(shell echo "1.2.0"))
 	@$(eval DEVICEKEY_PACKAGE_DIR=$(BUILDDIR)/package/device-key-$(BOARD)-$(DEVICEKEYVERSION))
 	@mkdir -p $(DEVICEKEY_PACKAGE_DIR)
 	@cp -r /builder/deb/device-key/* $(DEVICEKEY_PACKAGE_DIR)/
@@ -9,6 +9,7 @@ $(BUILDDIR)/device-key-stamp:
 	@chmod +x $(DEVICEKEY_PACKAGE_DIR)/etc/init.d/S02devicekey
 	@cp -a addons/device-key/S10uuid $(DEVICEKEY_PACKAGE_DIR)/etc/init.d/
 	@chmod +x $(DEVICEKEY_PACKAGE_DIR)/etc/init.d/S10uuid
+	@[ "$(BOARD)" = "licheervnano" ] || sed -i s/licheervnano/$(BOARD)/g $(DEVICEKEY_PACKAGE_DIR)/etc/init.d/S10uuid
 	@mkdir -pv $(DEVICEKEY_PACKAGE_DIR)/etc/systemd/system/
 	@cp -a addons/device-key/device-key*.service $(DEVICEKEY_PACKAGE_DIR)/etc/systemd/system/
 	@cp -a addons/device-key/device-uuid*.service $(DEVICEKEY_PACKAGE_DIR)/etc/systemd/system/

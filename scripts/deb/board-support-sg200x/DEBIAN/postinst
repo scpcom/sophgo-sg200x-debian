@@ -11,3 +11,16 @@ for l in ld-linux-riscv64v0p7_xthead-lp64d.so.1 ld-linux-riscv64v_xthead-lp64d.s
     ln -s riscv64-linux-gnu/ld-linux-riscv64-lp64d.so.1 /usr/lib/$l
   fi
 done
+for l in libax_engine.so libax_interpreter.so ; do
+  if [ -e /opt/lib/$l -a ! -e /usr/lib/$l ]; then
+    ln -s /opt/lib/$l /usr/lib/$l
+  fi
+done
+[ -e /usr/bin/devmem ] || ln -s busybox /usr/bin/devmem
+pysubdir=python3.13
+if [ -e /usr/lib/$pysubdir -a -e /usr/local/lib/$pysubdir/site-packages -a \
+   ! -e /usr/lib/$pysubdir/usercustomize.py ]; then
+  echo "import site" > /usr/lib/$pysubdir/usercustomize.py
+  echo "site.addsitedir('/usr/local/lib/$pysubdir/site-packages')" >> /usr/lib/$pysubdir/usercustomize.py
+  chmod ugo+rx /usr/lib/$pysubdir/usercustomize.py
+fi

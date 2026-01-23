@@ -89,6 +89,9 @@ start() {
 			if [ -e /boot/usb.rndis0.mac ]
 			then
 				new_rndismac=$(cat /boot/usb.rndis0.mac)
+			elif [ -e /proc/ax_proc/uid ]
+			then
+				new_rndismac=$(hex2mac 48da356d$(sha512sum /device_key_legacy | head -c 3)f)
 			else
 				new_rndismac=$(hex2mac 48da356e$(sha512sum /device_key_legacy | head -c 4))
 			fi
@@ -140,6 +143,9 @@ start() {
 			if [ -e /boot/usb.ncm.mac ]
 			then
 				new_mac=$(cat /boot/usb.ncm.mac)
+			elif [ -e /proc/ax_proc/uid ]
+			then
+				new_mac=$(hex2mac 48da356d$(sha512sum /device_key_legacy | head -c 3)e)
 			else
 				new_mac=$(hex2mac 48da356e$(sha512sum /device_key_legacy | head -c 4))
 			fi

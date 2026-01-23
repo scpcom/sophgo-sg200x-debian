@@ -1,0 +1,21 @@
+diff --git a/cmd/pxe_utils.c b/cmd/pxe_utils.c
+index 067c24e5ff..0b12598242 100644
+--- a/cmd/pxe_utils.c
++++ b/cmd/pxe_utils.c
+@@ -570,9 +570,13 @@ static int label_boot(struct cmd_tbl *cmdtp, struct pxe_label *label)
+ 		} else if (label->fdtdir) {
+ 			char *f1, *f2, *f3, *f4, *slash;
+ 
+-			f1 = env_get("fdtfile");
+-			if (f1) {
+-				f2 = "";
++			f2 = env_get("fdtfile");
++			if (f2) {
++#ifdef CONFIG_TARGET_CVITEK
++				f1 = "axera/";
++#else
++				f1 = "";
++#endif
+ 				f3 = "";
+ 				f4 = "";
+ 			} else {

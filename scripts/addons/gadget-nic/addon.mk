@@ -1,6 +1,6 @@
 $(BUILDDIR)/gadget-nic-stamp:
 	@echo "$(COLOUR_GREEN)Packaging gadget-nic for $(BOARD)$(END_COLOUR)"
-	@$(eval GADGETNICVERSION=$(shell echo "1.0.0"))
+	@$(eval GADGETNICVERSION=$(shell echo "1.2.0"))
 	@$(eval GADGETNIC_PACKAGE_DIR=$(BUILDDIR)/package/gadget-nic-$(BOARD)-$(GADGETNICVERSION))
 	@mkdir -p $(GADGETNIC_PACKAGE_DIR)
 	@cp -r /builder/deb/gadget-nic/* $(GADGETNIC_PACKAGE_DIR)/
@@ -13,6 +13,10 @@ $(BUILDDIR)/gadget-nic-stamp:
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(GADGETNIC_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(GADGETNICVERSION)/' $(GADGETNIC_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: gadget-nic/Package: gadget-nic-$(BOARD)/' $(GADGETNIC_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CVITEK/$(CHIP_VENDOR)/' $(GADGETNIC_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CV18xx and SG200X/$(CHIP)/' $(GADGETNIC_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/cv181x/$(CHIP)/' $(GADGETNIC_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/RISC-V/$(ARCH_NAME)/' $(GADGETNIC_PACKAGE_DIR)/DEBIAN/control
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build gadget-nic-$(BOARD)-$(GADGETNICVERSION) gadget-nic-$(BOARD)_$(GADGETNICVERSION)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/gadget-nic-$(BOARD)_$(GADGETNICVERSION)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/

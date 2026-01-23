@@ -1,0 +1,74 @@
+From fd763cc1f32383e5ab9e0e0a5a6c5f780bca05d2 Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Sat, 29 Mar 2025 02:26:00 +0000
+Subject: [PATCH] builddeb: do not directly install to /boot
+
+---
+ scripts/package/builddeb | 29 +++++++++++++++++++++++++----
+ 1 file changed, 25 insertions(+), 4 deletions(-)
+
+diff --git a/scripts/package/builddeb b/scripts/package/builddeb
+index 91a502bb9..858478808 100755
+--- a/scripts/package/builddeb
++++ b/scripts/package/builddeb
+@@ -135,7 +135,7 @@ BUILD_DEBUG=$(if_enabled_echo CONFIG_DEBUG_INFO Yes)
+ # Setup the directory structure
+ rm -rf "$tmpdir" "$kernel_headers_dir" "$libc_headers_dir" "$dbg_dir" $objtree/debian/files
+ mkdir -m 755 -p "$tmpdir/DEBIAN"
+-mkdir -p "$tmpdir/lib" "$tmpdir/boot"
++mkdir -p "$tmpdir/lib" "$tmpdir/lib/boot/$version"
+ mkdir -p "$kernel_headers_dir/lib/modules/$version/"
+ 
+ # Build and install the kernel
+@@ -144,10 +144,10 @@ if [ "$ARCH" = "um" ] ; then
+ 	cp $KCONFIG_CONFIG "$tmpdir/usr/share/doc/$packagename/config"
+ 	gzip "$tmpdir/usr/share/doc/$packagename/config"
+ else
+-	cp System.map "$tmpdir/boot/System.map-$version"
+-	cp $KCONFIG_CONFIG "$tmpdir/boot/config-$version"
++	cp System.map "$tmpdir/lib/boot/$version/System.map"
++	cp $KCONFIG_CONFIG "$tmpdir/lib/boot/$version/config"
+ fi
+-cp "$($MAKE -s -f $srctree/Makefile image_name)" "$tmpdir/$installed_image_path"
++cp "$($MAKE -s -f $srctree/Makefile image_name)" "$tmpdir/lib/boot/$version/vmlinuz"
+ 
+ if grep -q "^CONFIG_OF=y" $KCONFIG_CONFIG ; then
+ 	# Only some architectures with OF support have this target
+@@ -196,6 +196,16 @@ for script in postinst postrm preinst prerm ; do
+ 
+ set -e
+ 
++EOF
++
++	[ $script != postinst ] || cat <<EOF >> "$tmpdir/DEBIAN/$script"
++cp -p "/lib/boot/$version/vmlinuz" "/$installed_image_path"
++cp -p "/lib/boot/$version/System.map" "/boot/System.map-$version"
++cp -p "/lib/boot/$version/config" "/boot/config-$version"
++
++EOF
++
++	cat <<EOF >> "$tmpdir/DEBIAN/$script"
+ # Pass maintainer script parameters to hook scripts
+ export DEB_MAINT_PARAMS="\$*"
+ 
+@@ -203,6 +213,17 @@ export DEB_MAINT_PARAMS="\$*"
+ export INITRD=$want_initrd
+ 
+ test -d $debhookdir/$script.d && run-parts --arg="$version" --arg="/$installed_image_path" $debhookdir/$script.d
++EOF
++
++	[ $script != postrm ] || cat <<EOF >> "$tmpdir/DEBIAN/$script"
++
++rm -f "/$installed_image_path"
++rm -f "/boot/System.map-$version"
++rm -f "/boot/config-$version"
++
++EOF
++
++	cat <<EOF >> "$tmpdir/DEBIAN/$script"
+ exit 0
+ EOF
+ 	chmod 755 "$tmpdir/DEBIAN/$script"
+-- 
+2.47.2
+

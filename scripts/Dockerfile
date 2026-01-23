@@ -20,7 +20,8 @@ RUN apt-get update \
         systemd-container texinfo zlib1g-dev wget arch-test \
         genimage joe lz4 lzip mc unzip zip \
         fakeroot git kernel-wedge quilt ccache cmake flex bison \
-        libssl-dev dh-exec rsync libelf-dev bc gcc-riscv64-unknown-elf \
+        libssl-dev dh-exec jq rsync u-boot-tools libelf-dev bc \
+        gcc-riscv64-unknown-elf \
         cpp-riscv64-linux-gnu binutils-riscv64-linux-gnu gcc-riscv64-linux-gnu \
         g++-riscv64-linux-gnu libc6-dev-riscv64-cross linux-libc-dev-riscv64-cross
 

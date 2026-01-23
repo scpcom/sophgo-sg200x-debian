@@ -58,13 +58,20 @@ jobs:
         boards: [licheervnano, duo256, duos]
         variant: [e]
         storage: [sd]
+        archs: [riscv]
         include: 
+          - boards: nanokvmpro
+            variant: kvm
+            storage: emmc
+            archs: arm64
           - boards: licheervnano
             variant: kvm
             storage: sd
+            archs: riscv
           - boards: duos
             variant: e
             storage: emmc
+            archs: riscv
     runs-on: ubuntu-latest
     needs: build-docker-image
     steps:
@@ -78,7 +85,7 @@ jobs:
           image: ghcr.io/scpcom/sophgo-sg200x-debian:${{ github.ref_name }}
           options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/
           run: |
-            make BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} image
+            make ARCH=${{ matrix.archs }} BOARD=${{ matrix.boards }} VARIANT=${{ matrix.variant }} STORAGE_TYPE=${{ matrix.storage }} GIT_REF=${{ github.ref_name }} image
             chmod 777 /output/
       - name: Pack
         run: |
