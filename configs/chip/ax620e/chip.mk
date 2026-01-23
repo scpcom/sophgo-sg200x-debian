@@ -110,7 +110,7 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 		mkdir -p /host-tools/gcc ; \
 		wget -O - https://github.com/scpcom/riscv-gnu-toolchain/releases/download/riscv64-gcc-thead_20241206-10.4.0-x86_64/riscv64-linux-gcc-thead_20241206-10.4.0-x86_64.tar.gz | tar -C /host-tools/gcc -xz ; \
 	fi
-	#@cd / && /builder/fix-thead-glibc-toolchain.sh
+	@#cd / && /builder/fix-thead-glibc-toolchain.sh
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-checkout-stamp: $(BUILDDIR)/bsp-prepare-checkout-stamp
@@ -396,11 +396,14 @@ $(BUILDDIR)/bsp-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out BSP for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b main $(GIT_CLONE_OPTS) --recursive https://github.com/scpcom/ax620e-bsp-build $(BUILDDIR)/bsp
-	@cd $(BUILDDIR)/bsp && git checkout 2417c4b
+	@cd $(BUILDDIR)/bsp && git checkout 2352e03
 	@touch $@
 
 $(BUILDDIR)/bsp-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/bsp-prepare-checkout-stamp
 	@echo "$(COLOUR_GREEN)Patching BSP for $(BOARD)$(END_COLOUR)"
+	@sed -i '/get-toolchain.sh/d' $(BUILDDIR)/bsp/build.sh
+	@sed -i 's|^CROSS_COMPILE_PATH=.*|CROSS_COMPILE_PATH=$(SBL_CROSS_COMPILE_PATH)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
+	@sed -i 's|^CROSS_COMPILE=.*|CROSS_COMPILE=$(SBL_CROSS_COMPILE_PREFIX)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|dtb EXTRA_CFLAGS|dtb BOARD=$(UBOOT_FAMILY) EXTRA_CFLAGS|g' $(BUILDDIR)/bsp/scripts/build-u-boot.sh
 	@touch $@
 
