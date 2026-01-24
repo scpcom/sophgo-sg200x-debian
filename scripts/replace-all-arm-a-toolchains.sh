@@ -3,33 +3,33 @@ d=`dirname $0`
 cd $d ; d=`pwd` ; cd - > /dev/null
 
 tcurl=$1
-[ "X${tcurl}" = "X" ] && tcurl=https://developer.arm.com/-/media/Files/downloads/gnu
+[ "X${tcurl}" = "X" ] && tcurl=https://developer.arm.com/-/media/files/downloads/gnu-a
 
-tcver=12.2.rel1
-tcdat=2022.12
+tcver=9.2
+tcdat=2019.12
 
 harch=`uname -m`
 
-gcver=12.2.rel1
+gcver=9.2
 lcver=2.23
 gctgts="arm-none-linux-gnueabihf
 aarch64-none-linux-gnu
 aarch64-none-elf"
 
-tcset=arm-gnu-toolchain-${gcver}-${harch}
+tcset=gcc-arm-${gcver}-${tcdat}-${harch}
 
 cd $d
 for gctgt in $gctgts ; do
-  gctar=arm-gnu-toolchain-${gcver}-${harch}-${gctgt}.tar.xz
+  gctar=gcc-arm-${gcver}-${tcdat}-${harch}-${gctgt}.tar.xz
   srtar=none
   if [ ! -e ${gctar} ]; then
-    wget -N ${tcurl}/${tcver}/binrel/${gctar}
+    wget -N ${tcurl}/${tcver}-${tcdat}/binrel/${gctar}
   fi
-  #rttar=runtime-arm-gnu-toolchain-${gcver}-${gctgt}.tar.xz
+  #rttar=runtime-gcc-arm-${gcver}-${tcdat}-${gctgt}.tar.xz
   if echo ${gctgt} | grep -q linux ; then
     srtar=sysroot-glibc-arm-${lcver}-${tcdat}-${gctgt}.tar.xz
     if [ ! -e ${srtar} ]; then
-      wget -N ${tcurl}/${tcver}/binrel/${srtar} || true
+      wget -N ${tcurl}/${tcver}-${tcdat}/binrel/${srtar} || true
     fi
   fi
   if [ -e ${tcset}.sha256 ]; then
@@ -66,7 +66,7 @@ rm -rf gcc/gcc-arm-*/
 mkdir -p gcc
 cd gcc
 for gctgt in $gctgts ; do
-  gctar=arm-gnu-toolchain-${gcver}-${harch}-${gctgt}.tar.xz
+  gctar=gcc-arm-${gcver}-${tcdat}-${harch}-${gctgt}.tar.xz
   tar xJf ${d}/${gctar}
 done
 cd ../..

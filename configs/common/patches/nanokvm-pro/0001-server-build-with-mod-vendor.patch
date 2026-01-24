@@ -1,0 +1,25 @@
+From 58ed9363e530d507a3a4b09f532b49a484efe225 Mon Sep 17 00:00:00 2001
+From: builder <builder@localhost.localdomain>
+Date: Fri, 23 Jan 2026 23:39:40 +0000
+Subject: [PATCH] server: build with mod vendor
+
+---
+ server/build.sh | 2 +-
+ 1 file changed, 1 insertion(+), 1 deletion(-)
+
+diff --git a/server/build.sh b/server/build.sh
+index 6ebe161..b05e411 100755
+--- a/server/build.sh
++++ b/server/build.sh
+@@ -161,7 +161,7 @@ build_project() {
+     log_info "Building Go application..."
+     if ! CGO_ENABLED=1 GOOS=linux GOARCH=${arch} CC=${cc} \
+         CGO_CFLAGS="$cgo_cflags" CGO_LDFLAGS="$cgo_ldflags" \
+-        GOEXPERIMENT=boringcrypto go build -ldflags "\
++        GOEXPERIMENT=boringcrypto go build -mod vendor -ldflags "\
+         -X 'main.Version=$VERSION' \
+         -X 'main.BuildTime=$BUILD_TIME' \
+         -X 'main.Commit=$COMMIT' \
+-- 
+2.43.0
+
