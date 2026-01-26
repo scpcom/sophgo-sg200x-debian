@@ -19,6 +19,7 @@ pyotp
 pyserial
 pyserial_asyncio
 pyyaml
+ruamel.yaml
 setproctitle
 setuptools
 systemd-python

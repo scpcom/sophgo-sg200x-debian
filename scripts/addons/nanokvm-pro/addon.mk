@@ -44,6 +44,7 @@ $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@#(eval NANOKVM_PRO_VERSION=$(shell cat $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json | jq -c '.version' | cut -d '"' -f 2))
 	@$(eval NANOKVM_PRO_LATEST_FILE=nanokvm_pro_$(NANOKVM_PRO_VERSION).tar.gz)
 	@$(eval NANOKVM_PRO_PACKAGE_DIR=$(BUILDDIR)/package/nanokvmpro-$(NANOKVM_PRO_VERSION))
+	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/resources/kvmadmin.tar.gz"
 	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/$(NANOKVM_PRO_LATEST_FILE)" || wget -N "$(NANOKVM_PRO_PREVIEW_URL)/$(NANOKVM_PRO_LATEST_FILE)"
 	@if [ "`sha256sum "$(BUILDDIR)/nanokvm-pro/$(NANOKVM_PRO_LATEST_FILE)" | cut -d ' ' -f 1`" != "$(NANOKVM_PRO_SHA256)" ]; then \
 		echo "$(NANOKVM_PRO_LATEST_FILE): checksum mismatch!" ; \
@@ -55,6 +56,7 @@ $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(DEB_DISTRO)" != "trixie" ] || wget -N https://launchpadlibrarian.net/470183065/libconfig9_1.5-0.4build1_arm64.deb
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(DEB_DISTRO)" = "jammy" ] || wget -N https://launchpadlibrarian.net/571748137/libwebsockets16_4.0.20-2ubuntu1_arm64.deb
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(findstring ubuntu,$(DEB_URL))" != "" ] || wget -N https://launchpadlibrarian.net/572052652/ttyd_1.6.3+20210924-1build1_arm64.deb
+	@cp -p $(BUILDDIR)/nanokvm-pro/kvmadmin.tar.gz /output/$(BOARD)-kvmadmin.tar.gz
 	@apt-get install -y golang-go npm
 	@npm install -g pnpm
 	@cd $(BUILDDIR)/nanokvm-pro && git clone $(NANOKVM_PRO_GIT_URL)
@@ -65,6 +67,7 @@ $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_UPDATE_URL)/glibc_'$(DEB_ARCH)'|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/application/service.go
+	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_UPDATE_URL)/glibc_'$(DEB_ARCH)'|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/extensions/kvmadmin/install.go
 	@cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts ; ./toolchain_setup.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/server/ ; ./build.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/web/ ; pnpm install
@@ -83,6 +86,8 @@ $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@for f in $(NANOKVM_PRO_KVMCOMM_MODULES) ; do \
 		cp -p $(BSP_INSTALL_DIR)/ko/$$f $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/ko/ ; \
 	done
+	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_UPDATE_URL)/glibc_'$(DEB_ARCH)'|g' $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/firmware_update.sh
+	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_UPDATE_URL)/glibc_'$(DEB_ARCH)'|g' $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/reset_to_default.sh
 	@cd $(BUILDDIR)/nanokvm-pro ; rm -f nanokvm_pro_$(NANOKVM_PRO_VERSION)/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build kvmcomm-$(NANOKVM_PRO_VERSION) kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb /output/
