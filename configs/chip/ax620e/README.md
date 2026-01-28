@@ -23,7 +23,7 @@ where the (board)_emmc.img is the image file you want to flash, and /dev/sdX is 
 (if you build for a different board, the image file name will be different)
 
 ## Image Info
-Logins: root/rv and debian/rv
+Logins: root/ax and debian/ax
 
 (root login is disabled via SSH, login via debian, and SU to root if needed)
 

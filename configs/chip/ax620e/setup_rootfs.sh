@@ -35,7 +35,7 @@ unset DEBIAN_FRONTEND DEBCONF_NONINTERACTIVE_SEEN
 #
 # Change root password
 #
-password=rv
+password=ax
 if echo "$VARIANT" | grep -q "kvm" ; then
   echo "PermitRootLogin yes" >> /etc/ssh/sshd_config
   password=sipeed
@@ -43,7 +43,7 @@ fi
 usermod --password "$(echo $password | openssl passwd -1 -stdin)" root
 
 #
-# Add a new user debian and its passwd is `rv`
+# Add a new user debian and set its passwd
 #
 mkdir -p /home/debian
 useradd --password dummy \
@@ -51,7 +51,7 @@ useradd --password dummy \
     --home-dir /home/debian --shell /bin/bash debian || true
 chown debian:debian /home/debian
 # Set debian password
-password=rv
+password=ax
 if echo "$VARIANT" | grep -q "kvm" ; then
   password=$(tr -dc 'A-Za-z0-9!?%=' < /dev/urandom | head -c 12)
 fi

@@ -207,7 +207,7 @@ $(BUILDDIR)/osdrv-prepare-configure-stamp: $(BUILDDIR)/osdrv-prepare-patch-stamp
 $(BUILDDIR)/osdrv-compile-stamp: $(BUILDDIR)/bsp-compile-stamp $(BUILDDIR)/osdrv-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)/osdrv/ko
-	@cp -p $(BUILDDIR)/bsp/axerabin/ax630c/rootfs/soc/ko/ax_*.ko $(BUILDDIR)/osdrv/ko/
+	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/soc/ko/ax_*.ko $(BUILDDIR)/osdrv/ko/
 	@touch $@
 
 $(BUILDDIR)/osdrv-package-stamp: $(BUILDDIR)/osdrv-compile-stamp
@@ -282,7 +282,7 @@ $(BUILDDIR)/middleware-prepare-configure-stamp: $(BUILDDIR)/middleware-prepare-p
 $(BUILDDIR)/middleware-compile-stamp: $(BUILDDIR)/middleware-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building Middleware for $(BOARD)$(END_COLOUR)"
 	@mkdir -pv $(BUILDDIR)/middleware/install/system/lib/
-	@cp -p $(BUILDDIR)/bsp/axerabin/ax630c/rootfs/opt/lib/*.so* $(BUILDDIR)/middleware/install/system/lib/
+	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/lib/*.so* $(BUILDDIR)/middleware/install/system/lib/
 	@touch $@
 
 $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
@@ -393,15 +393,21 @@ $(BUILDDIR)/bsp-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out BSP for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b main $(GIT_CLONE_OPTS) --recursive https://github.com/scpcom/ax620e-bsp-build $(BUILDDIR)/bsp
-	@cd $(BUILDDIR)/bsp && git checkout 9d76a86
+	@cd $(BUILDDIR)/bsp && git checkout 0db36f9
 	@touch $@
 
 $(BUILDDIR)/bsp-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/bsp-prepare-checkout-stamp
 	@echo "$(COLOUR_GREEN)Patching BSP for $(BOARD)$(END_COLOUR)"
 	@sed -i '/get-toolchain.sh/d' $(BUILDDIR)/bsp/build.sh
+	@sed -i 's|^BOARD_DTS=.*|BOARD_DTS=$(BOARD_DTS)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|^CROSS_COMPILE_PATH=.*|CROSS_COMPILE_PATH=$(SBL_CROSS_COMPILE_PATH)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|^CROSS_COMPILE=.*|CROSS_COMPILE=$(SBL_CROSS_COMPILE_PREFIX)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|dtb EXTRA_CFLAGS|dtb BOARD=$(UBOOT_FAMILY) EXTRA_CFLAGS|g' $(BUILDDIR)/bsp/scripts/build-u-boot.sh
+	@if [ "X$(findstring kvm,$(VARIANT))" = "X" ]; then \
+		sed -i /'devmem 0x10030028'/d $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/etc/rc.local ; \
+		sed -i s/'if ! systemctl is-active --quiet sysdev.service'/'if false'/g $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/etc/rc.local ; \
+		sed -i s/'systemctl enable --now sysdev.service'/'true # no sysdev.service'/g $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/etc/rc.local ; \
+	fi
 	@touch $@
 
 $(BUILDDIR)/bsp-compile-stamp: $(BUILDDIR)/bsp-prepare-patch-stamp
@@ -416,14 +422,14 @@ $(BUILDDIR)/bsp-package-stamp: $(BUILDDIR)/bsp-compile-stamp
 	@mkdir -p $(BSP_PACKAGE_DIR)
 	@cp -r /builder/deb/linux-image-sg200x/* $(BSP_PACKAGE_DIR)/
 	@mkdir -pv $(BSP_PACKAGE_DIR)/etc/
-	@cp -p -r $(BUILDDIR)/bsp/axerabin/ax630c/rootfs/etc/* $(BSP_PACKAGE_DIR)/etc/
+	@cp -p -r $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/etc/* $(BSP_PACKAGE_DIR)/etc/
 	@mv $(BSP_PACKAGE_DIR)/etc/rc.local $(BSP_PACKAGE_DIR)/etc/rc.local.$(CHIP_VENDOR)
 	@mkdir -pv $(BSP_PACKAGE_DIR)/opt/scripts/
-	@cp -p -r $(BUILDDIR)/bsp/axerabin/ax630c/rootfs/opt/scripts/* $(BSP_PACKAGE_DIR)/opt/scripts/
+	@cp -p -r $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/scripts/* $(BSP_PACKAGE_DIR)/opt/scripts/
 	@mkdir -pv $(BSP_PACKAGE_DIR)/soc/scripts/
-	@cp -p -r $(BUILDDIR)/bsp/axerabin/ax630c/rootfs/soc/scripts/* $(BSP_PACKAGE_DIR)/soc/scripts/
+	@cp -p -r $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/soc/scripts/* $(BSP_PACKAGE_DIR)/soc/scripts/
 	@mkdir -pv $(BSP_PACKAGE_DIR)/usr/
-	@cp -p -r $(BUILDDIR)/bsp/axerabin/ax630c/rootfs/usr/* $(BSP_PACKAGE_DIR)/usr/
+	@cp -p -r $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/usr/* $(BSP_PACKAGE_DIR)/usr/
 	@rm -f $(BSP_PACKAGE_DIR)/usr/bin/fw_*env
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(BSP_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0-1/Version: $(OSDRVVERSION)$(BSPRELEASE)/' $(BSP_PACKAGE_DIR)/DEBIAN/control
@@ -438,7 +444,7 @@ $(BUILDDIR)/bsp-package-stamp: $(BUILDDIR)/bsp-compile-stamp
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build $(CHIP_VENDOR)-bsp-$(BOARD)-$(VARIANT) $(CHIP_VENDOR)-bsp-$(BOARD)-$(VARIANT)_$(OSDRVVERSION)$(BSPRELEASE)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/$(CHIP_VENDOR)-bsp-$(BOARD)-$(VARIANT)_$(OSDRVVERSION)$(BSPRELEASE)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/etc/
-	@cp -p $(BUILDDIR)/bsp/axerabin/ax630c/rootfs/etc/rc.local /rootfs/etc/
+	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/etc/rc.local /rootfs/etc/
 	@mkdir -p /rootfs/tmp/install/
 	@cp /output/$(CHIP_VENDOR)-bsp-*.deb /rootfs/tmp/install/
 	@echo " wifi" >> /rootfs/tmp/install/systemd-enable
@@ -615,9 +621,15 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 	@umount /rootfs/dev || true
 	@touch $@
 
+ifneq ("$(findstring kvm,$(VARIANT))","")
+IMAGE_APP_VERSION ?= $(NANOKVM_PRO_VERSION)
+else
+MAIX_PY_VERSION ?= 4.12.4
+IMAGE_APP_VERSION ?= $(MAIX_PY_VERSION)
+endif
+
 $(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp
 	@echo "$(COLOUR_GREEN)Compiling Image for $(BOARD)$(END_COLOUR)"
-	@$(eval NANOKVM_PRO_LATEST_VER=$(shell cat $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json | jq -c '.version' | cut -d '"' -f 2))
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf $(BR_DIR)/dl
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf $(BR_OUTPUT_DIR)/per-package
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf $(BUILDDIR)/bsp/build/dl/
@@ -650,7 +662,7 @@ $(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp
 		cd $(BUILDDIR) && genimage --config /configs/chip/$(CHIP_FAMILY)/genimage_sd.cfg --tmppath /tmp/genimage --rootpath /tmp/rom/ ; \
 		mv $(BUILDDIR)/images/sdcard.img $(BUILDDIR)/images/$(BOARD)_sdcard.img ; \
 		echo "Image Version: $(GIT_REF)" > $(BUILDDIR)/images/README.md ; \
-		echo "App Version: $(NANOKVM_PRO_LATEST_VER)" >> $(BUILDDIR)/images/README.md ; \
+		echo "App Version: $(IMAGE_APP_VERSION)" >> $(BUILDDIR)/images/README.md ; \
 		cd $(BUILDDIR)/images && zip /output/$(BOARD)_sdcard.zip $(BOARD)_sdcard.img README.md ; \
 		echo "$(COLOUR_GREEN)Image for $(BOARD) is $(BOARD)_sdcard.zip$(END_COLOUR)"; \
 	fi
