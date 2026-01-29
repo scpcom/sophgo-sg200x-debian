@@ -396,20 +396,27 @@ $(BUILDDIR)/bsp-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out BSP for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b main $(GIT_CLONE_OPTS) --recursive https://github.com/scpcom/ax620e-bsp-build $(BUILDDIR)/bsp
-	@cd $(BUILDDIR)/bsp && git checkout 0db36f9
+	@cd $(BUILDDIR)/bsp && git checkout 7909d4b
 	@touch $@
 
 $(BUILDDIR)/bsp-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/bsp-prepare-checkout-stamp
 	@echo "$(COLOUR_GREEN)Patching BSP for $(BOARD)$(END_COLOUR)"
+	@$(eval BSP_ROOTFS_SOURCE_DIR=$(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs)
 	@sed -i '/get-toolchain.sh/d' $(BUILDDIR)/bsp/build.sh
 	@sed -i 's|^BOARD_DTS=.*|BOARD_DTS=$(BOARD_DTS)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|^CROSS_COMPILE_PATH=.*|CROSS_COMPILE_PATH=$(SBL_CROSS_COMPILE_PATH)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|^CROSS_COMPILE=.*|CROSS_COMPILE=$(SBL_CROSS_COMPILE_PREFIX)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|dtb EXTRA_CFLAGS|dtb BOARD=$(UBOOT_FAMILY) EXTRA_CFLAGS|g' $(BUILDDIR)/bsp/scripts/build-u-boot.sh
 	@if [ "X$(findstring kvm,$(VARIANT))" = "X" ]; then \
-		sed -i /'devmem 0x10030028'/d $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/etc/rc.local ; \
-		sed -i s/'if ! systemctl is-active --quiet sysdev.service'/'if false'/g $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/etc/rc.local ; \
-		sed -i s/'systemctl enable --now sysdev.service'/'true # no sysdev.service'/g $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/etc/rc.local ; \
+		sed -i /'devmem 0x10030028'/d $(BSP_ROOTFS_SOURCE_DIR)/etc/rc.local ; \
+		sed -i s/'if ! systemctl is-active --quiet sysdev.service'/'if false'/g $(BSP_ROOTFS_SOURCE_DIR)/etc/rc.local ; \
+		sed -i s/'systemctl enable --now sysdev.service'/'true # no sysdev.service'/g $(BSP_ROOTFS_SOURCE_DIR)/etc/rc.local ; \
+		rm -f $(BSP_ROOTFS_SOURCE_DIR)/etc/systemd/system/sysdev.service ; \
+		rm -f $(BSP_ROOTFS_SOURCE_DIR)/opt/scripts/sysdev.sh ; \
+		sed -i s/'echo "nanokvm"'/'echo "$(BOARD)"'/g $(BSP_ROOTFS_SOURCE_DIR)/opt/scripts/usb-gadget.sh ; \
+	else \
+		sed -i /'cw2015_battery.ko'/d $(BSP_ROOTFS_SOURCE_DIR)/soc/scripts/auto_load_all_drv.sh ; \
+		sed -i /'rtc-pcf8563.ko'/d $(BSP_ROOTFS_SOURCE_DIR)/soc/scripts/auto_load_all_drv.sh ; \
 	fi
 	@touch $@
 
@@ -419,6 +426,9 @@ $(BUILDDIR)/bsp-compile-stamp: $(BUILDDIR)/bsp-prepare-patch-stamp
 	@touch $@
 
 $(BUILDDIR)/bsp-package-stamp: $(BUILDDIR)/bsp-compile-stamp
+	@echo "$(COLOUR_GREEN)Installing BSP for $(BOARD)$(END_COLOUR)"
+	@mkdir -p /rootfs/boot/
+	@cp /configs/$(BOARD_CFG)/boot/configs /rootfs/boot/
 	@echo "$(COLOUR_GREEN)Packaging BSP for $(BOARD)$(END_COLOUR)"
 	@$(eval BSPRELEASE=$(shell cd $(BUILDDIR)/bsp && git log -1 --format="%at" | xargs -I{} date -d @{} +-%Y%m%d-${KERNELREV}))
 	@$(eval BSP_PACKAGE_DIR=$(BUILDDIR)/package/$(CHIP_VENDOR)-bsp-$(BOARD)-$(VARIANT))
