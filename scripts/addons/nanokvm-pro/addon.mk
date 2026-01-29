@@ -34,8 +34,6 @@ $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json:
 
 $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@echo "$(COLOUR_GREEN)Installing nanokvm-pro for $(BOARD)$(END_COLOUR)"
-	@mkdir -p /rootfs/boot/
-	@cp -p addons/nanokvm-pro/configs /rootfs/boot/
 	@touch /rootfs/boot/check_resize2fs
 	@touch /rootfs/boot/first_time_boot
 	@touch /rootfs/boot/usb.ncm
