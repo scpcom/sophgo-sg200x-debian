@@ -415,6 +415,9 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@$(foreach file, $(wildcard /configs/common/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
+	@$(foreach file, $(wildcard /configs/common/patches/nanokvm/*.patch), cp $(file) $(BR_DIR)/package/nanokvm-server/;)
+	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/nanokvm/*.patch), cp $(file) $(BR_DIR)/package/nanokvm-server/;)
+	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/nanokvm/*.patch), cp $(file) $(BR_DIR)/package/nanokvm-server/;)
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@if [ "X$(findstring kvm,$(VARIANT))$(findstring maixapp,$(IMAGE_ADDITIONS))" = "X" ]; then \

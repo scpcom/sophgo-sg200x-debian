@@ -93,6 +93,8 @@ Available debian packages:
  Board-specific scripts and tools.
  - board-support-nanokvmpro-kvm  
  Meta package, installs all board-specific packages.
+ - axera-firmware-nanokvmpro  
+ Signed u-boot, kernel and dtb.
  - axera-middleware-nanokvmpro  
  Libs and samples for the ISP (vi/vo/venc/vdec etc.).
  - axera-osdrv-nanokvmpro-kvm  

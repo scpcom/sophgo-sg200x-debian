@@ -11,7 +11,7 @@ index 067c24e5ff..0b12598242 100644
 -				f2 = "";
 +			f2 = env_get("fdtfile");
 +			if (f2) {
-+#ifdef CONFIG_TARGET_CVITEK
++#ifdef CONFIG_ARCH_AXERA
 +				f1 = "axera/";
 +#else
 +				f1 = "";

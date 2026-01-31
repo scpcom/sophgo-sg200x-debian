@@ -1,0 +1,25 @@
+From f91b73e0a0c4c099e35f29d23144f57428b93f5d Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Thu, 20 Feb 2025 18:58:38 +0100
+Subject: [PATCH] support: kvm_system: do not delete S30wifi
+
+---
+ support/sg2002/kvm_system/main/lib/system_init/system_init.cpp | 2 --
+ 1 file changed, 2 deletions(-)
+
+diff --git a/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp b/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp
+index 9b17d51..6648a8c 100644
+--- a/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp
++++ b/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp
+@@ -19,8 +19,6 @@ void new_app_init(void)
+ 	system("cp -f /kvmapp/system/init.d/S50sshd /etc/init.d/");
+ 	if(kvm_wifi_exist()) {
+ 		system("cp -f /kvmapp/system/init.d/S30wifi /etc/init.d/");
+-	} else {
+-		system("rm -f /etc/init.d/S30wifi");
+ 	}
+ 
+ 	// rmmod soph_saradc
+-- 
+2.34.1
+

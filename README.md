@@ -5,7 +5,7 @@ This repository builds debian images for Sophgo cv181x/sg200x based boards such 
 
 The images aim to be as close to possible to debian best practices as possible
 
-[AX620Q/AX630C based boards](configs/chip/ax620e/README.md) are supported too.
+[AX620Q/AX630C based boards](configs/chip/ax620e#readme) are supported too.
 
 ## Flashing the Image
 

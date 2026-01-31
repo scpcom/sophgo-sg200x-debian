@@ -1,0 +1,540 @@
+From 65c311d365f1d20892385c3c951325f74ad3d834 Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Fri, 7 Feb 2025 03:14:43 +0100
+Subject: [PATCH] auth: change system user from root/root do debian/rv
+
+---
+ server/service/auth/password.go                         | 8 ++++----
+ support/sg2002/kvm_system/main/lib/system_ctrl/system_ctrl.cpp | 6 +++---
+ web/README.md                                           | 2 +-
+ web/README_JA.md                                        | 2 +-
+ web/README_ZH.md                                        | 2 +-
+ web/src/i18n/locales/cz.ts                              | 4 ++--
+ web/src/i18n/locales/da.ts                              | 4 ++--
+ web/src/i18n/locales/de.ts                              | 4 ++--
+ web/src/i18n/locales/en.ts                              | 4 ++--
+ web/src/i18n/locales/es.ts                              | 4 ++--
+ web/src/i18n/locales/fr.ts                              | 2 +-
+ web/src/i18n/locales/hu.ts                              | 4 ++--
+ web/src/i18n/locales/id.ts                              | 4 ++--
+ web/src/i18n/locales/it.ts                              | 4 ++--
+ web/src/i18n/locales/ja.ts                              | 4 ++--
+ web/src/i18n/locales/ko.ts                              | 2 +-
+ web/src/i18n/locales/nb.ts                              | 4 ++--
+ web/src/i18n/locales/nl.ts                              | 4 ++--
+ web/src/i18n/locales/pl.ts                              | 4 ++--
+ web/src/i18n/locales/ru.ts                              | 4 ++--
+ web/src/i18n/locales/uk.ts                              | 4 ++--
+ web/src/i18n/locales/vi.ts                              | 4 ++--
+ web/src/i18n/locales/zh.ts                              | 4 ++--
+ web/src/i18n/locales/zh_tw.ts                           | 4 ++--
+ web/src/pages/auth/login/tips.tsx                       | 2 +-
+ 25 files changed, 47 insertions(+), 47 deletions(-)
+
+diff --git a/server/service/auth/password.go b/server/service/auth/password.go
+index 22c6016..a40ed2a 100644
+--- a/server/service/auth/password.go
++++ b/server/service/auth/password.go
+@@ -40,7 +40,7 @@ func (s *Service) ChangePassword(c *gin.Context) {
+ 		return
+ 	}
+ 
+-	// change root password
++	// change debian password
+ 	err = changeRootPassword(password)
+ 	if err != nil {
+ 		_ = DelAccount()
+@@ -80,16 +80,16 @@ func (s *Service) IsPasswordUpdated(c *gin.Context) {
+ func changeRootPassword(password string) error {
+ 	err := passwd(password)
+ 	if err != nil {
+-		log.Errorf("failed to change root password: %s", err)
++		log.Errorf("failed to change debian password: %s", err)
+ 		return err
+ 	}
+ 
+-	log.Debugf("change root password successful.")
++	log.Debugf("change debian password successful.")
+ 	return nil
+ }
+ 
+ func passwd(password string) error {
+-	cmd := exec.Command("passwd", "root")
++	cmd := exec.Command("passwd", "debian")
+ 
+ 	stdin, err := cmd.StdinPipe()
+ 	if err != nil {
+diff --git a/support/sg2002/kvm_system/main/lib/system_ctrl/system_ctrl.cpp b/support/sg2002/kvm_system/main/lib/system_ctrl/system_ctrl.cpp
+index c367deb..f1a7ecc 100644
+--- a/support/sg2002/kvm_system/main/lib/system_ctrl/system_ctrl.cpp
++++ b/support/sg2002/kvm_system/main/lib/system_ctrl/system_ctrl.cpp
+@@ -161,11 +161,11 @@ uint8_t kvm_reset_password(void)
+         return 0;
+     }
+ 
+-    fputs("passwd root\n", fp);
++    fputs("passwd debian\n", fp);
+ 	time::sleep_ms(10);
+-    fputs("root\n", fp);
++    fputs("rv\n", fp);
+ 	time::sleep_ms(10);
+-    fputs("root\n", fp);
++    fputs("rv\n", fp);
+ 	time::sleep_ms(10);
+     fputs("rm /etc/kvm/pwd\n", fp);
+ 	time::sleep_ms(10);
+diff --git a/web/README.md b/web/README.md
+index 4c385df..c9e6279 100644
+--- a/web/README.md
++++ b/web/README.md
+@@ -28,7 +28,7 @@ Due to CORS restrictions, authentication needs to be disabled during local devel
+ 
+ To develop authentication features, you need to build the project and test in NanoKVM.
+ 
+-1. Log in to NanoKVM via SSH: `ssh root@your-nanokvm-ip` (default password is root).
++1. Log in to NanoKVM via SSH: `ssh debian@your-nanokvm-ip` (default password is rv).
+ 2. Open the configuration file `/etc/kvm/server.yaml/` and add `authentication: disable`. ⚠️CAUTION: This option disables all authentication and should NOT be enabled in production environment!
+ 3. Restart the service: `/etc/init.d/S95nanokvm restart`.
+ 4. Edit the `.env.development` file and change `VITE_SERVER_IP` to your NanoKVM IP address.
+diff --git a/web/README_JA.md b/web/README_JA.md
+index 44aa2be..0e2550b 100644
+--- a/web/README_JA.md
++++ b/web/README_JA.md
+@@ -26,7 +26,7 @@ CORS 制限のため、ローカル開発中は認証を無効にする必要が
+ 
+ 認証機能を開発するには、プロジェクトをビルドして NanoKVM でテストする必要があります。
+ 
+-1. SSH を介して NanoKVM にログインします：`ssh root@your-nanokvm-ip`（デフォルトのパスワードは root です）。
++1. SSH を介して NanoKVM にログインします：`ssh debian@your-nanokvm-ip`（デフォルトのパスワードは rv です）。
+ 2. 設定ファイル `/etc/kvm/server.yaml/` を開き、`authentication: disable` を追加します。⚠️注意：このオプションはすべての認証を無効にし、本番環境では有効にしないでください！
+ 3. サービスを再起動します：`/etc/init.d/S95nanokvm restart`。
+ 4. `.env.development` ファイルを編集し、`VITE_SERVER_IP` を NanoKVM の IP アドレスに変更します。
+diff --git a/web/README_ZH.md b/web/README_ZH.md
+index 331ef60..d17eed4 100644
+--- a/web/README_ZH.md
++++ b/web/README_ZH.md
+@@ -28,7 +28,7 @@ src
+ 
+ 如果想要开发鉴权相关的功能，需要编译后在 NanoKVM 中进行测试。
+ 
+-1. 通过 SSH 登录到 NanoKVM：`ssh root@your-nanokvm-ip`（默认密码为 root）；
++1. 通过 SSH 登录到 NanoKVM：`ssh debian@your-nanokvm-ip`（默认密码为 rv）；
+ 2. 修改配置文件 `/etc/kvm/server.yaml`，添加一行 `authentication: disable`。⚠️注意：该选项会禁用所有鉴权功能，生产环境请勿开启该选项！
+ 3. 执行 `/etc/init.d/S95nanokvm restart` 重启服务。
+ 4. 编辑 `.env.development` 文件，将 `VITE_SERVER_IP` 修改为你的 NanoKVM IP 地址。
+diff --git a/web/src/i18n/locales/cz.ts b/web/src/i18n/locales/cz.ts
+index 05cfb99..78eb3ed 100644
+--- a/web/src/i18n/locales/cz.ts
++++ b/web/src/i18n/locales/cz.ts
+@@ -36,7 +36,7 @@ const cz = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -102,7 +102,7 @@ const cz = {
+         usb3: 'Otevřete virtuální disk na vašem počítači a zkopírujte soubor s obrazem do kořenového adresáře virtuálního disku.',
+         scp1: 'Ujistěte se, že jsou NanoKVM a váš počítač ve stejné místní síti.',
+         scp2: 'Otevřete terminál na vašem počítači a použijte příkaz SCP pro nahrání souboru s obrazem do adresáře /data na zařízení NanoKVM.',
+-        scp3: 'Příklad: scp cesta-k-vašemu-obrazu root@ip-nanokvm:/data',
++        scp3: 'Příklad: scp cesta-k-vašemu-obrazu debian@ip-nanokvm:/data',
+         tfCard: 'SD Karta',
+         tf1: 'Tato metoda je podporována na systémech Linux',
+         tf2: 'Vyjměte SD kartu z NanoKVM (u plné verze nejprve rozložte krabičku).',
+diff --git a/web/src/i18n/locales/da.ts b/web/src/i18n/locales/da.ts
+index 5617dab..1ea7d2d 100644
+--- a/web/src/i18n/locales/da.ts
++++ b/web/src/i18n/locales/da.ts
+@@ -35,7 +35,7 @@ const da = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -100,7 +100,7 @@ const da = {
+         usb3: 'Åben den virtuelle disk på din computer og kopier diskbilledet til roden af den virtuelle disk.',
+         scp1: 'Kontroller at din NanoKVM og din computer er på samme lokale netværk.',
+         scp2: 'Åben en terminal på din computer og brug SCP-kommandoen for at uploade diskbilledet til /data mappen på din NanoKVM.',
+-        scp3: 'Eksempel: scp sti-til-dit-diskbillede root@din-nanokvm-ip:/data',
++        scp3: 'Eksempel: scp sti-til-dit-diskbillede debian@din-nanokvm-ip:/data',
+         tfCard: 'microSD-kort',
+         tf1: 'Denne metode er understøttet af Linux systemer',
+         tf2: 'Tag microSD-kortet ud af din NanoKVM (for den fulde version af NanoKVM skal du åbne enheden for at kunne tage microSD-kortet ud).',
+diff --git a/web/src/i18n/locales/de.ts b/web/src/i18n/locales/de.ts
+index b8248a6..2050cc5 100644
+--- a/web/src/i18n/locales/de.ts
++++ b/web/src/i18n/locales/de.ts
+@@ -36,7 +36,7 @@ const de = {
+         reset4: 'SSH Standard-Account:',
+         change1: 'Bitte beachten Sie, dass diese Aktion folgende Passwörter ändert:',
+         change2: 'Web Anmelde-Passwort',
+-        change3: 'System root Passwort (SSH Anmelde-Passwort)',
++        change3: 'System debian Passwort (SSH Anmelde-Passwort)',
+         change4:
+           'Um die Passwörter zurückzusetzen, drücken und halten Sie den BOOT Knopf auf dem NanoKVM.'
+       }
+@@ -102,7 +102,7 @@ const de = {
+         usb3: 'Öffnen Sie die virtuelle Festplatte auf Ihrem Computer und kopieren Sie die Image-Datei in das Stammverzeichnis der virtuellen Festplatte.',
+         scp1: 'Stellen Sie sicher, dass sich der NanoKVM und Ihr Computer im selben lokalen Netzwerk befinden.',
+         scp2: 'Öffnen Sie ein Terminal auf Ihrem Computer und verwenden Sie den SCP-Befehl, um die Image-Datei in das Verzeichnis /data auf dem NanoKVM hochzuladen.',
+-        scp3: 'Beispiel: scp your-image-path root@your-nanokvm-ip:/data',
++        scp3: 'Beispiel: scp your-image-path debian@your-nanokvm-ip:/data',
+         tfCard: 'TF-Karte',
+         tf1: 'Diese Methode wird unter Linux-Systemen unterstützt.',
+         tf2: 'Entnehmen Sie die TF-Karte aus dem NanoKVM (bei der FULL-Version muss zuvor das Gehäuse geöffnet werden).',
+diff --git a/web/src/i18n/locales/en.ts b/web/src/i18n/locales/en.ts
+index d776aa6..04669a2 100644
+--- a/web/src/i18n/locales/en.ts
++++ b/web/src/i18n/locales/en.ts
+@@ -34,7 +34,7 @@ const en = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -100,7 +100,7 @@ const en = {
+         usb3: 'Open the virtual disk on your computer and copy the image file to the root directory of the virtual disk.',
+         scp1: 'Make sure the NanoKVM and your computer are on the same local network.',
+         scp2: 'Open a terminal on your computer and use the SCP command to upload the image file to the /data directory on the NanoKVM.',
+-        scp3: 'Example: scp your-image-path root@your-nanokvm-ip:/data',
++        scp3: 'Example: scp your-image-path debian@your-nanokvm-ip:/data',
+         tfCard: 'TF Card',
+         tf1: 'This method is supported on Linux system',
+         tf2: 'Get TF card from the NanoKVM (for the FULL version, disassemble the case first).',
+diff --git a/web/src/i18n/locales/es.ts b/web/src/i18n/locales/es.ts
+index cd0ddf8..9293aca 100644
+--- a/web/src/i18n/locales/es.ts
++++ b/web/src/i18n/locales/es.ts
+@@ -36,7 +36,7 @@ const en = {
+         reset4: 'Cuenta predeterminada de SSH:',
+         change1: 'Ten en cuenta que esta acción cambiará las siguientes contraseñas:',
+         change2: 'Contraseña de acceso web',
+-        change3: 'Contraseña root del sistema (contraseña de acceso por SSH)',
++        change3: 'Contraseña debian del sistema (contraseña de acceso por SSH)',
+         change4: 'Para restablecer las contraseñas, mantén pulsado el botón BOOT del NanoKVM.'
+       }
+     },
+@@ -102,7 +102,7 @@ const en = {
+         usb3: 'Abre el disco virtual en tu computadora y copia el archivo de imagen en el directorio raíz del disco virtual.',
+         scp1: 'Asegúrate de que el NanoKVM y tu computadora estén en la misma red local.',
+         scp2: 'Abre una terminal en tu computadora y usa el comando SCP para subir el archivo de imagen al directorio /data en el NanoKVM.',
+-        scp3: 'Ejemplo: scp tu-ruta-de-imagen root@tu-ip-del-nanokvm:/data',
++        scp3: 'Ejemplo: scp tu-ruta-de-imagen debian@tu-ip-del-nanokvm:/data',
+         tfCard: 'Tarjeta SD',
+         tf1: 'Este método es compatible con el sistema Linux',
+         tf2: 'Obtén la tarjeta SD del NanoKVM (para la versión FULL, desmonta la carcasa primero).',
+diff --git a/web/src/i18n/locales/fr.ts b/web/src/i18n/locales/fr.ts
+index 70e62aa..b6de204 100644
+--- a/web/src/i18n/locales/fr.ts
++++ b/web/src/i18n/locales/fr.ts
+@@ -102,7 +102,7 @@ const fr = {
+         usb3: 'Ouvrez le disque virtuel sur votre ordinateur et copiez le fichier image dans le répertoire racine du disque virtuel.',
+         scp1: 'Assurez-vous que le NanoKVM et votre ordinateur sont sur le même réseau local.',
+         scp2: 'Ouvrez un terminal sur votre ordinateur et utilisez la commande SCP pour copier le fichier image dans le répertoire /data du NanoKVM.',
+-        scp3: 'Exemple : scp chemin-de-votre-image root@ip-de-votre-nanokvm:/data',
++        scp3: 'Exemple : scp chemin-de-votre-image debian@ip-de-votre-nanokvm:/data',
+         tfCard: 'Carte TF',
+         tf1: 'Cette méthode est adaptée aux systèmes Linux.',
+         tf2: 'Retirez la carte TF du NanoKVM (Pour la version FULL, il est nécessaire de retirer le boîtier).',
+diff --git a/web/src/i18n/locales/hu.ts b/web/src/i18n/locales/hu.ts
+index eb65b15..f40eee2 100644
+--- a/web/src/i18n/locales/hu.ts
++++ b/web/src/i18n/locales/hu.ts
+@@ -36,7 +36,7 @@ const hu = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -102,7 +102,7 @@ const hu = {
+         usb3: 'Nyissa meg a virtuális lemezt a számítógépén, és másolja a kép fájlt a virtuális lemez gyökérkönyvtárába.',
+         scp1: 'Győződjön meg róla, hogy a NanoKVM és a számítógépe ugyanazon a helyi hálózaton van.',
+         scp2: 'Nyisson meg egy terminált a számítógépén, és használja az SCP parancsot a kép fájl feltöltésére a /data könyvtárba a NanoKVM-en.',
+-        scp3: 'Példa: scp your-image-path root@your-nanokvm-ip:/data',
++        scp3: 'Példa: scp your-image-path debian@your-nanokvm-ip:/data',
+         tfCard: 'TF Kártya',
+         tf1: 'Ez a módszer támogatott Linux rendszeren',
+         tf2: 'Vegye ki a TF kártyát a NanoKVM-ből (a TELJES verzióhoz, először szedje szét a házat).',
+diff --git a/web/src/i18n/locales/id.ts b/web/src/i18n/locales/id.ts
+index 800d18c..baee4f5 100644
+--- a/web/src/i18n/locales/id.ts
++++ b/web/src/i18n/locales/id.ts
+@@ -35,7 +35,7 @@ const id = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -101,7 +101,7 @@ const id = {
+         usb3: 'Buka disk virtual di komputer Anda dan salin file gambar ke direktori root disk virtual.',
+         scp1: 'Pastikan NanoKVM dan komputer Anda berada di jaringan lokal yang sama.',
+         scp2: 'Buka terminal di komputer Anda dan gunakan perintah SCP untuk mengunggah file gambar ke direktori /data di NanoKVM.',
+-        scp3: 'Contoh: scp jalur-gambar-anda root@ip-nanokvm-anda:/data',
++        scp3: 'Contoh: scp jalur-gambar-anda debian@ip-nanokvm-anda:/data',
+         tfCard: 'Kartu TF',
+         tf1: 'Metode ini didukung di sistem linux',
+         tf2: 'Dapatkan Kartu TF dari NanoKVM (untuk versi LENGKAP, bongkar casingnya terlebih dahulu).',
+diff --git a/web/src/i18n/locales/it.ts b/web/src/i18n/locales/it.ts
+index 4d78232..80564e1 100644
+--- a/web/src/i18n/locales/it.ts
++++ b/web/src/i18n/locales/it.ts
+@@ -36,7 +36,7 @@ const it = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -102,7 +102,7 @@ const it = {
+         usb3: 'Apri il disk virtuale sul tuo computer e copia il file immagine nella directory principale del disk.',
+         scp1: 'Assicurati che il NanoKVM e il tuo computer siano sulla stessa rete locale.',
+         scp2: 'Apri un terminale sul tuo computer e usa il comando SCP per caricare il file immagine nella directory /data del NanoKVM.',
+-        scp3: 'Esempio: scp il-tuo-percorso-immagine root@il-tuo-ip-nanokvm:/data',
++        scp3: 'Esempio: scp il-tuo-percorso-immagine debian@il-tuo-ip-nanokvm:/data',
+         tfCard: 'Scheda TF',
+         tf1: 'Questo metodo è supportato su sistemi Linux',
+         tf2: 'Recupera la scheda TF dal NanoKVM (per la versione FULL, smonta prima il case).',
+diff --git a/web/src/i18n/locales/ja.ts b/web/src/i18n/locales/ja.ts
+index f889961..cec105c 100644
+--- a/web/src/i18n/locales/ja.ts
++++ b/web/src/i18n/locales/ja.ts
+@@ -36,7 +36,7 @@ const ja = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -102,7 +102,7 @@ const ja = {
+         usb3: 'コンピュータ上で仮想ディスクを開き、イメージファイルを仮想ディスクのルートディレクトリにコピーします。',
+         scp1: 'NanoKVMとコンピュータが同じローカルネットワークに接続されていることを確認します。',
+         scp2: 'コンピュータのターミナルを開き、SCPコマンドを使用してイメージファイルをNanoKVMの/dataディレクトリにアップロードします。',
+-        scp3: '例: scp あなたのイメージパス root@あなたのナノKVMのIP:/data',
++        scp3: '例: scp あなたのイメージパス debian@あなたのナノKVMのIP:/data',
+         tfCard: 'TFカード',
+         tf1: 'この方法はLinuxシステムでサポートされています',
+         tf2: 'NanoKVMからTFカードを取り出します（フルバージョンの場合、まずケースを分解してください）。',
+diff --git a/web/src/i18n/locales/ko.ts b/web/src/i18n/locales/ko.ts
+index d4f8805..80b4e52 100644
+--- a/web/src/i18n/locales/ko.ts
++++ b/web/src/i18n/locales/ko.ts
+@@ -99,7 +99,7 @@ const ko = {
+         usb3: '컴퓨터에서 가상 디스크를 열고 이미지 파일을 가상 디스크의 루트 디렉토리로 복사하세요.',
+         scp1: 'NanoKVM과 컴퓨터가 동일한 로컬 네트워크에 있는지 확인하세요.',
+         scp2: '컴퓨터에서 터미널을 열고 SCP 명령을 사용하여 이미지 파일을 NanoKVM의 /data 디렉터리에 업로드하세요.',
+-        scp3: '예시: scp [이미지 파일 경로] root@[NanoKVM IP 주소]:/data',
++        scp3: '예시: scp [이미지 파일 경로] debian@[NanoKVM IP 주소]:/data',
+         tfCard: 'TF 카드',
+         tf1: '이 방법은 Linux 시스템에서 지원됩니다',
+         tf2: 'NanoKVM에서 TF 카드를 가져옵니다(전체 버전의 경우 먼저 케이스를 분해하세요).',
+diff --git a/web/src/i18n/locales/nb.ts b/web/src/i18n/locales/nb.ts
+index e9e86d0..50dfa84 100644
+--- a/web/src/i18n/locales/nb.ts
++++ b/web/src/i18n/locales/nb.ts
+@@ -36,7 +36,7 @@ const nb = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -101,7 +101,7 @@ const nb = {
+         usb3: 'Åpne den virtuelle disken på datamaskinen din og kopier arkivfilen til rot-mappen på den virtuelle disken.',
+         scp1: 'Sikre at NanoKVM-enheten og datamaskinen din er tilkoblet det samme lokale nettverket.',
+         scp2: 'Åpne en terminal på datamaskinen din og bruk SCP-kommandoen til å laste opp arkivfilen til mappen /data på NanoKVM-enheten.',
+-        scp3: 'Eksempel: scp sti-til-din-arkivfil root@din-nanokvm-ip:/data',
++        scp3: 'Eksempel: scp sti-til-din-arkivfil debian@din-nanokvm-ip:/data',
+         tfCard: 'TF-kort',
+         tf1: 'Denne metoden er støttet på datamskiner med Linux',
+         tf2: 'Ta TF-kortet ut av NanoKVM-enheten (hvis du har FULL-versjonen, demonter kabinettet først).',
+diff --git a/web/src/i18n/locales/nl.ts b/web/src/i18n/locales/nl.ts
+index d6403e9..c98ead4 100644
+--- a/web/src/i18n/locales/nl.ts
++++ b/web/src/i18n/locales/nl.ts
+@@ -36,7 +36,7 @@ const nl = {
+         reset4: 'Standaard SSH-account:',
+         change1: 'Houd er rekening mee dat deze actie de volgende wachtwoorden zal wijzigen:',
+         change2: 'Web login wachtwoord',
+-        change3: 'Systeem root-wachtwoord (SSH-inlogwachtwoord)',
++        change3: 'Systeem debian-wachtwoord (SSH-inlogwachtwoord)',
+         change4: 'Om de wachtwoorden opnieuw in te stellen, houdt u de BOOT-knop op de NanoKVM ingedrukt.'
+       }
+     },
+@@ -102,7 +102,7 @@ const nl = {
+         usb3: 'Open de virtuele schijf op uw computer en kopieer het imagebestand naar de hoofdmap van de virtuele schijf.',
+         scp1: 'Zorg ervoor dat de NanoKVM en uw computer zich in hetzelfde lokale netwerk bevinden.',
+         scp2: 'Open een terminal op uw computer en gebruik het SCP-commando om het imagebestand te uploaden naar de /data directory op de NanoKVM.',
+-        scp3: 'Voorbeeld: scp uw-image-pad root@uw-nanokvm-ip:/data',
++        scp3: 'Voorbeeld: scp uw-image-pad debian@uw-nanokvm-ip:/data',
+         tfCard: 'TF-kaart',
+         tf1: 'Deze methode wordt ondersteund op Linux-systemen',
+         tf2: 'Haal de TF-kaart uit de NanoKVM (voor de VOLLEDIGE versie, demonteer eerst de behuizing).',
+diff --git a/web/src/i18n/locales/pl.ts b/web/src/i18n/locales/pl.ts
+index 1f510ac..cc8ac24 100644
+--- a/web/src/i18n/locales/pl.ts
++++ b/web/src/i18n/locales/pl.ts
+@@ -36,7 +36,7 @@ const pl = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -93,7 +93,7 @@ const pl = {
+         usb3: 'Otwórz dysk wirtualny na swoim komputerze i skopiuj plik obrazu do katalogu głównego dysku wirtualnego.',
+         scp1: 'Upewnij się że NanoKVM i twój komputer są na tej samej sieci lokalnej.',
+         scp2: 'Otwórz terminal na komputerze i użyj komendę SCP aby przesłać obraz do katalogu /data na NanoKVM.',
+-        scp3: 'Przykład: scp lokalizacja-zrodlowego-obrazu root@ip-twojego-nanokvm:/data',
++        scp3: 'Przykład: scp lokalizacja-zrodlowego-obrazu debian@ip-twojego-nanokvm:/data',
+         tfCard: 'Karta SD',
+         tf1: 'Ta metoda jest obsługiwana w systemie Linux',
+         tf2: 'Usuń kartę SD od NanoKVM (dla wersji FULL, rozbierz obudowę najpierw).',
+diff --git a/web/src/i18n/locales/ru.ts b/web/src/i18n/locales/ru.ts
+index cf3d893..f13ea4e 100644
+--- a/web/src/i18n/locales/ru.ts
++++ b/web/src/i18n/locales/ru.ts
+@@ -35,7 +35,7 @@ const ru = {
+         reset4: 'Аккаунт SSH по умолчанию:',
+         change1: 'Пожалуйста учтите, что это действие изменит следующие пароли:',
+         change2: 'Пароль для входа в веб-интерфейс',
+-        change3: 'Пароль системного пользователя "root" (пароль для входа по SSH)',
++        change3: 'Пароль системного пользователя "debian" (пароль для входа по SSH)',
+         change4: 'Чтобы сбросить пароли, нажмите и удерживайте кнопку BOOT на NanoKVM.'
+       }
+     },
+@@ -100,7 +100,7 @@ const ru = {
+         usb3: 'Откройте виртуальный диск на вашем компьютере и скопируйте файл образа в корневой каталог диска.',
+         scp1: 'Убедитесь что NanoKVM и ваш компьютер находятся в одной и той же сети.',
+         scp2: 'Откройте терминал на вашем компьютере и используйте команду scp, чтобы загрузить файл образа в директорию /data, находящуюся на NanoKVM.',
+-        scp3: 'Например: scp путь-к-образу root@ip-вашего-nanokvm:/data',
++        scp3: 'Например: scp путь-к-образу debian@ip-вашего-nanokvm:/data',
+         tfCard: 'Карта памяти',
+         tf1: 'Этот метод поддерживается на Linux-системах',
+         tf2: 'Извлеките карту памяти из NanoKVM (если у вас "полная" (Full) версия, сначала нужно разобрать корпус).',
+diff --git a/web/src/i18n/locales/uk.ts b/web/src/i18n/locales/uk.ts
+index 906c01d..d8f7733 100644
+--- a/web/src/i18n/locales/uk.ts
++++ b/web/src/i18n/locales/uk.ts
+@@ -36,7 +36,7 @@ const uk = {
+         reset4: 'Обліковий запис SSH за замовчуванням:',
+         change1: 'Зверніть увагу, що ця дія змінить наступні паролі:',
+         change2: 'Пароль для входу у веб-інтерфейс',
+-        change3: 'Системний root пароль (пароль для входу в систему по SSH)',
++        change3: 'Системний debian пароль (пароль для входу в систему по SSH)',
+         change4: 'Щоб скинути паролі, натисніть та утримуйте кнопку "Завантаження" на Nanokvm.'
+       }
+     },
+@@ -102,7 +102,7 @@ const uk = {
+         usb3: "Відкрийте віртуальний диск на вашому комп'ютері та скопіюйте файл зображення до кореневого каталогу віртуального диска.",
+         scp1: "Переконайтеся, що NanoKVM і ваш комп'ютер знаходяться в одній локальній мережі.",
+         scp2: "Відкрийте термінал на вашому комп'ютері та використовуйте команду SCP для завантаження файлу зображення до каталогу /data на NanoKVM.",
+-        scp3: 'Приклад: scp ваш-шлях-до-зображення root@ваш-ip-nanokvm:/data',
++        scp3: 'Приклад: scp ваш-шлях-до-зображення debian@ваш-ip-nanokvm:/data',
+         tfCard: 'TF карта',
+         tf1: 'Цей метод підтримується на системах Linux',
+         tf2: 'Отримайте TF карту з NanoKVM (для повної версії, спочатку розберіть корпус).',
+diff --git a/web/src/i18n/locales/vi.ts b/web/src/i18n/locales/vi.ts
+index 7e36e70..27aa73e 100644
+--- a/web/src/i18n/locales/vi.ts
++++ b/web/src/i18n/locales/vi.ts
+@@ -35,7 +35,7 @@ const vi = {
+         reset4: 'SSH default account:',
+         change1: 'Please note that this action will change the following passwords:',
+         change2: 'Web login password',
+-        change3: 'System root password (SSH login password)',
++        change3: 'System debian password (SSH login password)',
+         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+       }
+     },
+@@ -100,7 +100,7 @@ const vi = {
+         usb3: 'Mở đĩa ảo trên máy tính của bạn và sao chép vào thư mục gốc của đĩa ảo.',
+         scp1: 'Đảm bảo NanoKVM và máy tính của bạn đang trên cùng một mạng nội bộ.',
+         scp2: 'Mở terminal trên máy tính và sử dụng lệnh SCP để tải đĩa ảo lên thư mục /data trên NanoKVM.',
+-        scp3: 'Ví dụ: scp đường-dẫn-image root@ip-của-nanokvm:/data',
++        scp3: 'Ví dụ: scp đường-dẫn-image debian@ip-của-nanokvm:/data',
+         tfCard: 'Thẻ TF',
+         tf1: 'Phương pháp này được hỗ trợ trên hệ thống Linux',
+         tf2: 'Lấy thẻ TF từ NanoKVM (với phiên bản FULL, hãy tháo vỏ trước).',
+diff --git a/web/src/i18n/locales/zh.ts b/web/src/i18n/locales/zh.ts
+index 57efb88..abbb1ca 100644
+--- a/web/src/i18n/locales/zh.ts
++++ b/web/src/i18n/locales/zh.ts
+@@ -33,7 +33,7 @@ const zh = {
+         reset4: 'SSH 默认帐号：',
+         change1: '请注意，此操作将同时更新以下密码：',
+         change2: '网页的登录密码',
+-        change3: '系统 root 用户的密码（SSH 登录密码）',
++        change3: '系统 debian 用户的密码（SSH 登录密码）',
+         change4: '如果您忘记了密码，需要长按 NanoKVM 上的 BOOT 按键来重置密码。'
+       }
+     },
+@@ -97,7 +97,7 @@ const zh = {
+         usb3: '在电脑上打开虚拟硬盘，将镜像文件拷贝到虚拟硬盘的根目录下。',
+         scp1: '确保 NanoKVM 和你的电脑在同一个局域网内；',
+         scp2: '在电脑上打开终端软件，使用 SCP 命令将镜像文件上传到 NanoKVM 的 /data 目录。',
+-        scp3: '示例：scp your-image-path root@your-nanokvm-ip:/data',
++        scp3: '示例：scp your-image-path debian@your-nanokvm-ip:/data',
+         tfCard: 'TF 卡',
+         tf1: '该方式适用于 Linux 系统',
+         tf2: '将 TF 卡从 NanoKVM 中取出（FULL 版本需要先拆开外壳）；',
+diff --git a/web/src/i18n/locales/zh_tw.ts b/web/src/i18n/locales/zh_tw.ts
+index 91fe8cf..8e07135 100644
+--- a/web/src/i18n/locales/zh_tw.ts
++++ b/web/src/i18n/locales/zh_tw.ts
+@@ -33,7 +33,7 @@ const zh_tw = {
+         reset4: 'SSH 預設帳號：',
+         change1: '請注意，此操作將同時更新下列密碼：',
+         change2: '網頁登入密碼',
+-        change3: 'root user 密碼 (SSH登入密碼)',
++        change3: 'debian user 密碼 (SSH登入密碼)',
+         change4: '如果您忘記密碼，需要長按 NanoKVM 上的 BOOT 按鍵來重設密碼。'
+       }
+     },
+@@ -96,7 +96,7 @@ const zh_tw = {
+         usb3: '開啟電腦上的虛擬磁碟，將映象檔案複製到虛擬磁碟的根目錄下。',
+         scp1: '確保 NanoKVM 和您的電腦位於同一區域網路。',
+         scp2: '開啟電腦上的終端機，使用 SCP 指令將映像檔案上傳到 NanoKVM 的 /data 目錄下。',
+-        scp3: '範例：scp your-image-path root@your-nanokvm-ip:/data',
++        scp3: '範例：scp your-image-path debian@your-nanokvm-ip:/data',
+         tfCard: 'microSD 卡',
+         tf1: '此方法適用於 Linux 系統',
+         tf2: '從 NanoKVM 拔出 microSD 卡（FULL 版本請先拆開外殼）。',
+diff --git a/web/src/pages/auth/login/tips.tsx b/web/src/pages/auth/login/tips.tsx
+index 6a04491..8559be3 100644
+--- a/web/src/pages/auth/login/tips.tsx
++++ b/web/src/pages/auth/login/tips.tsx
+@@ -51,7 +51,7 @@ export const Tips = () => {
+               </li>
+               <li>
+                 {t('auth.tips.reset4')}
+-                <Text code={true}>root/root</Text>
++                <Text code={true}>debian/rv</Text>
+               </li>
+             </ul>
+           </div>
+-- 
+2.34.1
+
