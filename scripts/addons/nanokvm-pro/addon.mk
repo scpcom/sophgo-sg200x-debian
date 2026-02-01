@@ -2,11 +2,11 @@ ifneq ("$(findstring nanokvm-pro,$(IMAGE_ADDITIONS))","")
 BSPFILTER += "nanokvm-pro"
 endif
 
-NANOKVM_PRO_GIT_REF = c6ba5c8a0313d7817db9fe63f3a308d0f21c2996
+NANOKVM_PRO_GIT_REF = 6e6df77eddbe4947d19da375de3a84f64840f0c4
 NANOKVM_PRO_GIT_URL = https://github.com/sipeed/NanoKVM-Pro
 
-NANOKVM_PRO_SHA256 = 39c510bb442b42b53a325afc37b9edcd0ad02860ff5ee7353475b8a9c2328182
-NANOKVM_PRO_VERSION = 1.2.12
+NANOKVM_PRO_SHA256 = 4e914ea0fc1980132314f782c062bd7b61352017c39ccd590625696d0f5d562d
+NANOKVM_PRO_VERSION = 1.2.13
 
 NANOKVM_PRO_GO_VENDOR_REF = f573cc27f239da8ce24646e4dbe91410c88b1c03
 NANOKVM_PRO_GO_VENDOR_URL = https://github.com/scpcom/nanokvm-pro-server-vendor
@@ -32,7 +32,7 @@ $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json:
 	@mkdir -p $(BUILDDIR)/nanokvm-pro
 	@cd $(BUILDDIR)/nanokvm-pro ; wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_BASE_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)"
 
-$(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
+$(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@echo "$(COLOUR_GREEN)Installing nanokvm-pro for $(BOARD)$(END_COLOUR)"
 	@touch /rootfs/boot/check_resize2fs
 	@touch /rootfs/boot/first_time_boot
@@ -49,12 +49,14 @@ $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 		exit 1 ; \
 	fi
 	@cd $(BUILDDIR)/nanokvm-pro ; tar xzf "$(NANOKVM_PRO_LATEST_FILE)"
-	@cd $(BUILDDIR)/nanokvm-pro ; dpkg-deb -R nanokvm_pro_$(NANOKVM_PRO_VERSION)/nanokvmpro_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb $(NANOKVM_PRO_PACKAGE_DIR)
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(findstring ubuntu,$(DEB_URL))" != "" ] || wget -N https://launchpadlibrarian.net/587202705/libjpeg-turbo8_2.1.2-0ubuntu1_arm64.deb
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(DEB_DISTRO)" != "trixie" ] || wget -N https://launchpadlibrarian.net/470183065/libconfig9_1.5-0.4build1_arm64.deb
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(DEB_DISTRO)" = "jammy" ] || wget -N https://launchpadlibrarian.net/571748137/libwebsockets16_4.0.20-2ubuntu1_arm64.deb
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(findstring ubuntu,$(DEB_URL))" != "" ] || wget -N https://launchpadlibrarian.net/572052652/ttyd_1.6.3+20210924-1build1_arm64.deb
 	@cp -p $(BUILDDIR)/nanokvm-pro/kvmadmin.tar.gz /output/$(BOARD)-kvmadmin.tar.gz
+
+$(BUILDDIR)/nanokvm-pro-package-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
+	@cd $(BUILDDIR)/nanokvm-pro ; dpkg-deb -R nanokvm_pro_$(NANOKVM_PRO_VERSION)/nanokvmpro_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb $(NANOKVM_PRO_PACKAGE_DIR)
 	@apt-get install -y golang-go npm
 	@npm install -g pnpm
 	@cd $(BUILDDIR)/nanokvm-pro && git clone $(NANOKVM_PRO_GIT_URL)
@@ -79,6 +81,9 @@ $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@cp $(BUILDDIR)/package/nanokvmpro_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/
 	@cp /output/nanokvmpro_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb /rootfs/tmp/install/
+	@touch $@
+
+$(BUILDDIR)/nanokvm-pro-kvmcomm-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@$(eval NANOKVM_PRO_KVMCOMM_PACKAGE_DIR=$(BUILDDIR)/package/kvmcomm-$(NANOKVM_PRO_VERSION))
 	@cd $(BUILDDIR)/nanokvm-pro ; dpkg-deb -R nanokvm_pro_$(NANOKVM_PRO_VERSION)/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)
 	@for f in $(NANOKVM_PRO_KVMCOMM_MODULES) ; do \
@@ -91,6 +96,32 @@ $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@cp $(BUILDDIR)/package/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb /output/
 	@mkdir -p /rootfs/tmp/install/
 	@cp /output/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb /rootfs/tmp/install/
+	@touch $@
+
+$(BUILDDIR)/nanokvm-pro/firmware_latest.json: $(BUILDDIR)/nanokvm-pro-kvmcomm-stamp
+	@$(eval NANOKVM_PRO_FIRMWARE_VERSION=$(shell grep 'REQUIRED_FIRMWARE_VERSION=".*"' $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/kvmcomm.sh | cut -d '=' -f 2- | cut -d '"' -f 2 | sed s/'^v'/''/g))
+	@$(eval NANOKVM_PRO_FIRMWARE_JSON=firmware_$(NANOKVM_PRO_FIRMWARE_VERSION).json)
+	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/pro/$(NANOKVM_PRO_FIRMWARE_JSON)" || wget -N "$(NANOKVM_PRO_BASE_URL)/pro/preview/$(NANOKVM_PRO_FIRMWARE_JSON)"
+	@cd $(BUILDDIR)/nanokvm-pro ; cp -p "$(NANOKVM_PRO_FIRMWARE_JSON)" firmware_latest.json
+
+$(BUILDDIR)/nanokvm-pro-firmware-stamp: $(BUILDDIR)/nanokvm-pro/firmware_latest.json
+	@$(eval NANOKVM_PRO_FIRMWARE_FILE=$(shell cat $(BUILDDIR)/nanokvm-pro/$(NANOKVM_PRO_FIRMWARE_JSON) | jq -c '.name' | cut -d '"' -f 2))
+	@$(eval NANOKVM_PRO_FIRMWARE_PACKAGE_DIR=$(BUILDDIR)/nanokvm-pro/axera_firmware_v$(NANOKVM_PRO_FIRMWARE_VERSION))
+	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/pro/$(NANOKVM_PRO_FIRMWARE_FILE)" || wget -N "$(NANOKVM_PRO_BASE_URL)/pro/preview/$(NANOKVM_PRO_FIRMWARE_FILE)"
+	@mkdir -p $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)
+	@cd $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR) && tar xJf ../"$(NANOKVM_PRO_FIRMWARE_FILE)"
+	@cp $(BSP_INSTALL_DIR)/uboot.bin $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/firmware/u-boot_signed.bin
+	@for f in $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/firmware/*.dtb ; do \
+		cp $(BSP_INSTALL_DIR)/dtb.img $$f ; \
+	done
+	@cp $(BSP_INSTALL_DIR)/kernel.img $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/firmware/boot_signed.bin
+	@cp -p $(BSP_INSTALL_DIR)/ko/aic8800_*.ko $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/soc/ko/
+	@cd $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR) && $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/firmware_update.sh gen_b2sum
+	@cd $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR) && tar cJf /output/"$(BOARD)-$(NANOKVM_PRO_FIRMWARE_FILE)" .
+	#@cp -p $(BUILDDIR)/nanokvm-pro/$(NANOKVM_PRO_FIRMWARE_FILE) /output/
+	@touch $@
+
+$(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro-package-stamp $(BUILDDIR)/nanokvm-pro-firmware-stamp
 	@cp -p $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION)/*.deb /output/
 	@mkdir -p /rootfs/tmp/install/
 	@cp -p $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION)/*.deb /rootfs/tmp/install/
