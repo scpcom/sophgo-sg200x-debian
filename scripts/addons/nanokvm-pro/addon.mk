@@ -28,6 +28,8 @@ lt6911_manage.ko \
 rotary_encoder.ko \
 wireguard.ko
 
+NANOKVM_PRO_KVMCOMM_PACKAGE_DIR = $(BUILDDIR)/package/kvmcomm-$(NANOKVM_PRO_VERSION)
+
 $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json:
 	@mkdir -p $(BUILDDIR)/nanokvm-pro
 	@cd $(BUILDDIR)/nanokvm-pro ; wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_BASE_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)"
@@ -54,6 +56,7 @@ $(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_lates
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(DEB_DISTRO)" = "jammy" ] || wget -N https://launchpadlibrarian.net/571748137/libwebsockets16_4.0.20-2ubuntu1_arm64.deb
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(findstring ubuntu,$(DEB_URL))" != "" ] || wget -N https://launchpadlibrarian.net/572052652/ttyd_1.6.3+20210924-1build1_arm64.deb
 	@cp -p $(BUILDDIR)/nanokvm-pro/kvmadmin.tar.gz /output/$(BOARD)-kvmadmin.tar.gz
+	@touch $@
 
 $(BUILDDIR)/nanokvm-pro-package-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@cd $(BUILDDIR)/nanokvm-pro ; dpkg-deb -R nanokvm_pro_$(NANOKVM_PRO_VERSION)/nanokvmpro_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb $(NANOKVM_PRO_PACKAGE_DIR)
@@ -84,7 +87,6 @@ $(BUILDDIR)/nanokvm-pro-package-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@touch $@
 
 $(BUILDDIR)/nanokvm-pro-kvmcomm-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
-	@$(eval NANOKVM_PRO_KVMCOMM_PACKAGE_DIR=$(BUILDDIR)/package/kvmcomm-$(NANOKVM_PRO_VERSION))
 	@cd $(BUILDDIR)/nanokvm-pro ; dpkg-deb -R nanokvm_pro_$(NANOKVM_PRO_VERSION)/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)
 	@for f in $(NANOKVM_PRO_KVMCOMM_MODULES) ; do \
 		cp -p $(BSP_INSTALL_DIR)/ko/$$f $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/ko/ ; \
@@ -98,27 +100,28 @@ $(BUILDDIR)/nanokvm-pro-kvmcomm-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@cp /output/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb /rootfs/tmp/install/
 	@touch $@
 
-$(BUILDDIR)/nanokvm-pro/firmware_latest.json: $(BUILDDIR)/nanokvm-pro-kvmcomm-stamp
+$(BUILDDIR)/nanokvm-pro-firmware-stamp: $(BUILDDIR)/aic8800-firmware-stamp $(BUILDDIR)/nanokvm-pro-kvmcomm-stamp
 	@$(eval NANOKVM_PRO_FIRMWARE_VERSION=$(shell grep 'REQUIRED_FIRMWARE_VERSION=".*"' $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/kvmcomm.sh | cut -d '=' -f 2- | cut -d '"' -f 2 | sed s/'^v'/''/g))
-	@$(eval NANOKVM_PRO_FIRMWARE_JSON=firmware_$(NANOKVM_PRO_FIRMWARE_VERSION).json)
-	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/pro/$(NANOKVM_PRO_FIRMWARE_JSON)" || wget -N "$(NANOKVM_PRO_BASE_URL)/pro/preview/$(NANOKVM_PRO_FIRMWARE_JSON)"
-	@cd $(BUILDDIR)/nanokvm-pro ; cp -p "$(NANOKVM_PRO_FIRMWARE_JSON)" firmware_latest.json
-
-$(BUILDDIR)/nanokvm-pro-firmware-stamp: $(BUILDDIR)/nanokvm-pro/firmware_latest.json
-	@$(eval NANOKVM_PRO_FIRMWARE_FILE=$(shell cat $(BUILDDIR)/nanokvm-pro/$(NANOKVM_PRO_FIRMWARE_JSON) | jq -c '.name' | cut -d '"' -f 2))
+	@$(eval NANOKVM_PRO_FIRMWARE_FILE=$(CHIP_VENDOR)_firmware_v$(NANOKVM_PRO_FIRMWARE_VERSION).tar.xz)
 	@$(eval NANOKVM_PRO_FIRMWARE_PACKAGE_DIR=$(BUILDDIR)/nanokvm-pro/axera_firmware_v$(NANOKVM_PRO_FIRMWARE_VERSION))
-	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/pro/$(NANOKVM_PRO_FIRMWARE_FILE)" || wget -N "$(NANOKVM_PRO_BASE_URL)/pro/preview/$(NANOKVM_PRO_FIRMWARE_FILE)"
 	@mkdir -p $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)
-	@cd $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR) && tar xJf ../"$(NANOKVM_PRO_FIRMWARE_FILE)"
+	@cp -p $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/firmware_update.sh $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/
+	@mkdir -p $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/firmware/
 	@cp $(BSP_INSTALL_DIR)/uboot.bin $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/firmware/u-boot_signed.bin
-	@for f in $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/firmware/*.dtb ; do \
+	@for f in $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/firmware/AX630C_$(UBOOT_BOARD)_signed.dtb ; do \
 		cp $(BSP_INSTALL_DIR)/dtb.img $$f ; \
 	done
 	@cp $(BSP_INSTALL_DIR)/kernel.img $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/firmware/boot_signed.bin
+	@mkdir -p $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/opt/firmware/
+	@cp -a $(AIC8800_PACKAGE_DIR)$(AIC8800_TARGET_DIR)/* $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/opt/firmware/
+	@mkdir -p $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/soc/ko/
 	@cp -p $(BSP_INSTALL_DIR)/ko/aic8800_*.ko $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/soc/ko/
+	@mkdir -p $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/boot/
+	@cp /configs/$(BOARD_CFG)/boot/configs $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/boot/
+	sed -i s/'^maix_memory_cmm=.*'/'maix_memory_cmm=$(ION_SIZE)'/g $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/boot/configs
+	@echo "nanokvm-pro-$$(date +%Y-%m-%d)-v$(NANOKVM_PRO_FIRMWARE_VERSION)" > $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR)/overlay/boot/ver
 	@cd $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR) && $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/firmware_update.sh gen_b2sum
-	@cd $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR) && tar cJf /output/"$(BOARD)-$(NANOKVM_PRO_FIRMWARE_FILE)" .
-	#@cp -p $(BUILDDIR)/nanokvm-pro/$(NANOKVM_PRO_FIRMWARE_FILE) /output/
+	@cd $(NANOKVM_PRO_FIRMWARE_PACKAGE_DIR) && tar cJf /output/"$(BOARD)-$(NANOKVM_PRO_FIRMWARE_FILE)" *
 	@touch $@
 
 $(BUILDDIR)/nanokvm-pro-stamp: $(BUILDDIR)/nanokvm-pro-package-stamp $(BUILDDIR)/nanokvm-pro-firmware-stamp

@@ -464,6 +464,7 @@ $(BUILDDIR)/bsp-package-stamp: $(BUILDDIR)/bsp-compile-stamp
 	@echo "$(COLOUR_GREEN)Installing BSP for $(BOARD)$(END_COLOUR)"
 	@mkdir -p /rootfs/boot/
 	@cp /configs/$(BOARD_CFG)/boot/configs /rootfs/boot/
+	@sed -i s/'^maix_memory_cmm=.*'/'maix_memory_cmm=$(ION_SIZE)'/g /rootfs/boot/configs
 	@echo "$(COLOUR_GREEN)Packaging BSP for $(BOARD)$(END_COLOUR)"
 	@$(eval BSPRELEASE=$(shell cd $(BUILDDIR)/bsp && git log -1 --format="%at" | xargs -I{} date -d @{} +-%Y%m%d-${KERNELREV}))
 	@$(eval BSP_PACKAGE_DIR=$(BUILDDIR)/package/$(CHIP_VENDOR)-bsp-$(BOARD)-$(VARIANT))

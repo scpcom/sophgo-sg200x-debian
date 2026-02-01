@@ -3,12 +3,12 @@ BSPDEPENDS += firmware-aic8800-$(CHIP)
 BSPFILTER += "aic8800-firmware"
 endif
 
+AIC8800_PACKAGE_DIR = $(BUILDDIR)/package/firmware-aic8800-$(CHIP)-$(OSDRVVERSION)
 AIC8800_TARGET_DIR ?= /lib/firmware/aic8800_sdio
 
 $(BUILDDIR)/aic8800-firmware-stamp:
 	@echo "$(COLOUR_GREEN)Installing aic8800-firmware for $(BOARD)$(END_COLOUR)"
 	@$(eval AIC8800RELEASE=$(shell echo "2"))
-	@$(eval AIC8800_PACKAGE_DIR=$(BUILDDIR)/package/firmware-aic8800-$(CHIP)-$(OSDRVVERSION))
 	@rm -rf $(BUILDDIR)/aic8800-firmware
 	@git clone --depth 1 https://github.com/armbian/firmware.git $(BUILDDIR)/aic8800-firmware
 	@git clone --depth 1 https://github.com/scpcom/aic8800-sdio-firmware $(BUILDDIR)/aic8800-sdio-firmware

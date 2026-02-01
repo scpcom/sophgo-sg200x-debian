@@ -36,7 +36,7 @@ maix_npu_ai_isp=0
 #### [memory]
 # CMM memory is for camera and NPU etc. Now only support for maixcam2, unit is MiB.
 # -1 means use default.
-maix_memory_cmm=320
+maix_memory_cmm=200
 
 #### [usb]
 # USB mode, device or host.
@@ -84,5 +84,3 @@ maix_usb_hid_touchpad=0
 # Only valid in device mode.
 maix_usb_hid_adb=0
 
-# Enable (1) or disable (0) as system console on UART.
-maix_system_console=0
