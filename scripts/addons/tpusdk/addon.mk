@@ -53,13 +53,30 @@ tdl_sdk/toolchain/toolchain-riscv64-linux.cmake \
 tdl_sdk/toolchain/toolchain-riscv64-musl.cmake \
 tdl_sdk/modules/app/Makefile
 
-$(BUILDDIR)/tpusdk-prepare-checkout-stamp:
-	@echo "$(COLOUR_GREEN)Checking out TPU SDK for $(BOARD)$(END_COLOUR)"
+$(BUILDDIR)/tpusdk-prepare-clone-stamp:
+	@echo "$(COLOUR_GREEN)Cloning TPU SDK for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b develop $(GIT_CLONE_OPTS) --shallow-submodules https://github.com/scpcom/LicheeSG-Nano-Build.git $(BUILDDIR)/tpusdk
+	@git clone -b develop $(GIT_CLONE_OPTS) --shallow-submodules $(GIT_USER_URL)/LicheeSG-Nano-Build.git $(BUILDDIR)/tpusdk
 	@cd $(BUILDDIR)/tpusdk && git checkout df4ccf2
 	@cd $(BUILDDIR)/tpusdk && git rm -r buildroot freertos fsbl isp_tuning linux_5.10 middleware opensbi osdrv ramdisk u-boot-2021.10
-	@cd $(BUILDDIR)/tpusdk && git submodule update --init --recursive --depth=1
+	@touch $@
+
+$(BUILDDIR)/tpusdk-prepare-checkout-stamp: $(BUILDDIR)/tpusdk-prepare-clone-stamp
+	@echo "$(COLOUR_GREEN)Checking out TPU SDK for $(BOARD)$(END_COLOUR)"
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url build $(GIT_USER_URL)/sophgo-build
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url cnpy $(GIT_USER_URL)/cnpy
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url cvi_rtsp $(GIT_USER_URL)/cvi_rtsp
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url cvibuilder $(GIT_USER_URL)/cvibuilder
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url cvikernel $(GIT_USER_URL)/cvikernel
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url cvimath $(GIT_USER_URL)/cvimath
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url cviruntime $(GIT_USER_URL)/cviruntime
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url flatbuffers $(GIT_USER_URL)/flatbuffers
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url ive $(GIT_USER_URL)/sophgo-ive
+	@cd $(BUILDDIR)/tpusdk && git submodule set-url tdl_sdk $(GIT_USER_URL)/sophgo-tdl_sdk
+	@cd $(BUILDDIR)/tpusdk && git submodule update --init --depth=1
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://github.com/google/googletest|GIT_REPOSITORY $(GIT_USER_URL)/googletest|g' tdl_sdk/cmake/thirdparty.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://github.com/nothings/stb|GIT_REPOSITORY $(GIT_USER_URL)/stb|g' tdl_sdk/cmake/thirdparty.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://gitlab.com/libeigen/eigen|GIT_REPOSITORY $(GIT_USER_URL)/eigen|g' tdl_sdk/cmake/thirdparty.cmake
 	@touch $@
 
 $(BUILDDIR)/tpusdk-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/tpusdk-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp

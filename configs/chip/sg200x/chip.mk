@@ -178,18 +178,23 @@ $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h: $(BUILDDIR)/$(BOARD)-$(VARIA
 
 $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@echo "$(COLOUR_GREEN)Patching Toolchain for $(BOARD)$(END_COLOUR)"
-	@[ "$(DEB_ARCH)" != "arm64" -a "$(DEB_ARCH)" != "armhf" ] || apt-get install -y \
+	@if [ "$(UBOOT_ARCH)" = "arm" ]; then \
+		[ "$(DEB_ARCH)" != "arm64" -a "$(DEB_ARCH)" != "armhf" ] || apt-get install -y \
 		cpp-aarch64-linux-gnu binutils-aarch64-linux-gnu gcc-aarch64-linux-gnu \
-		g++-aarch64-linux-gnu libc6-dev-arm64-cross linux-libc-dev-arm64-cross
-	@[ "$(DEB_ARCH)" != "armhf" ] || apt-get install -y \
+		g++-aarch64-linux-gnu libc6-dev-arm64-cross linux-libc-dev-arm64-cross ; \
+		[ "$(DEB_ARCH)" != "armhf" ] || apt-get install -y \
 		cpp-arm-linux-gnueabihf binutils-arm-linux-gnueabihf gcc-arm-linux-gnueabihf \
-		g++-arm-linux-gnueabihf libc6-dev-armhf-cross linux-libc-dev-armhf-cross
+		g++-arm-linux-gnueabihf libc6-dev-armhf-cross linux-libc-dev-armhf-cross ; \
+	else \
+		apt-get install -y gcc-riscv64-unknown-elf && \
+		apt-get install -y cpp-riscv64-linux-gnu binutils-riscv64-linux-gnu gcc-riscv64-linux-gnu g++-riscv64-linux-gnu libc6-dev-riscv64-cross linux-libc-dev-riscv64-cross ; \
+	fi
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out Kernel for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) https://github.com/scpcom/linux.git $(BUILDDIR)/kernel
+	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) $(GIT_USER_URL)/linux.git $(BUILDDIR)/kernel
 	@cd $(BUILDDIR)/kernel && git checkout cc4b4a2
 	@touch $@
 
@@ -267,7 +272,7 @@ linux-clean:
 $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) https://github.com/scpcom/sophgo-osdrv.git $(BUILDDIR)/osdrv
+	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) $(GIT_USER_URL)/sophgo-osdrv.git $(BUILDDIR)/osdrv
 	@cd $(BUILDDIR)/osdrv && git checkout 94a3754
 	@touch $@
 
@@ -336,11 +341,53 @@ osdrv-clean:
 	@rm -f $(BUILDDIR)/osdrv-*-stamp
 
 
-$(BUILDDIR)/middleware-prepare-checkout-stamp:
-	@echo "$(COLOUR_GREEN)Checking out Middleware for $(BOARD)$(END_COLOUR)"
+$(BUILDDIR)/middleware-prepare-clone-stamp:
+	@echo "$(COLOUR_GREEN)Cloning Middleware for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b maix_mmf-cvisdk $(GIT_CLONE_OPTS) --recursive https://github.com/scpcom/sophgo-middleware.git $(BUILDDIR)/middleware
+	@git clone -b maix_mmf-cvisdk $(GIT_CLONE_OPTS) --shallow-submodules $(GIT_USER_URL)/sophgo-middleware.git $(BUILDDIR)/middleware
+	@touch $@
+
+$(BUILDDIR)/middleware-prepare-checkout-root-stamp: $(BUILDDIR)/middleware-prepare-clone-stamp
+	@echo "$(COLOUR_GREEN)Checking out Middleware for $(BOARD)$(END_COLOUR)"
 	@cd $(BUILDDIR)/middleware && git checkout 8a46b21
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/ffmpeg/ffmpeg $(GIT_USER_URL)/FFmpeg
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/flatbuffers/flatbuffers $(GIT_USER_URL)/flatbuffers
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/glog/glog $(GIT_USER_URL)/glog
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/json-c/json-c $(GIT_USER_URL)/json-c
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/libwebsockets/libwebsockets $(GIT_USER_URL)/libwebsockets
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/live/live555 $(GIT_USER_URL)/live555
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/miniz/miniz $(GIT_USER_URL)/miniz
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/nanomsg/nanomsg $(GIT_USER_URL)/nanomsg
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/opencv/opencv $(GIT_USER_URL)/opencv
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/openssl/openssl $(GIT_USER_URL)/openssl
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/sqlite/sqlite $(GIT_USER_URL)/sqlite
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/uv/uv $(GIT_USER_URL)/libuv
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/zlib/zlib $(GIT_USER_URL)/zlib
+	@cd $(BUILDDIR)/middleware && git submodule set-url component/isp $(GIT_USER_URL)/sophgo-SensorSupportList
+	@cd $(BUILDDIR)/middleware && git submodule set-url modules/bin/json-c $(GIT_USER_URL)/json-c
+	@cd $(BUILDDIR)/middleware && git submodule set-url modules/bin/miniz $(GIT_USER_URL)/miniz
+	@cd $(BUILDDIR)/middleware && git submodule set-url sample/kvm_stream $(GIT_USER_URL)/streameye
+	@cd $(BUILDDIR)/middleware && git submodule set-url sample/test_mmf/media_server-1.0.x $(GIT_USER_URL)/ireader
+	@cd $(BUILDDIR)/middleware && git submodule update --init --depth=1
+	@touch $@
+
+$(BUILDDIR)/middleware-prepare-checkout-openssl-stamp: $(BUILDDIR)/middleware-prepare-checkout-root-stamp
+	@echo "$(COLOUR_GREEN)Checking out Middleware openssl for $(BOARD)$(END_COLOUR)"
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule set-url boringssl $(GIT_USER_URL)/boringssl
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule set-url krb5 $(GIT_USER_URL)/krb5
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule set-url pyca-cryptography $(GIT_USER_URL)/pyca-cryptography
+	@cd $(BUILDDIR)/middleware/3rdparty/openssl/openssl && git submodule update --init --depth=1
+	@touch $@
+
+$(BUILDDIR)/middleware-prepare-checkout-media-server-stamp: $(BUILDDIR)/middleware-prepare-checkout-root-stamp
+	@echo "$(COLOUR_GREEN)Checking out Middleware media-server for $(BOARD)$(END_COLOUR)"
+	@cd $(BUILDDIR)/middleware/sample/test_mmf/media_server-1.0.x && git submodule set-url avcodec $(GIT_USER_URL)/ireader-avcodec
+	@cd $(BUILDDIR)/middleware/sample/test_mmf/media_server-1.0.x && git submodule set-url media-server $(GIT_USER_URL)/ireader-media-server
+	@cd $(BUILDDIR)/middleware/sample/test_mmf/media_server-1.0.x && git submodule set-url sdk $(GIT_USER_URL)/ireader-sdk
+	@cd $(BUILDDIR)/middleware/sample/test_mmf/media_server-1.0.x && git submodule update --init --depth=1
+	@touch $@
+
+$(BUILDDIR)/middleware-prepare-checkout-stamp: $(BUILDDIR)/middleware-prepare-checkout-media-server-stamp $(BUILDDIR)/middleware-prepare-checkout-openssl-stamp
 	@touch $@
 
 $(BUILDDIR)/middleware-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/middleware-prepare-checkout-stamp $(BUILDDIR)/osdrv-compile-stamp
@@ -401,13 +448,18 @@ middleware-clean:
 	@rm -f $(BUILDDIR)/middleware-*-stamp
 
 
-$(BUILDDIR)/buildroot-prepare-checkout-stamp:
-	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
+$(BUILDDIR)/buildroot-prepare-clone-stamp:
+	@echo "$(COLOUR_GREEN)Cloning Buildroot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b nanokvm-2025.02 $(GIT_CLONE_OPTS) --recursive https://github.com/scpcom/buildroot.git $(BUILDDIR)/buildroot
-	@cd $(BR_DIR) && git checkout fa17154
+	@git clone -b nanokvm-2025.02 $(GIT_CLONE_OPTS) --recursive $(GIT_USER_URL)/buildroot.git $(BUILDDIR)/buildroot
+	@touch $@
+
+$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
+	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
+	@cd $(BR_DIR) && git checkout 1402918
 	@mkdir -p $(BUILDDIR)/ramdisk/tools
-	@git clone -b main https://github.com/scpcom/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
+	@git clone -b main $(GIT_USER_URL)/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
+	@cd $(BUILDDIR)/ramdisk/tools/cvi_pinmux && git checkout 5b90da9
 	@touch $@
 
 $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
@@ -418,6 +470,16 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@$(foreach file, $(wildcard /configs/common/patches/nanokvm/*.patch), cp $(file) $(BR_DIR)/package/nanokvm-server/;)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/nanokvm/*.patch), cp $(file) $(BR_DIR)/package/nanokvm-server/;)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/nanokvm/*.patch), cp $(file) $(BR_DIR)/package/nanokvm-server/;)
+	@cd $(BR_DIR) && sed -i 's|https://scpcom.github.io|$(USER_SITE_URL)|g' package/nanokvm-server/nanokvm-server.mk
+	@cd $(BR_DIR) && sed -i 's|https://scpcom.github.io|$(USER_SITE_URL)|g' package/nanokvm-sg200x/nanokvm-sg200x.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/scpcom|$(GIT_USER_URL)|g' package/maix-cdk/maix-cdk.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/scpcom|$(GIT_USER_URL)|g' package/nanokvm-server/nanokvm-server.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/scpcom|$(GIT_USER_URL)|g' package/nanokvm-sg200x/nanokvm-sg200x.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/milkv-duo|$(GIT_USER_URL)|g' package/duo-pinmux/duo-pinmux.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/sipeed|$(GIT_USER_URL)|g' package/maix-cdk/maix-cdk.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/sipeed|$(GIT_USER_URL)|g' package/maix-py/maix-py.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/sipeed|$(GIT_USER_URL)|g' package/nanokvm-server/nanokvm-server.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/kmxz|$(GIT_USER_URL)|g' package/overlayfs-tools/overlayfs-tools.mk
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@if [ "X$(findstring kvm,$(VARIANT))$(findstring maixapp,$(IMAGE_ADDITIONS))" = "X" ]; then \
@@ -482,7 +544,7 @@ buildroot-clean:
 $(BUILDDIR)/uboot-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out U-Boot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) https://github.com/scpcom/u-boot $(BUILDDIR)/u-boot
+	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) $(GIT_USER_URL)/u-boot $(BUILDDIR)/u-boot
 	@cd $(BUILDDIR)/u-boot && git checkout 0963ce4
 	@touch $@
 
@@ -554,7 +616,7 @@ uboot-clean:
 $(BUILDDIR)/opensbi-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OpenSBI for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-cvisdk-1.2 $(GIT_CLONE_OPTS) https://github.com/scpcom/opensbi $(BUILDDIR)/opensbi
+	@git clone -b licheervnano-cvisdk-1.2 $(GIT_CLONE_OPTS) $(GIT_USER_URL)/opensbi $(BUILDDIR)/opensbi
 	@cd $(BUILDDIR)/opensbi && git checkout 3491ae4
 #	git clone https://github.com/riscv-software-src/opensbi.git $(BUILDDIR)/opensbi
 #	@cd $(BUILDDIR)/opensbi && git checkout a2b255b
@@ -590,7 +652,7 @@ opensbi-clean:
 $(BUILDDIR)/fsbl-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out FSBL for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) https://github.com/scpcom/sophgo-fsbl $(BUILDDIR)/fsbl
+	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) $(GIT_USER_URL)/sophgo-fsbl $(BUILDDIR)/fsbl
 	@cd $(BUILDDIR)/fsbl && git checkout 1e73867
 	@touch $@
 
@@ -672,8 +734,8 @@ $(BUILDDIR)/image-prepare-stamp:
 	@mkdir -p /rootfs/
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY)
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
-	@curl -v -L https://scpcom.github.io/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] https://scpcom.github.io/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
+	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
 	@touch $@
 
 $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) $(BUILDDIR)/linux-package-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
@@ -721,6 +783,7 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 	@echo $(VARIANT) > /rootfs/tmp/install/variant
 	@echo $(STORAGE_TYPE) > /rootfs/tmp/install/storage
 	@echo "deb $(DEB_URL) $(DEB_DISTRO) $(DEB_COMPONENTS_FULL)" > /rootfs/tmp/install/deb_sources
+	@echo "deb $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)" > /rootfs/tmp/install/deb_user_sources
 	@cp -v /usr/bin/qemu-$(QEMU_ARCH)-static /rootfs/tmp/install/
 	@cp -v /configs/chip/$(CHIP_FAMILY)/setup_rootfs.sh /rootfs/tmp/install/
 	@cp -v $(BUILDDIR)/public-key.asc /rootfs/tmp/install/

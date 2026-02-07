@@ -203,9 +203,7 @@ cat > /etc/apt/sources.list < /tmp/install/deb_sources
 
 mkdir -p /etc/apt/sources.list.d
 
-cat > /etc/apt/sources.list.d/scpcom-packages.list <<EOG
-deb https://scpcom.github.io/deb stable sg200x ${BOARD}-${VARIANT}
-EOG
+cat > /etc/apt/sources.list.d/scpcom-packages.list < /tmp/install/deb_user_sources
 
 cat >> /etc/systemd/journald.conf <<EOJ
 RuntimeMaxUse=16M

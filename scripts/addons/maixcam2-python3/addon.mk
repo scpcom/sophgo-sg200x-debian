@@ -2,8 +2,10 @@ ifneq ("$(findstring maixcam2-python3,$(IMAGE_ADDITIONS))","")
 BSPFILTER += "maixcam2-python3"
 endif
 
+MAIXCAM2_PYTHON3_SHA256 = a37165fddf7401b3932b94a10e9cbb166d9ee825e34e23a27de2dadcacce411a
 MAIXCAM2_PYTHON3_VERSION = 3.13.2
-MAIXCAM2_PYTHON3_BASE_URL = https://github.com/sipeed/MaixCDK/releases/download/v0.0.0
+
+MAIXCAM2_PYTHON3_BASE_URL = $(GIT_RELEASES_URL)/sipeed/MaixCDK/releases/download/v0.0.0
 MAIXCAM2_PYTHON3_FILENAME = python3.13.2_maixcam2_gcc11.4.0.tar.xz
 
 MAIXCAM2_PYTHON3_SITE_PACKAGES = /usr/local/lib/python3.13/site-packages
@@ -16,6 +18,10 @@ $(BUILDDIR)/maixcam2-python3-stamp:
 	@$(eval PV=-1)
 	@mkdir -p $(BUILDDIR)/maixcam2-python3
 	@cd $(BUILDDIR)/maixcam2-python3 ; wget -N "$(MAIXCAM2_PYTHON3_BASE_URL)/$(MAIXCAM2_PYTHON3_FILENAME)"
+	@if [ "`sha256sum "$(BUILDDIR)/maixcam2-python3/$(MAIXCAM2_PYTHON3_FILENAME)" | cut -d ' ' -f 1`" != "$(MAIXCAM2_PYTHON3_SHA256)" ]; then \
+		echo "$(MAIXCAM2_PYTHON3_FILENAME): checksum mismatch!" ; \
+		exit 1 ; \
+	fi
 	@mkdir -p $(MAIXCAM2_PYTHON3_PACKAGE_DIR)
 	@cp -r /builder/deb/maixapp-sg200x/* $(MAIXCAM2_PYTHON3_PACKAGE_DIR)/
 	@mkdir -pv $(MAIXCAM2_PYTHON3_PACKAGE_DIR)/usr/local/

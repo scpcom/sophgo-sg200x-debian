@@ -76,6 +76,7 @@ $(error $(red)BOARD is not set$(reset))
 endif
 
 include /configs/distro.mk
+include /configs/git.mk
 include /configs/settings.mk
 
 ifneq ("$(wildcard /configs/$(BOARD)_$(ARCH)/settings.mk)","")

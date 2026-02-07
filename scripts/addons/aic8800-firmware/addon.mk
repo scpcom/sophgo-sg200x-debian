@@ -9,16 +9,14 @@ AIC8800_TARGET_DIR ?= /lib/firmware/aic8800_sdio
 $(BUILDDIR)/aic8800-firmware-stamp:
 	@echo "$(COLOUR_GREEN)Installing aic8800-firmware for $(BOARD)$(END_COLOUR)"
 	@$(eval AIC8800RELEASE=$(shell echo "2"))
-	@rm -rf $(BUILDDIR)/aic8800-firmware
-	@git clone --depth 1 https://github.com/armbian/firmware.git $(BUILDDIR)/aic8800-firmware
-	@git clone --depth 1 https://github.com/scpcom/aic8800-sdio-firmware $(BUILDDIR)/aic8800-sdio-firmware
+	@rm -rf $(BUILDDIR)/aic8800-sdio-firmware
+	@git clone --depth 1 $(GIT_USER_URL)/aic8800-sdio-firmware $(BUILDDIR)/aic8800-sdio-firmware
+	@cd $(BUILDDIR)/aic8800-sdio-firmware && git checkout 6314482
 	@echo "$(COLOUR_GREEN)Packaging aic8800-firmware for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(AIC8800_PACKAGE_DIR)
 	@cp -r /builder/deb/firmware-aic8800-cv181x/* $(AIC8800_PACKAGE_DIR)/
-	@mkdir -p $(AIC8800_PACKAGE_DIR)$(AIC8800_TARGET_DIR)/aic8800/
-	@cp -a $(BUILDDIR)/aic8800-firmware/aic8800/SDIO/aic8800/ $(AIC8800_PACKAGE_DIR)$(AIC8800_TARGET_DIR)/
-# 	This is the DUOS firmware
-	@cp -a $(BUILDDIR)/aic8800-firmware/aic8800/SDIO/aic8800D80/* $(AIC8800_PACKAGE_DIR)$(AIC8800_TARGET_DIR)/aic8800/
+	@mkdir -p $(AIC8800_PACKAGE_DIR)$(AIC8800_TARGET_DIR)/aic8800
+	@cp -a $(BUILDDIR)/aic8800-sdio-firmware/aic8800/ $(AIC8800_PACKAGE_DIR)$(AIC8800_TARGET_DIR)/
 	@mkdir -p $(AIC8800_PACKAGE_DIR)$(AIC8800_TARGET_DIR)/aic8800_and_aic8800D80
 	@cp -a $(BUILDDIR)/aic8800-sdio-firmware/aic8800_and_aic8800D80/ $(AIC8800_PACKAGE_DIR)$(AIC8800_TARGET_DIR)/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(AIC8800_PACKAGE_DIR)/DEBIAN/control
