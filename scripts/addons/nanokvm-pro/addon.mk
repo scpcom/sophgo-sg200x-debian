@@ -17,6 +17,7 @@ NANOKVM_PRO_PREVIEW_URL = https://cdn.sipeed.com/nanokvm/preview
 NANOKVM_PRO_BASE_URL ?= $(NANOKVM_PRO_STABLE_URL)
 
 NANOKVM_PRO_UPDATE_URL = $(USER_SITE_URL)/nanokvm_pro
+NANOKVM_PRO_ARCH_URL = $(NANOKVM_PRO_UPDATE_URL)/glibc_$(DEB_ARCH)
 
 NANOKVM_PRO_BUILD_DIR = $(BUILDDIR)/nanokvm-pro/NanoKVM-Pro
 
@@ -32,7 +33,7 @@ NANOKVM_PRO_KVMCOMM_PACKAGE_DIR = $(BUILDDIR)/package/kvmcomm-$(NANOKVM_PRO_VERS
 
 $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json:
 	@mkdir -p $(BUILDDIR)/nanokvm-pro
-	@cd $(BUILDDIR)/nanokvm-pro ; wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_BASE_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)"
+	@cd $(BUILDDIR)/nanokvm-pro ; wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_BASE_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)" || wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_ARCH_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)"
 
 $(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@echo "$(COLOUR_GREEN)Installing nanokvm-pro for $(BOARD)$(END_COLOUR)"
@@ -40,15 +41,20 @@ $(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_lates
 	@touch /rootfs/boot/first_time_boot
 	@touch /rootfs/boot/usb.ncm
 	@mkdir -p $(BUILDDIR)/nanokvm-pro
+	@$(eval NANOKVM_PRO_LATEST_SHA512=$(shell cat $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json | jq -c '.sha512' | cut -d '"' -f 2 | basenc -d --base64 | xxd -p | tr -d '\n'))
 	@#(eval NANOKVM_PRO_LATEST_FILE=$(shell cat $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json | jq -c '.name' | cut -d '"' -f 2))
 	@#(eval NANOKVM_PRO_VERSION=$(shell cat $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json | jq -c '.version' | cut -d '"' -f 2))
 	@$(eval NANOKVM_PRO_LATEST_FILE=nanokvm_pro_$(NANOKVM_PRO_VERSION).tar.gz)
 	@$(eval NANOKVM_PRO_PACKAGE_DIR=$(BUILDDIR)/package/nanokvmpro-$(NANOKVM_PRO_VERSION))
-	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/resources/kvmadmin.tar.gz"
-	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/$(NANOKVM_PRO_LATEST_FILE)" || wget -N "$(NANOKVM_PRO_PREVIEW_URL)/$(NANOKVM_PRO_LATEST_FILE)"
+	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/resources/kvmadmin.tar.gz" || wget -N "$(NANOKVM_PRO_ARCH_URL)/resources/kvmadmin.tar.gz"
+	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/$(NANOKVM_PRO_LATEST_FILE)" || wget -N "$(NANOKVM_PRO_PREVIEW_URL)/$(NANOKVM_PRO_LATEST_FILE)" || wget -N "$(NANOKVM_PRO_ARCH_URL)/$(NANOKVM_PRO_LATEST_FILE)"
 	@if [ "`sha256sum "$(BUILDDIR)/nanokvm-pro/$(NANOKVM_PRO_LATEST_FILE)" | cut -d ' ' -f 1`" != "$(NANOKVM_PRO_SHA256)" ]; then \
-		echo "$(NANOKVM_PRO_LATEST_FILE): checksum mismatch!" ; \
-		exit 1 ; \
+		if [ "`sha512sum "$(BUILDDIR)/nanokvm-pro/$(NANOKVM_PRO_LATEST_FILE)" | cut -d ' ' -f 1`" != "$(NANOKVM_PRO_LATEST_SHA512)" ]; then \
+			echo "$(NANOKVM_PRO_LATEST_FILE): checksum mismatch!" ; \
+			exit 1 ; \
+		else \
+			echo "$(NANOKVM_PRO_LATEST_FILE): used json checksum!" ; \
+		fi \
 	fi
 	@cd $(BUILDDIR)/nanokvm-pro ; tar xzf "$(NANOKVM_PRO_LATEST_FILE)"
 	@cd $(BUILDDIR)/nanokvm-pro/nanokvm_pro_$(NANOKVM_PRO_VERSION) ; [ "$(findstring ubuntu,$(DEB_URL))" != "" ] || wget -N https://launchpadlibrarian.net/587202705/libjpeg-turbo8_2.1.2-0ubuntu1_arm64.deb
@@ -69,8 +75,8 @@ $(BUILDDIR)/nanokvm-pro-package-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@$(foreach file, $(wildcard /configs/common/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
-	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_UPDATE_URL)/glibc_'$(DEB_ARCH)'|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/application/service.go
-	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_UPDATE_URL)/glibc_'$(DEB_ARCH)'|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/extensions/kvmadmin/install.go
+	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/application/service.go
+	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/extensions/kvmadmin/install.go
 	@cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts ; ./toolchain_setup.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/server/ ; ./build.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/web/ ; pnpm install
@@ -91,8 +97,8 @@ $(BUILDDIR)/nanokvm-pro-kvmcomm-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@for f in $(NANOKVM_PRO_KVMCOMM_MODULES) ; do \
 		cp -p $(BSP_INSTALL_DIR)/ko/$$f $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/ko/ ; \
 	done
-	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_UPDATE_URL)/glibc_'$(DEB_ARCH)'|g' $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/firmware_update.sh
-	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_UPDATE_URL)/glibc_'$(DEB_ARCH)'|g' $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/reset_to_default.sh
+	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/firmware_update.sh
+	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_KVMCOMM_PACKAGE_DIR)/kvmcomm/scripts/reset_to_default.sh
 	@cd $(BUILDDIR)/nanokvm-pro ; rm -f nanokvm_pro_$(NANOKVM_PRO_VERSION)/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb
 	@cd $(BUILDDIR)/package/ && dpkg-deb --build kvmcomm-$(NANOKVM_PRO_VERSION) kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb
 	@cp $(BUILDDIR)/package/kvmcomm_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb /output/

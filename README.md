@@ -267,6 +267,31 @@ make BOARD=licheea53nano ARCH=arm64 image
 ```
 You can replace ARCH=arm64 with ARCH=arm to get 32 bit (armhf) images.
 
+## Mirroring
+If you want to get a copy of all required sources you can use the related scripts.
+
+Get a local copy of all sources:
+```
+./scripts/mirror/do-clone.sh
+```
+
+Next you can push all sources to your git:
+```
+GIT_TARGET_HOST=git.example.dev GIT_TARGET_USER=yournamehere ./scripts/mirror/do-push.sh
+```
+
+You can re-run the push script to keep the repositories up-to-date.
+
+Build Image by using your git:
+```
+make BOARD=licheervnano GIT_USER_URL=https://git.example.dev/yournamehere image
+```
+
+If you also provide an update server, a mirror of the release downloads (for MaixCDK pre-built python3) and the toolchains you can run:
+```
+make BOARD=licheervnano GIT_HOST=https://git.example.dev GIT_USER=yournamehere GIT_RELEASES_URL=https://downloads.example.dev/path/to/releases TOOLCHAIN_URL=https://downloads.example.dev/path/to/toolchain USER_SITE_URL=https://downloads.example.dev/path/to/updates image
+```
+
 # TODO
 - DeviceTree Overlay Support
 - Possibly mainline kernel support via the sophgo linux for-next repositories
