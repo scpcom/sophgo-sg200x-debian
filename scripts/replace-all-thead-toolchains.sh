@@ -57,13 +57,15 @@ for gctgt in $gctgts ; do
 done
 cd ../..
 
-sed -i s/x86_64/${harch}/g build/envsetup_soc.sh
+if [ -e build/envsetup_soc.sh ]; then
+  sed -i s/x86_64/${harch}/g build/envsetup_soc.sh
+fi
 
 if [ -e cvi_mpi/Makefile.param ]; then
   sed -i s/x86_64/${harch}/g cvi_mpi/Makefile.param
 elif [ -e middleware/v2/Makefile.param ]; then
   sed -i s/x86_64/${harch}/g middleware/v2/Makefile.param
-else
+elif [ -e middleware/Makefile.param ]; then
   sed -i s/x86_64/${harch}/g middleware/Makefile.param
 fi
 

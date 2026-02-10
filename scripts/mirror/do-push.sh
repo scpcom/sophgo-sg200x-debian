@@ -12,8 +12,23 @@ if [ "X$GIT_TARGET_HOST" = "X" ]; then
   fi
 fi
 
+checkoutbranches=true
 pushtags=true
-[ "X$1" != "X--no-tags" ] || pushtags=false
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+	--no-checkout)
+		checkoutbranches=false
+		shift
+		;;
+	--no-tags)
+		pushtags=false
+		shift
+		;;
+	*)
+		break
+		;;
+	esac
+done
 
 do_pull_push() {
   x=$1
@@ -53,7 +68,9 @@ for f in */.git ; do
   b=$(git branch | grep -E '^\*' | grep -m1 -v detached | tr -d ' *')
   [ "$b" != "X" ] || b=$(git branch | grep -m1 -v detached | tr -d ' *')
   echo "$d: $s $b"
-  if echo $d | grep -q -E '^u-boot$' ; then
+  if [ $checkoutbranches = false ]; then
+     do_pull_push $b $u $s
+  elif echo $d | grep -q -E '^u-boot$' ; then
     for x in licheervnano-cvisdk-2021.10 nanokvmpro-2020.04 ; do
       do_pull_push $x $u $s
     done

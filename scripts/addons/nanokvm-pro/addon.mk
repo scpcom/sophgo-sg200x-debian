@@ -2,6 +2,22 @@ ifneq ("$(findstring nanokvm-pro,$(IMAGE_ADDITIONS))","")
 BSPFILTER += "nanokvm-pro"
 endif
 
+GOLANG_HOST_ARCH ?= amd64
+GOLANG_TOOLCHAIN_URL ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/golang.org|g' | sed 's|/linaro/.*|/golang.org|g')
+
+ifeq ($(GOLANG_HOST_ARCH),riscv64)
+GOLANG_TOOLCHAIN_SHA256 = 82cfe15a11d65090cdcdfec6e1ebb54cc89398c1059d9948f483c378bb0864de
+else ifeq ($(GOLANG_HOST_ARCH),arm64)
+GOLANG_TOOLCHAIN_SHA256 = 46bb31df41009439c8333aa223dacde912c8fa7cf6dd0ab338e5efa17b790471
+else
+GOLANG_TOOLCHAIN_SHA256 = 39ad33636fa17d737bac55a2971239ce8bc0c9e5fb600012a630c3875813a767
+endif
+GOLANG_TOOLCHAIN_VERSION = 1.24.0
+
+GOLANG_TOOLCHAIN_CACHE = ~/go/pkg/mod/cache/download
+GOLANG_TOOLCHAIN_DL_DIR = $(BUILDDIR)/golang-toolchain
+GOLANG_TOOLCHAIN_FILE = v0.0.1-go$(GOLANG_TOOLCHAIN_VERSION).linux-$(GOLANG_HOST_ARCH)
+
 NANOKVM_PRO_GIT_REF = 6e6df77eddbe4947d19da375de3a84f64840f0c4
 NANOKVM_PRO_GIT_URL ?= $(GIT_USER_URL)/NanoKVM-Pro
 
@@ -19,7 +35,10 @@ NANOKVM_PRO_BASE_URL ?= $(NANOKVM_PRO_STABLE_URL)
 NANOKVM_PRO_UPDATE_URL = $(USER_SITE_URL)/nanokvm_pro
 NANOKVM_PRO_ARCH_URL = $(NANOKVM_PRO_UPDATE_URL)/glibc_$(DEB_ARCH)
 
+NANOKVM_PRO_TOOLCHAIN_URL ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g')
+
 NANOKVM_PRO_BUILD_DIR = $(BUILDDIR)/nanokvm-pro/NanoKVM-Pro
+NANOKVM_PRO_PACKAGE_DIR = $(BUILDDIR)/package/nanokvmpro-$(NANOKVM_PRO_VERSION)
 
 NANOKVM_PRO_KVMCOMM_MODULES = f_udisp_drv.ko \
 fbtft.ko \
@@ -31,11 +50,41 @@ wireguard.ko
 
 NANOKVM_PRO_KVMCOMM_PACKAGE_DIR = $(BUILDDIR)/package/kvmcomm-$(NANOKVM_PRO_VERSION)
 
+$(BUILDDIR)/golang-toolchain-stamp:
+	@if [ "X$(GOLANG_TOOLCHAIN_URL)" != "X" ]; then \
+		mkdir -p $(GOLANG_TOOLCHAIN_DL_DIR) && \
+		cd $(GOLANG_TOOLCHAIN_DL_DIR) && \
+		wget -N $(GOLANG_TOOLCHAIN_URL)/toolchain/@v/$(GOLANG_TOOLCHAIN_FILE).zip || \
+		rm -f $(GOLANG_TOOLCHAIN_FILE).zip ; \
+	fi
+	@if [ -e $(GOLANG_TOOLCHAIN_DL_DIR)/$(GOLANG_TOOLCHAIN_FILE).zip ]; then \
+		cd $(GOLANG_TOOLCHAIN_DL_DIR) && \
+		if [ "`sha256sum "$(GOLANG_TOOLCHAIN_FILE).zip" | cut -d ' ' -f 1`" != "$(GOLANG_TOOLCHAIN_SHA256)" ]; then \
+			echo "$(GOLANG_TOOLCHAIN_FILE).zip: checksum mismatch!" ; \
+			rm -f $(GOLANG_TOOLCHAIN_FILE).zip ; \
+		fi ; \
+	fi
+	@if [ -e $(GOLANG_TOOLCHAIN_DL_DIR)/$(GOLANG_TOOLCHAIN_FILE).zip ]; then \
+		cd $(GOLANG_TOOLCHAIN_DL_DIR) && \
+		mkdir -p $(GOLANG_TOOLCHAIN_CACHE)/golang.org/toolchain/\@v && \
+		cp $(GOLANG_TOOLCHAIN_FILE).zip $(GOLANG_TOOLCHAIN_CACHE)/golang.org/toolchain/\@v/ && \
+		touch $(GOLANG_TOOLCHAIN_CACHE)/$(GOLANG_TOOLCHAIN_FILE).lock && \
+		wget -N $(GOLANG_TOOLCHAIN_URL)/toolchain/@v/$(GOLANG_TOOLCHAIN_FILE)-sumdb.zip || \
+		rm -f $(GOLANG_TOOLCHAIN_FILE)-sumdb.zip ; \
+	fi
+	@if [ -e $(GOLANG_TOOLCHAIN_DL_DIR)/$(GOLANG_TOOLCHAIN_FILE)-sumdb.zip -a \
+	    ! -e $(GOLANG_TOOLCHAIN_CACHE)/sumdb/sum.golang.org ]; then \
+		cd $(GOLANG_TOOLCHAIN_DL_DIR) && \
+		mkdir -p $(GOLANG_TOOLCHAIN_CACHE)/sumdb/sum.golang.org && \
+		unzip -d $(GOLANG_TOOLCHAIN_CACHE)/sumdb/sum.golang.org $(GOLANG_TOOLCHAIN_FILE)-sumdb.zip lookup/golang.org/toolchain\@$(GOLANG_TOOLCHAIN_FILE) 'tile/*' ; \
+	fi
+	@touch $@
+
 $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json:
 	@mkdir -p $(BUILDDIR)/nanokvm-pro
 	@cd $(BUILDDIR)/nanokvm-pro ; wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_BASE_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)" || wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_ARCH_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)"
 
-$(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
+$(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/golang-toolchain-stamp $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json
 	@echo "$(COLOUR_GREEN)Installing nanokvm-pro for $(BOARD)$(END_COLOUR)"
 	@touch /rootfs/boot/check_resize2fs
 	@touch /rootfs/boot/first_time_boot
@@ -45,7 +94,7 @@ $(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_lates
 	@#(eval NANOKVM_PRO_LATEST_FILE=$(shell cat $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json | jq -c '.name' | cut -d '"' -f 2))
 	@#(eval NANOKVM_PRO_VERSION=$(shell cat $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json | jq -c '.version' | cut -d '"' -f 2))
 	@$(eval NANOKVM_PRO_LATEST_FILE=nanokvm_pro_$(NANOKVM_PRO_VERSION).tar.gz)
-	@$(eval NANOKVM_PRO_PACKAGE_DIR=$(BUILDDIR)/package/nanokvmpro-$(NANOKVM_PRO_VERSION))
+	@#(eval NANOKVM_PRO_PACKAGE_DIR=$(BUILDDIR)/package/nanokvmpro-$(NANOKVM_PRO_VERSION))
 	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/resources/kvmadmin.tar.gz" || wget -N "$(NANOKVM_PRO_ARCH_URL)/resources/kvmadmin.tar.gz"
 	@cd $(BUILDDIR)/nanokvm-pro ; wget -N "$(NANOKVM_PRO_BASE_URL)/$(NANOKVM_PRO_LATEST_FILE)" || wget -N "$(NANOKVM_PRO_PREVIEW_URL)/$(NANOKVM_PRO_LATEST_FILE)" || wget -N "$(NANOKVM_PRO_ARCH_URL)/$(NANOKVM_PRO_LATEST_FILE)"
 	@if [ "`sha256sum "$(BUILDDIR)/nanokvm-pro/$(NANOKVM_PRO_LATEST_FILE)" | cut -d ' ' -f 1`" != "$(NANOKVM_PRO_SHA256)" ]; then \
@@ -64,7 +113,7 @@ $(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/nanokvm-pro/nanokvm_pro_lates
 	@cp -p $(BUILDDIR)/nanokvm-pro/kvmadmin.tar.gz /output/$(BOARD)-kvmadmin.tar.gz
 	@touch $@
 
-$(BUILDDIR)/nanokvm-pro-package-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
+$(BUILDDIR)/nanokvm-pro-package-prepare-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@cd $(BUILDDIR)/nanokvm-pro ; dpkg-deb -R nanokvm_pro_$(NANOKVM_PRO_VERSION)/nanokvmpro_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb $(NANOKVM_PRO_PACKAGE_DIR)
 	@apt-get install -y golang-go npm
 	@npm install -g pnpm
@@ -77,6 +126,12 @@ $(BUILDDIR)/nanokvm-pro-package-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/application/service.go
 	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/extensions/kvmadmin/install.go
+	@if [ "X$(NANOKVM_PRO_TOOLCHAIN_URL)" != "X" ]; then \
+		cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts && sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(NANOKVM_PRO_TOOLCHAIN_URL)|g' config.ini ; \
+	fi
+	@touch $@
+
+$(BUILDDIR)/nanokvm-pro-package-stamp: $(BUILDDIR)/nanokvm-pro-package-prepare-stamp
 	@cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts ; ./toolchain_setup.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/server/ ; ./build.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/web/ ; pnpm install

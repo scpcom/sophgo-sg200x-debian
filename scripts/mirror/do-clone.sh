@@ -34,6 +34,13 @@ git_subclone cviruntime https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/cviruntime -b 
 git_subclone flatbuffers https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/flatbuffers -b licheervnano-cvisdk
 git_subclone ive https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-ive -b master
 git_subclone tdl_sdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-tdl_sdk -b licheervnano-cvisdk
+git_subclone freertos https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/FreeRTOS -b licheervnano
+git_subclone freertos-kernel https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/FreeRTOS-Kernel -b licheervnano
+git_subclone freertos-posix https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/Lab-Project-FreeRTOS-POSIX -b licheervnano
+git_subclone freertos-partner https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/FreeRTOS-Kernel-Partner-Supported-Ports -b main
+git_subclone freertos-community https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/FreeRTOS-Kernel-Community-Supported-Ports -b main
+git_subclone isp_tuning https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-isp_tuning -b sg200x-dev
+git_subclone ramdisk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-ramdisk -b licheesgnano
 git_clone -b maix_mmf-cvisdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-middleware.git middleware
 git_subclone component/isp https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-SensorSupportList -b licheervnano-cvisdk
 git_subclone sample/test_mmf/media_server-1.0.x https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/ireader -b maixcdk
@@ -98,6 +105,8 @@ git_clone -b nanokvmpro https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/axerabin axera
 git_clone -b debian https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-sg200x-debian sophgo-sg200x-debian
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/scpcom.github.io site
 
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/lcdtest lcdtest
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/tpudemo-sg200x tpudemo-sg200x
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/uvc-gadget uvc-gadget
 
 git_clone -b develop https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json json

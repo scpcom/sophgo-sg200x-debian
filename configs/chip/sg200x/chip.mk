@@ -485,7 +485,10 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@cd $(BR_DIR) && sed -i 's|https://github.com/scpcom|$(GIT_USER_URL)|g' package/maix-cdk/maix-cdk.mk
 	@cd $(BR_DIR) && sed -i 's|https://github.com/scpcom|$(GIT_USER_URL)|g' package/nanokvm-server/nanokvm-server.mk
 	@cd $(BR_DIR) && sed -i 's|https://github.com/scpcom|$(GIT_USER_URL)|g' package/nanokvm-sg200x/nanokvm-sg200x.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/lxowalle|$(GIT_USER_URL)|g' package/aic8800-sdio-firmware/aic8800-sdio-firmware.mk
 	@cd $(BR_DIR) && sed -i 's|https://github.com/milkv-duo|$(GIT_USER_URL)|g' package/duo-pinmux/duo-pinmux.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/0x754C|$(GIT_USER_URL)|g' package/lcdtest/lcdtest.mk
+	@cd $(BR_DIR) && sed -i 's|https://github.com/0x754C|$(GIT_USER_URL)|g' package/tpudemo-sg200x/tpudemo-sg200x.mk
 	@cd $(BR_DIR) && sed -i 's|https://github.com/sipeed|$(GIT_USER_URL)|g' package/maix-cdk/maix-cdk.mk
 	@cd $(BR_DIR) && sed -i 's|https://github.com/sipeed|$(GIT_USER_URL)|g' package/maix-py/maix-py.mk
 	@cd $(BR_DIR) && sed -i 's|https://github.com/sipeed|$(GIT_USER_URL)|g' package/nanokvm-server/nanokvm-server.mk
