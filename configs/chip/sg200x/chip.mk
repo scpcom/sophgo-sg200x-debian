@@ -273,7 +273,7 @@ $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) $(GIT_USER_URL)/sophgo-osdrv.git $(BUILDDIR)/osdrv
-	@cd $(BUILDDIR)/osdrv && git checkout 94a3754
+	@cd $(BUILDDIR)/osdrv && git checkout debcc0c
 	@touch $@
 
 $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/osdrv-prepare-checkout-stamp $(BUILDDIR)/linux-compile-stamp
@@ -455,19 +455,31 @@ $(BUILDDIR)/buildroot-prepare-clone-stamp:
 	@touch $@
 
 $(BUILDDIR)/buildroot-prepare-clone-dl-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
-	@echo "$(COLOUR_GREEN)Cloning Buildroot for $(BOARD)$(END_COLOUR)"
+	@echo "$(COLOUR_GREEN)Cloning Buildroot dl for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b main --depth=1 $(GIT_USER_URL)/buildroot-dl.git $(BR_DIR)/dl
-	@cd $(BR_DIR)/dl && git checkout b953bc0
+	@git clone -b maixcdk --depth=1 $(GIT_USER_URL)/buildroot-dl.git $(BR_DIR)/dl
+	@touch $@
+
+$(BUILDDIR)/buildroot-prepare-checkout-dl-stamp: $(BUILDDIR)/buildroot-prepare-clone-dl-stamp
+	@echo "$(COLOUR_GREEN)Checking out Buildroot dl for $(BOARD)$(END_COLOUR)"
+	@cd $(BR_DIR)/dl && git checkout 724b9c7
 	@cd $(BR_DIR)/dl && [ "$(GIT_REF)" = "develop" ] || rm -rf .git
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-clone-dl-stamp
-	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout fc0f627
+$(BUILDDIR)/buildroot-prepare-clone-pinmux-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
+	@echo "$(COLOUR_GREEN)Cloning Buildroot pinmux for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)/ramdisk/tools
 	@git clone -b main $(GIT_USER_URL)/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
+	@touch $@
+
+$(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp: $(BUILDDIR)/buildroot-prepare-clone-pinmux-stamp
+	@echo "$(COLOUR_GREEN)Checking out Buildroot pinmux for $(BOARD)$(END_COLOUR)"
 	@cd $(BUILDDIR)/ramdisk/tools/cvi_pinmux && git checkout 5b90da9
+	@touch $@
+
+$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp
+	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
+	@cd $(BR_DIR) && git checkout abf4e21
 	@touch $@
 
 $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
@@ -559,7 +571,7 @@ $(BUILDDIR)/uboot-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out U-Boot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) $(GIT_USER_URL)/u-boot $(BUILDDIR)/u-boot
-	@cd $(BUILDDIR)/u-boot && git checkout 0963ce4
+	@cd $(BUILDDIR)/u-boot && git checkout 3790a21
 	@touch $@
 
 $(BUILDDIR)/uboot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/uboot-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
@@ -746,7 +758,7 @@ $(BUILDDIR)/image-prepare-stamp:
 	@rm -rf /rootfs/
 	@-rm $(addon-targets)
 	@mkdir -p /rootfs/
-	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY)
+	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY) || true
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
 	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"

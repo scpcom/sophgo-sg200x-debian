@@ -28,6 +28,9 @@ NANOKVM_PRO_GO_VENDOR_REF = f573cc27f239da8ce24646e4dbe91410c88b1c03
 NANOKVM_PRO_GO_VENDOR_URL = $(GIT_USER_URL)/nanokvm-pro-server-vendor
 NANOKVM_PRO_GOMOD = server
 
+NANOKVM_PRO_NODE_MODULES_REF = 56b02d88aab803a759732f75e813b92c20a33100
+NANOKVM_PRO_NODE_MODULES_URL = $(GIT_USER_URL)/nanokvm-pro-web-modules
+
 NANOKVM_PRO_STABLE_URL = https://cdn.sipeed.com/nanokvm
 NANOKVM_PRO_PREVIEW_URL = https://cdn.sipeed.com/nanokvm/preview
 NANOKVM_PRO_BASE_URL ?= $(NANOKVM_PRO_STABLE_URL)
@@ -116,11 +119,21 @@ $(BUILDDIR)/nanokvm-pro-prepare-stamp: $(BUILDDIR)/golang-toolchain-stamp $(BUIL
 $(BUILDDIR)/nanokvm-pro-package-prepare-stamp: $(BUILDDIR)/nanokvm-pro-prepare-stamp
 	@cd $(BUILDDIR)/nanokvm-pro ; dpkg-deb -R nanokvm_pro_$(NANOKVM_PRO_VERSION)/nanokvmpro_$(NANOKVM_PRO_VERSION)_$(DEB_ARCH).deb $(NANOKVM_PRO_PACKAGE_DIR)
 	@apt-get install -y golang-go npm
-	@npm install -g pnpm
 	@cd $(BUILDDIR)/nanokvm-pro && git clone $(NANOKVM_PRO_GIT_URL)
 	@cd $(NANOKVM_PRO_BUILD_DIR) && git checkout $(NANOKVM_PRO_GIT_REF)
 	@cd $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD) && git clone --depth 1 $(NANOKVM_PRO_GO_VENDOR_URL) vendor
 	@cd $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/vendor && git checkout $(NANOKVM_PRO_GO_VENDOR_REF)
+	@cd $(NANOKVM_PRO_BUILD_DIR)/web && git clone --depth 1 $(NANOKVM_PRO_NODE_MODULES_URL) node_modules
+	@cd $(NANOKVM_PRO_BUILD_DIR)/web/node_modules && git checkout $(NANOKVM_PRO_NODE_MODULES_REF)
+	@if apt-get install -y node-corepack ; then \
+		corepack enable pnpm && \
+		mkdir -p ~/.cache/node && \
+		cd ~/.cache/node && \
+		mv $(NANOKVM_PRO_BUILD_DIR)/web/node_modules/corepack ~/.cache/node/ ; \
+	else \
+		npm install -g pnpm && \
+		rm -rf  $(NANOKVM_PRO_BUILD_DIR)/web/node_modules/corepack/ ; \
+	fi
 	@$(foreach file, $(wildcard /configs/common/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
@@ -134,7 +147,7 @@ $(BUILDDIR)/nanokvm-pro-package-prepare-stamp: $(BUILDDIR)/nanokvm-pro-prepare-s
 $(BUILDDIR)/nanokvm-pro-package-stamp: $(BUILDDIR)/nanokvm-pro-package-prepare-stamp
 	@cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts ; ./toolchain_setup.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/server/ ; ./build.sh
-	@cd $(NANOKVM_PRO_BUILD_DIR)/web/ ; pnpm install
+	@cd $(NANOKVM_PRO_BUILD_DIR)/web/ ; pnpm install -r --offline
 	@cd $(NANOKVM_PRO_BUILD_DIR)/web/ ; pnpm build
 	@cp -p $(NANOKVM_PRO_BUILD_DIR)/server/NanoKVM-Server $(NANOKVM_PRO_PACKAGE_DIR)/kvmapp/server/
 	@rm -rf $(NANOKVM_PRO_PACKAGE_DIR)/kvmapp/server/web/

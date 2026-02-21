@@ -70,18 +70,93 @@ for f in */.git ; do
   echo "$d: $s $b"
   if [ $checkoutbranches = false ]; then
      do_pull_push $b $u $s
+  elif echo $d | grep -q -E '^LicheeRV-Nano-Build' ; then
+    for x in develop main middleware-maix_mmf nanokvm ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^LicheeSG-Nano-Build' ; then
+    for x in develop main ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^build$' ; then
+    for x in licheervnano-cvisdk licheervnano ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^buildroot$' ; then
+    for x in nanokvm-2025.02 licheervnano-2025.02 licheervnano-2023.11 ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^buildroot-dl$|^dl$' ; then
+    for x in main maixcdk licheesgnano ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^fsbl$' ; then
+    for x in licheervnano-cvisdk licheervnano ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
   elif echo $d | grep -q -E '^u-boot$' ; then
-    for x in licheervnano-cvisdk-2021.10 nanokvmpro-2020.04 ; do
+    for x in licheervnano-cvisdk-2021.10 nanokvmpro-2020.04 licheervnano-2021.10 ; do
       do_pull_push $x $u $s
     done
     git checkout $b
   elif echo $d | grep -q -E '^kernel$|^linux' ; then
-    for x in licheervnano-merged-5.10.y nanokvmpro-4.19.y ; do
+    for x in licheervnano-merged-5.10.y nanokvmpro-4.19.y licheervnano-cvisdk-5.10.y licheervnano-5.10.y ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^middleware$' ; then
+    for x in maix_mmf-cvisdk licheervnano ; do
       do_pull_push $x $u $s
     done
     git checkout $b
   elif echo $d | grep -q -E '^opencv$' ; then
     for x in 3rd 4.x ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^opensbi$' ; then
+    for x in licheervnano-cvisdk-1.2 licheervnano-0.9 ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^osdrv$' ; then
+    for x in licheervnano-cvisdk licheervnano ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^ramdisk$' ; then
+    for x in licheesgnano licheervnano ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^json-c$' ; then
+    for x in 3rd cvi ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^miniz$' ; then
+    for x in 3rd cvi ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^berkeley-testfloat-3$' ; then
+    for x in master qemu ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^riscv-gcc$' ; then
+    for x in xuantie-gcc-10.2.0 xuantie-gcc-10.4.0 ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
+  elif echo $d | grep -q -E '^riscv-gnu-toolchain$' ; then
+    for x in  xuantie-gnu-toolchain-v2.6.x  xuantie-gnu-toolchain-v2.8.x xuantie-gnu-toolchain-v2.10.x ; do
       do_pull_push $x $u $s
     done
     git checkout $b
@@ -108,6 +183,12 @@ for f in */.git ; do
     do_push_tags '[0-9]\.*'
   elif echo $d | grep -q -E '^cvi_pinmux|^duo-pinmux$' ; then
     do_push_tags '[0-9]\.*'
+  elif echo $d | grep -q -E '^capstone$' ; then
+    do_push_tags '5.0*'
+  elif echo $d | grep -q -E '^dtc$' ; then
+    do_push_tags 'v[0-9]\.*'
+  elif echo $d | grep -q -E '^edk2$' ; then
+    do_push_tags 'edk2-stable2020*'
   elif echo $d | grep -q -E '^flatbuffers|^glog$' ; then
     do_push_tags 'v*'
   elif echo $d | grep -q -E '^kernel$|^linux' ; then
@@ -117,12 +198,18 @@ for f in */.git ; do
     do_push_tags 'krb5-1.17*'
   elif echo $d | grep -q -E '^eigen|^libeigen$' ; then
     do_push_tags '[0-9]\.*'
+  elif echo $d | grep -q -E '^ipmitool$' ; then
+    do_push_tags 'IPMITOOL_1*'
+  elif echo $d | grep -q -E '^libslirp$' ; then
+    do_push_tags 'v4.*'
   elif echo $d | grep -q -E '^libwebsockets$' ; then
     do_push_tags 'v4\.*'
   elif echo $d | grep -q -E '^LicheeSG-Nano-Build$' ; then
     do_push_tags 'v*'
   elif echo $d | grep -q -E '^maixcam-skeleton$' ; then
     do_push_tags 'v*'
+  elif echo $d | grep -q -E '^meson$' ; then
+    do_push_tags '0.55*'
   elif echo $d | grep -q -E '^NanoKVM' ; then
     do_push_tags '[0-9]\.*'
   elif echo $d | grep -q -E '^nanokvm-skeleton$' ; then
@@ -137,6 +224,10 @@ for f in */.git ; do
     do_push_tags 'OpenSSL_1_1_*'
   elif echo $d | grep -q -E '^overlayfs-tools$' ; then
     do_push_tags 'v20*'
+  elif echo $d | grep -q -E '^riscv-gnu-toolchain$' ; then
+    do_push_tags 'riscv*-10.?.*'
+  elif echo $d | grep -q -E '^rtc-tools' ; then
+    do_push_tags '2022*'
   elif echo $d | grep -q -E '^sqlite$' ; then
     do_push_tags 'version-3\.*'
   elif echo $d | grep -q -E '^u-boot$' ; then

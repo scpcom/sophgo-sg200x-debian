@@ -80,7 +80,7 @@ jobs:
       - name: Get Board Configs
         uses: actions/checkout@v4
       - name: Build Images
-        uses: addnab/docker-run-action@v3
+        uses: scpcom/docker-run-action@v4
         with:
           image: ghcr.io/scpcom/sophgo-sg200x-debian:${{ github.ref_name }}
           options: --privileged -v ${{ github.workspace }}/images/:/output -v ${{ github.workspace }}/configs/:/configs/
@@ -113,7 +113,7 @@ jobs:
           ls -lah
           ls -lah image-files-*/
       - name: publish artifacts
-        uses: softprops/action-gh-release@v2
+        uses: softprops/action-gh-release@v2.4.2
         with:
           append_body: true
           files: |

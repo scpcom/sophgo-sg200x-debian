@@ -448,7 +448,7 @@ $(BUILDDIR)/bsp-prepare-clone-stamp:
 
 $(BUILDDIR)/bsp-prepare-checkout-stamp: $(BUILDDIR)/bsp-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out BSP for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/bsp && git checkout 89c7d70
+	@cd $(BUILDDIR)/bsp && git checkout 84e6397
 	@cd $(BUILDDIR)/bsp && git submodule set-url axerabin $(GIT_USER_URL)/axerabin
 	@cd $(BUILDDIR)/bsp && git submodule set-url linux $(GIT_USER_URL)/linux
 	@cd $(BUILDDIR)/bsp && git submodule set-url u-boot $(GIT_USER_URL)/u-boot
@@ -623,7 +623,7 @@ $(BUILDDIR)/image-prepare-stamp:
 	@rm -rf /rootfs/
 	@-rm $(addon-targets)
 	@mkdir -p /rootfs/
-	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY)
+	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY) || true
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
 	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"

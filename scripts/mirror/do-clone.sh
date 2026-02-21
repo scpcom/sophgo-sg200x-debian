@@ -2,6 +2,32 @@
 [ "X$GIT_SOURCE_HOST" != "X" ] || GIT_SOURCE_HOST=github.com
 [ "X$GIT_SOURCE_USER" != "X" ] || GIT_SOURCE_USER=scpcom
 
+clonesecondary=false
+clonetoolchain=false
+while [ "$#" -gt 0 ]; do
+	case "$1" in
+	--no-secondary)
+		clonesecondary=false
+		shift
+		;;
+	--secondary)
+		clonesecondary=true
+		shift
+		;;
+	--no-toolchain)
+		clonetoolchain=false
+		shift
+		;;
+	--toolchain)
+		clonetoolchain=true
+		shift
+		;;
+	*)
+		break
+		;;
+	esac
+done
+
 git_clone() {
   d=$4
   [ "X$d" != "X" ] || d=$(echo $3 | rev | cut -d / -f 1 | rev | sed s/'\.git$'/''/g)
@@ -45,8 +71,8 @@ git_clone -b maix_mmf-cvisdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-mi
 git_subclone component/isp https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-SensorSupportList -b licheervnano-cvisdk
 git_subclone sample/test_mmf/media_server-1.0.x https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/ireader -b maixcdk
 git_subclone sample/kvm_stream https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/streameye -b kvm_stream
-git_subclone modules/bin/cvi_json-c https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json-c -b cvi
-git_subclone modules/bin/cvi_miniz https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/miniz -b cvi
+#git_subclone modules/bin/cvi_json-c https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json-c -b cvi
+#git_subclone modules/bin/cvi_miniz https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/miniz -b cvi
 git_subclone 3rdparty/live/live555 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/live555 -b sg200x-dev
 git_subclone 3rdparty/json-c/json-c https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json-c -b 3rd
 git_subclone 3rdparty/miniz/miniz https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/miniz -b 3rd
@@ -96,7 +122,9 @@ git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/maixcdk-dl-pkgs
 git_clone -b latest https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/maixcam-skeleton
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/nanokvm-server-vendor
 git_clone -b latest https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/nanokvm-skeleton
+git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/nanokvm-web-modules
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/nanokvm-pro-server-vendor
+git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/nanokvm-pro-web-modules
 
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/duo-pinmux
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/ax620e-bsp-build
@@ -110,5 +138,43 @@ git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/tpudemo-sg200x tpu
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/uvc-gadget uvc-gadget
 
 git_clone -b develop https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json json
+
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/ipmitool ipmitool
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/rtc-tools rtc-tools
+
+# not required for build
+if [ $clonesecondary != false ]; then
+git_clone -b develop https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/LicheeRV-Nano-Build.git
+#git_clone -b master https://github.com/sophgo/host-tools host-tools
+git_clone -b licheervnano https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-oss oss
+git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/maix_ax620e_sdk maix_ax620e_sdk
+git_subclone maix_ax620e_msp https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/maix_ax620e_sdk_msp.git -b main
+git_subclone maix_ax620e_kernel https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/maix_ax620e_sdk_kernel.git -b main
+fi
+
+if [ $clonetoolchain != false ]; then
+git_clone -b xuantie-gnu-toolchain-v2.10.x https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/riscv-gnu-toolchain riscv-gnu-toolchain
+git_clone -b xuantie-binutils-gdb-2.35 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/riscv-binutils-gdb riscv-binutils-gdb
+git_clone -b xuantie-gcc-10.4.0 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/riscv-gcc riscv-gcc
+git_clone -b riscv-glibc-2.33-thead https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/riscv-glibc riscv-glibc
+git_clone -b riscv-dejagnu-1.6 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/riscv-dejagnu riscv-dejagnu
+git_clone -b xuantie-newlib-3.2.0 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/riscv-newlib riscv-newlib
+git_clone -b xuantie-qemu-6.1.0 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/qemu qemu
+
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/berkeley-softfloat-3 berkeley-softfloat-3
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/berkeley-testfloat-3 berkeley-testfloat-3
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/cmocka cmocka
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/oniguruma oniguruma
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/brotli brotli
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/esaxx esaxx
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/libdivsufsort libdivsufsort
+
+git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/dtc dtc
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/edk2 edk2
+git_clone -b v5 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/capstone capstone
+git_clone -b 0.55 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/meson meson
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/keycodemapdb keycodemapdb
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/libslirp libslirp
+fi
 
 echo OK
