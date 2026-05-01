@@ -18,7 +18,7 @@ else
 $(error $(red)SDK_VER is invalid$(reset))
 endif
 
-ifeq ($(UBOOT_ARCH),arm)
+ifeq ($(BOOT_CPU),aarch64)
 SBL_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SBL_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
 else
@@ -75,6 +75,7 @@ include $(wildcard /builder/addons/*/addon.mk)
 
 addon-targets = $(patsubst "%,$(BUILDDIR)/%-stamp,$(patsubst %",%,$(IMAGE_ADDITIONS)))
 _PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(PACKAGES)))
+_DEV_PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(DEV_PACKAGES)))
 
 COMMA := ,
 EMPTY :=
@@ -92,6 +93,7 @@ $(info $(blue)ION Size: $(ION_SIZE)M$(reset))
 $(info $(blue)Default Panel: $(PANEL_TUNING_DEFAULT)$(reset))
 $(info $(blue)Image Addons: $(IMAGE_ADDITIONS)$(reset))
 $(info $(blue)Packages: $(_PACKAGES)$(reset))
+$(info $(blue)Development Packages: $(_DEV_PACKAGES)$(reset))
 
 NPROCS := $(shell nproc)
 
@@ -448,7 +450,7 @@ $(BUILDDIR)/bsp-prepare-clone-stamp:
 
 $(BUILDDIR)/bsp-prepare-checkout-stamp: $(BUILDDIR)/bsp-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out BSP for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/bsp && git checkout 84e6397
+	@cd $(BUILDDIR)/bsp && git checkout 8222716
 	@cd $(BUILDDIR)/bsp && git submodule set-url axerabin $(GIT_USER_URL)/axerabin
 	@cd $(BUILDDIR)/bsp && git submodule set-url linux $(GIT_USER_URL)/linux
 	@cd $(BUILDDIR)/bsp && git submodule set-url u-boot $(GIT_USER_URL)/u-boot
@@ -460,9 +462,11 @@ $(BUILDDIR)/bsp-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $
 	@$(eval BSP_ROOTFS_SOURCE_DIR=$(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs)
 	@sed -i '/get-toolchain.sh/d' $(BUILDDIR)/bsp/build.sh
 	@sed -i 's|^BOARD_DTS=.*|BOARD_DTS=$(BOARD_DTS)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
+	@sed -i s/'^BOARD_CHIP=.*'/'BOARD_CHIP='$(CHIP)/g $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
+	@sed -i s/'^BOARD_FAMILY=.*'/'BOARD_FAMILY='$(UBOOT_CHIP)/g $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
+	@sed -i s/'^KERNEL_ARCH=.*'/'KERNEL_ARCH='$(KERNEL_ARCH)/g $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|^CROSS_COMPILE_PATH=.*|CROSS_COMPILE_PATH=$(SBL_CROSS_COMPILE_PATH)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
 	@sed -i 's|^CROSS_COMPILE=.*|CROSS_COMPILE=$(SBL_CROSS_COMPILE_PREFIX)|g' $(BUILDDIR)/bsp/scripts/envsetup_pack.sh
-	@sed -i 's|dtb EXTRA_CFLAGS|dtb BOARD=$(UBOOT_FAMILY) EXTRA_CFLAGS|g' $(BUILDDIR)/bsp/scripts/build-u-boot.sh
 	@if [ "X$(findstring kvm,$(VARIANT))" = "X" ]; then \
 		sed -i /'devmem 0x10030028'/d $(BSP_ROOTFS_SOURCE_DIR)/etc/rc.local ; \
 		sed -i s/'if ! systemctl is-active --quiet sysdev.service'/'if false'/g $(BSP_ROOTFS_SOURCE_DIR)/etc/rc.local ; \
@@ -626,10 +630,26 @@ $(BUILDDIR)/image-prepare-stamp:
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --recv-key --keyserver $(DEB_KEYSERVER) $(DEB_PUBKEY) || true
 	@[ "X$(DEB_PUBKEY)" = "X" ] || gpg --export $(DEB_PUBKEY) > /etc/apt/trusted.gpg.d/distro-archive-keyring.gpg
 	@curl -v -L $(USER_SITE_URL)/scpcom-packages.asc -o $(BUILDDIR)/public-key.asc
-	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
+	@mmdebstrap -v --architectures=$(DEB_ARCH) --include="$(_PACKAGES) $(_DEV_PACKAGES)" $(DEB_DISTRO) "/rootfs/" "deb $(DEB_URL)/ $(DEB_DISTRO) $(DEB_COMPONENTS)" "deb [signed-by=$(BUILDDIR)/public-key.asc] $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)"
 	@touch $@
 
-$(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) $(BUILDDIR)/linux-package-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
+$(BUILDDIR)/image-configure-stamp: $(BUILDDIR)/image-prepare-stamp $(BUILDDIR)/linux-package-stamp $(FSBL_TARGETS)
+	@echo "$(COLOUR_GREEN)Configuring Image for $(BOARD)$(END_COLOUR)"
+	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
+	@mkdir -p /rootfs/tmp/install/
+	@cp -p /etc/resolv.conf /rootfs/tmp/install/
+	@cp -v /usr/bin/qemu-$(QEMU_ARCH)-static /rootfs/tmp/install/
+	@cp -v /configs/chip/$(CHIP_FAMILY)/config_rootfs.sh /rootfs/tmp/install/
+	@[ $(DEB_ARCH) = $(KERNEL_DEB_ARCH) ] || chroot /rootfs/ /tmp/install/qemu-$(QEMU_ARCH)-static /usr/bin/dpkg --add-architecture $(KERNEL_DEB_ARCH)
+	@chroot /rootfs/ /tmp/install/qemu-$(QEMU_ARCH)-static /bin/sh /tmp/install/config_rootfs.sh
+	@rm -f /rootfs/tmp/install/resolv.conf
+	@umount /rootfs/proc || true
+	@umount /rootfs/sys || true
+	@umount /rootfs/run || true
+	@umount /rootfs/dev || true
+	@touch $@
+
+$(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-configure-stamp $(BUILDDIR)/osdrv-package-stamp $(BUILDDIR)/middleware-package-stamp $(addon-targets)
 	@echo "$(COLOUR_GREEN)Packaging board-support-$(CHIP_FAMILY) for $(BOARD)$(END_COLOUR)"
 	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@$(eval BOARD_SUPPORT_PACKAGE_DIR=$(BUILDDIR)/package/board-support-$(BOARD)-$(VARIANT)-$(BSPVERSION))
@@ -667,9 +687,8 @@ $(BUILDDIR)/image-addons-stamp: $(BUILDDIR)/image-prepare-stamp $(FSBL_TARGETS) 
 	@touch $@
 
 
-$(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/linux-package-stamp $(FSBL_TARGETS)
+$(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/image-configure-stamp
 	@echo "$(COLOUR_GREEN)Customizing Image for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@mkdir -p /rootfs/tmp/install/
 	@echo $(GIT_REF) > /rootfs/tmp/install/gitref
 	@echo $(BOARD) > /rootfs/tmp/install/hostname
@@ -679,12 +698,9 @@ $(BUILDDIR)/image-customize-stamp: $(BUILDDIR)/image-addons-stamp $(BUILDDIR)/li
 	@echo $(STORAGE_TYPE) > /rootfs/tmp/install/storage
 	@echo "deb $(DEB_URL) $(DEB_DISTRO) $(DEB_COMPONENTS_FULL)" > /rootfs/tmp/install/deb_sources
 	@echo "deb $(USER_SITE_URL)/deb stable $(CHIP_FAMILY) $(BOARD)-$(VARIANT)" > /rootfs/tmp/install/deb_user_sources
-	@[ "$(DEB_DISTRO)" != "jammy" -o -e /rootfs/etc/resolv.conf-dist ] || mv /rootfs/etc/resolv.conf /rootfs/etc/resolv.conf-dist
-	@[ "$(DEB_DISTRO)" != "jammy" ] || cp -p /etc/resolv.conf /rootfs/etc/
 	@cp -v /usr/bin/qemu-$(QEMU_ARCH)-static /rootfs/tmp/install/
 	@cp -v /configs/chip/$(CHIP_FAMILY)/setup_rootfs.sh /rootfs/tmp/install/
 	@cp -v $(BUILDDIR)/public-key.asc /rootfs/tmp/install/
-	@[ $(DEB_ARCH) = $(KERNEL_DEB_ARCH) ] || chroot /rootfs/ /tmp/install/qemu-$(QEMU_ARCH)-static /usr/bin/dpkg --add-architecture $(KERNEL_DEB_ARCH)
 	@chroot /rootfs/ /tmp/install/qemu-$(QEMU_ARCH)-static /bin/sh /tmp/install/setup_rootfs.sh
 	@rm -rf /rootfs/tmp/install/
 	@umount /rootfs/proc || true 
@@ -700,7 +716,95 @@ MAIX_PY_VERSION ?= 4.12.4
 IMAGE_APP_VERSION ?= $(MAIX_PY_VERSION)
 endif
 
-$(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp
+$(BUILDDIR)/image-dev-list-stamp: $(BUILDDIR)/image-customize-stamp $(BUILDDIR)/python3-dev-uninstall-stamp
+	@echo "$(COLOUR_GREEN)Listing dev packages for $(BOARD)$(END_COLOUR)"
+	@chroot /rootfs apt-get update || true
+	@for p in libwebsockets-evlib-uv ; do \
+		chroot /rootfs dpkg -s $$p | grep -q '^Version:' || continue ; \
+		echo $$p >> $(BUILDDIR)/image-libs-$(BOARD) ; \
+	done
+	@for d in $(_PACKAGES) $(_DEV_PACKAGES) ; do \
+		echo $$d | grep -q -E '^lib.*-dev$$' || continue ; \
+		l=`echo $$d | sed s/'-dev$$'/''/g` ; \
+		chroot /rootfs dpkg -s $$d | grep -q '^Version:' || continue ; \
+		p=`chroot /rootfs dpkg -S $${l}.so.* 2>/dev/null | grep -v $$d | grep -m1 ':'$(DEB_ARCH)':' | cut -d ':' -f 1` ; \
+		[ "$$p" != "" ] || l=`echo $$d | sed s/'-dev$$'/''/g | sed s/'[0-9]*$$'/''/g` ; \
+		[ "$$p" != "" ] || p=`chroot /rootfs dpkg -S $${l}.so.* 2>/dev/null | grep -v $$d | grep -m1 ':'$(DEB_ARCH)':' | cut -d ':' -f 1` ; \
+		[ "$$p" != "" ] || continue ; \
+		chroot /rootfs dpkg -S $${l}.so.* 2>/dev/null | grep -v $$d | grep ':'$(DEB_ARCH)':' | cut -d ':' -f 1 | uniq | while read p ; do \
+			echo $$p >> $(BUILDDIR)/image-libs-$(BOARD) ; \
+		done && \
+		echo $$d >> $(BUILDDIR)/image-dev-$(BOARD) ; \
+	done
+	@for d in $(_DEV_PACKAGES) ; do \
+		chroot /rootfs dpkg -s $$d | grep -q '^Version:' || continue ; \
+		echo $$d >> $(BUILDDIR)/image-dev-$(BOARD) ; \
+	done
+	@touch $@
+
+$(BUILDDIR)/image-dev-uninstall-stamp: $(BUILDDIR)/image-dev-list-stamp
+	@echo "$(COLOUR_GREEN)Uninstalling dev packages for $(BOARD)$(END_COLOUR)"
+	@$(eval IMAGE_LIBS_DEPENDS=$(shell cat $(BUILDDIR)/image-libs-$(BOARD) | sort | uniq | tr '\n' ' '))
+	@$(eval IMAGE_DEV_DEPENDS=$(shell cat $(BUILDDIR)/image-dev-$(BOARD) | sort | uniq | tr '\n' ' '))
+	@chroot /rootfs mount proc -t proc /proc
+	@chroot /rootfs apt-get install -y $(IMAGE_LIBS_DEPENDS)
+	@chroot /rootfs apt-get remove --purge -y $(IMAGE_DEV_DEPENDS)
+	@chroot /rootfs apt-get autoremove --purge -y
+	@umount /rootfs/proc || true
+	@chroot /rootfs apt-get clean
+	@touch $@
+
+$(BUILDDIR)/image-libs-package-stamp: $(BUILDDIR)/image-dev-uninstall-stamp
+	@echo "$(COLOUR_GREEN)Packaging image-libs-$(CHIP_FAMILY) for $(BOARD)$(END_COLOUR)"
+	@$(eval IMAGE_LIBS_PACKAGE_DIR=$(BUILDDIR)/package/image-libs-$(BOARD)-$(VARIANT)-$(BSPVERSION))
+	@$(eval IMAGE_LIBS_DEPENDS=$(shell cat $(BUILDDIR)/image-libs-$(BOARD) | sort | uniq | tr '\n' ' '))
+	@$(eval _IMAGE_LIBS_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(IMAGE_LIBS_DEPENDS))))
+	@mkdir -p $(IMAGE_LIBS_PACKAGE_DIR)
+	@cp -r /builder/deb/board-support-sg200x/* $(IMAGE_LIBS_PACKAGE_DIR)/
+	@mkdir -pv $(IMAGE_LIBS_PACKAGE_DIR)/usr/share/doc/image-libs-$(BOARD)-$(VARIANT)/
+	@echo "meta package" > $(IMAGE_LIBS_PACKAGE_DIR)/usr/share/doc/image-libs-$(BOARD)-$(VARIANT)/README
+	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Version: 1.0.0-1/Version: $(BSPVERSION)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: board-support-sg200x/Package: image-libs-$(BOARD)-$(VARIANT)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Depends: .*/Depends: $(_IMAGE_LIBS_DEPENDS)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i '/Recommends: .*/d' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CVITEK/$(CHIP_VENDOR)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CV18xx and SG200X/$(CHIP)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/cv181x/$(CHIP)/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Board support/Image libs/' $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/control
+	@rm -f $(IMAGE_LIBS_PACKAGE_DIR)/DEBIAN/postinst
+	@cd $(BUILDDIR)/package/ && dpkg-deb --build image-libs-$(BOARD)-$(VARIANT)-$(BSPVERSION) image-libs-$(BOARD)-$(VARIANT)_$(BSPVERSION)_$(DEB_ARCH).deb
+	@cp $(BUILDDIR)/package/image-libs-$(BOARD)-$(VARIANT)_$(BSPVERSION)_$(DEB_ARCH).deb /output/
+	@mkdir -p /rootfs/tmp/install/
+	@cp /output/image-libs-$(BOARD)-$(VARIANT)*.deb /rootfs/tmp/install/
+	@touch $@
+
+$(BUILDDIR)/image-dev-package-stamp: $(BUILDDIR)/image-dev-uninstall-stamp $(BUILDDIR)/image-libs-package-stamp
+	@echo "$(COLOUR_GREEN)Packaging image-dev-$(CHIP_FAMILY) for $(BOARD)$(END_COLOUR)"
+	@$(eval IMAGE_DEV_PACKAGE_DIR=$(BUILDDIR)/package/image-dev-$(BOARD)-$(VARIANT)-$(BSPVERSION))
+	@$(eval IMAGE_DEV_DEPENDS=$(shell cat $(BUILDDIR)/image-dev-$(BOARD) | sort | uniq | tr '\n' ' '))
+	@$(eval _IMAGE_DEV_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(IMAGE_DEV_DEPENDS))))
+	@mkdir -p $(IMAGE_DEV_PACKAGE_DIR)
+	@cp -r /builder/deb/board-support-sg200x/* $(IMAGE_DEV_PACKAGE_DIR)/
+	@mkdir -pv $(IMAGE_DEV_PACKAGE_DIR)/usr/share/doc/image-dev-$(BOARD)-$(VARIANT)/
+	@echo "meta package" > $(IMAGE_DEV_PACKAGE_DIR)/usr/share/doc/image-dev-$(BOARD)-$(VARIANT)/README
+	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Version: 1.0.0-1/Version: $(BSPVERSION)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: board-support-sg200x/Package: image-dev-$(BOARD)-$(VARIANT)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Depends: .*/Depends: $(_IMAGE_DEV_DEPENDS)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i '/Recommends: .*/d' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CVITEK/$(CHIP_VENDOR)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CV18xx and SG200X/$(CHIP)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/cv181x/$(CHIP)/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Board support/Image development/' $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@rm -f $(IMAGE_DEV_PACKAGE_DIR)/DEBIAN/postinst
+	@cd $(BUILDDIR)/package/ && dpkg-deb --build image-dev-$(BOARD)-$(VARIANT)-$(BSPVERSION) image-dev-$(BOARD)-$(VARIANT)_$(BSPVERSION)_$(DEB_ARCH).deb
+	@cp $(BUILDDIR)/package/image-dev-$(BOARD)-$(VARIANT)_$(BSPVERSION)_$(DEB_ARCH).deb /output/
+	@#mkdir -p /rootfs/tmp/install/
+	@#cp /output/image-dev-$(BOARD)-$(VARIANT)*.deb /rootfs/tmp/install/
+	@touch $@
+
+$(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp $(BUILDDIR)/image-dev-package-stamp
 	@echo "$(COLOUR_GREEN)Compiling Image for $(BOARD)$(END_COLOUR)"
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf $(BR_DIR)/dl
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf $(BR_OUTPUT_DIR)/per-package
@@ -713,7 +817,7 @@ $(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp
 	@[ "$(GIT_REF)" = "develop" ] || rm -rf /host-tools/gcc/
 	@rm -rf /tmp/genimage/
 	@mkdir -p $(BUILDDIR)/input/
-	@cp -p $(BSP_INSTALL_DIR)/$(STORAGE_TYPE).img $(BUILDDIR)/input/
+	@[ ! -e $(BSP_INSTALL_DIR)/$(STORAGE_TYPE).img ] || cp -p $(BSP_INSTALL_DIR)/$(STORAGE_TYPE).img $(BUILDDIR)/input/
 	@cd $(BUILDDIR) && genimage --config /configs/chip/$(CHIP_FAMILY)/genimage_$(STORAGE_TYPE).cfg --tmppath /tmp/genimage --rootpath /rootfs/
 	@rm -rf /tmp/genimage/
 	@lz4 -9 -f $(BUILDDIR)/images/sdcard.img /output/$(BOARD)_$(STORAGE_TYPE).img.lz4
@@ -731,7 +835,7 @@ $(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp
 		cp -p $(BSP_INSTALL_DIR)/kernel.img /tmp/rom/boot/ ; \
 		cp -p $(BSP_INSTALL_DIR)/uboot.bin /tmp/rom/boot/ ; \
 		touch /tmp/rom/boot/rec ; \
-		cd $(BUILDDIR) && genimage --config /configs/chip/$(CHIP_FAMILY)/genimage_sd.cfg --tmppath /tmp/genimage --rootpath /tmp/rom/ ; \
+		cd $(BUILDDIR) && genimage --config /configs/chip/$(CHIP_FAMILY)/genimage_sdcard.cfg --tmppath /tmp/genimage --rootpath /tmp/rom/ ; \
 		mv $(BUILDDIR)/images/sdcard.img $(BUILDDIR)/images/$(BOARD)_sdcard.img ; \
 		echo "Image Version: $(GIT_REF)" > $(BUILDDIR)/images/README.md ; \
 		echo "App Version: $(IMAGE_APP_VERSION)" >> $(BUILDDIR)/images/README.md ; \

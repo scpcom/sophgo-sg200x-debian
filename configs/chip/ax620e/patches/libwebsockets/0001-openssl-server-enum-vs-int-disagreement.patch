@@ -1,0 +1,33 @@
+From db5fcc28567b300f7ec4228f1fe5890c44d188a0 Mon Sep 17 00:00:00 2001
+From: Andy Green <andy@warmcat.com>
+Date: Wed, 14 Jun 2023 07:14:23 +0100
+Subject: [PATCH] openssl-server: enum vs int disagreement
+
+https://github.com/warmcat/libwebsockets/issues/2907
+---
+ lib/tls/openssl/openssl-server.c | 4 ++--
+ 1 file changed, 2 insertions(+), 2 deletions(-)
+
+diff --git a/lib/tls/openssl/openssl-server.c b/lib/tls/openssl/openssl-server.c
+index 4e0c380e..7ac3a3f0 100644
+--- a/lib/tls/openssl/openssl-server.c
++++ b/lib/tls/openssl/openssl-server.c
+@@ -607,13 +607,13 @@ lws_tls_server_new_nonblocking(struct lws *wsi, lws_sockfd_type accept_fd)
+ 	return 0;
+ }
+ 
+-int
++enum lws_ssl_capable_status
+ lws_tls_server_abort_connection(struct lws *wsi)
+ {
+ 	SSL_shutdown(wsi->tls.ssl);
+ 	SSL_free(wsi->tls.ssl);
+ 
+-	return 0;
++	return LWS_SSL_CAPABLE_DONE;
+ }
+ 
+ enum lws_ssl_capable_status
+-- 
+2.34.1
+

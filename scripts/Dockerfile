@@ -16,7 +16,7 @@ RUN apt-get update \
         libtool mmdebstrap openssl parted tcl \
         patchutils python3 python3-dev  \
         python-is-python3 python3-jinja2 pkg-config xxd \
-        python3-setuptools  swig gnupg \
+        python3-setuptools python3-yaml swig gnupg \
         systemd-container texinfo zlib1g-dev wget arch-test \
         genimage joe lz4 lzip mc unzip zip zstd \
         fakeroot git kernel-wedge quilt ccache cmake flex bison \

@@ -5,9 +5,18 @@ cleanupramdisk=false
 [ -e host-tools ] || cleanuphosttools=true
 [ -e ramdisk ] || cleanupramdisk=true
 
-for f in ./scripts/replace-all-*toolchains.sh ; do
-  $f
-done
+#for f in ./scripts/replace-all-*toolchains.sh ; do
+#  $f
+#done
+
+tcver=6.3 ./scripts/replace-all-linaro-toolchains.sh
+tcver=7.5 ./scripts/replace-all-linaro-toolchains.sh
+tcver=9.2 ./scripts/replace-all-arm-a-toolchains.sh
+tcver=10.3 ./scripts/replace-all-arm-a-toolchains.sh
+tcver=11.3.rel1 ./scripts/replace-all-arm-toolchains.sh
+tcver=12.2.rel1 ./scripts/replace-all-arm-toolchains.sh
+tcver=2.6.1 ./scripts/replace-all-thead-toolchains.sh
+tcver=2.10.2 ./scripts/replace-all-thead-toolchains.sh
 
 [ $cleanuphosttools = false ] || rm -rf host-tools
 [ $cleanupramdisk = false ] || rm -rf ramdisk

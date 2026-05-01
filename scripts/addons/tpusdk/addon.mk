@@ -57,7 +57,7 @@ $(BUILDDIR)/tpusdk-prepare-clone-stamp:
 	@echo "$(COLOUR_GREEN)Cloning TPU SDK for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b develop $(GIT_CLONE_OPTS) --shallow-submodules $(GIT_USER_URL)/LicheeSG-Nano-Build.git $(BUILDDIR)/tpusdk
-	@cd $(BUILDDIR)/tpusdk && git checkout df4ccf2
+	@cd $(BUILDDIR)/tpusdk && git checkout 30de475
 	@cd $(BUILDDIR)/tpusdk && git rm -r buildroot freertos fsbl isp_tuning linux_5.10 middleware opensbi osdrv ramdisk u-boot-2021.10
 	@touch $@
 
@@ -77,6 +77,9 @@ $(BUILDDIR)/tpusdk-prepare-checkout-stamp: $(BUILDDIR)/tpusdk-prepare-clone-stam
 	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://github.com/google/googletest|GIT_REPOSITORY $(GIT_USER_URL)/googletest|g' tdl_sdk/cmake/thirdparty.cmake
 	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://github.com/nothings/stb|GIT_REPOSITORY $(GIT_USER_URL)/stb|g' tdl_sdk/cmake/thirdparty.cmake
 	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://gitlab.com/libeigen/eigen|GIT_REPOSITORY $(GIT_USER_URL)/eigen|g' tdl_sdk/cmake/thirdparty.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://github.com/nlohmann/json|GIT_REPOSITORY $(GIT_USER_URL)/json|g' tdl_sdk/cmake/thirdparty.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://github.com/scpcom/kissfft|GIT_REPOSITORY $(GIT_USER_URL)/kissfft|g' tdl_sdk/cmake/thirdparty.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|GIT_REPOSITORY https://github.com/scpcom/kaldi-native-fbank|GIT_REPOSITORY $(GIT_USER_URL)/kaldi-native-fbank|g' tdl_sdk/cmake/thirdparty.cmake
 	@touch $@
 
 $(BUILDDIR)/tpusdk-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/tpusdk-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp

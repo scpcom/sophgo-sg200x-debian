@@ -2,20 +2,23 @@ ifneq ("$(findstring maixcam2-python3,$(IMAGE_ADDITIONS))","")
 BSPFILTER += "maixcam2-python3"
 endif
 
+MAIXCAM2_PYTHON3_PACKAGE_NAME = maixcam2-python3
+
 MAIXCAM2_PYTHON3_SHA256 = a37165fddf7401b3932b94a10e9cbb166d9ee825e34e23a27de2dadcacce411a
 MAIXCAM2_PYTHON3_VERSION = 3.13.2
+MAIXCAM2_PYTHON3_BUILD = 1
 
 MAIXCAM2_PYTHON3_BASE_URL = $(GIT_RELEASES_URL)/sipeed/MaixCDK/releases/download/v0.0.0
 MAIXCAM2_PYTHON3_FILENAME = python3.13.2_maixcam2_gcc11.4.0.tar.xz
+
+MAIXCAM2_PYTHON3_PACKAGE_DIR = $(BUILDDIR)/package/$(MAIXCAM2_PYTHON3_PACKAGE_NAME)-$(MAIXCAM2_PYTHON3_VERSION)
 
 MAIXCAM2_PYTHON3_SITE_PACKAGES = /usr/local/lib/python3.13/site-packages
 MAIXCAM2_PYTHON3_SHARE_DIR = /usr/local/share/$(MAIXCAM2_PYTHON3_PACKAGE_NAME)
 
 $(BUILDDIR)/maixcam2-python3-stamp:
 	@echo "$(COLOUR_GREEN)Packaging maixcam2-python3 for $(BOARD)$(END_COLOUR)"
-	@$(eval MAIXCAM2_PYTHON3_PACKAGE_NAME=maixcam2-python3)
-	@$(eval MAIXCAM2_PYTHON3_PACKAGE_DIR=$(BUILDDIR)/package/$(MAIXCAM2_PYTHON3_PACKAGE_NAME)-$(MAIXCAM2_PYTHON3_VERSION))
-	@$(eval PV=-1)
+	@$(eval PV=-$(MAIXCAM2_PYTHON3_BUILD))
 	@mkdir -p $(BUILDDIR)/maixcam2-python3
 	@cd $(BUILDDIR)/maixcam2-python3 ; wget -N "$(MAIXCAM2_PYTHON3_BASE_URL)/$(MAIXCAM2_PYTHON3_FILENAME)"
 	@if [ "`sha256sum "$(BUILDDIR)/maixcam2-python3/$(MAIXCAM2_PYTHON3_FILENAME)" | cut -d ' ' -f 1`" != "$(MAIXCAM2_PYTHON3_SHA256)" ]; then \

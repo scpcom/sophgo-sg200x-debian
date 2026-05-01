@@ -10,12 +10,16 @@ cd $d ; d=`pwd` ; cd - > /dev/null
 # 3. Download or copy the archives to the host folder
 tcurl=$1
 
-tcver=2.10.2
-tcdat=20241206
+[ "X${tcver}" != "X" ] || tcver=2.10.2
+[ "X${tcdat}" != "X" -o "X${tcver}" != "X2.6.1" ] || tcdat=20230307
+[ "X${tcdat}" != "X" -o "X${tcver}" != "X2.8.1" ] || tcdat=20240502
+[ "X${tcdat}" != "X" -o "X${tcver}" != "X2.10.2" ] || tcdat=20241206
 
 harch=`uname -m`
 
-gcver=10.4.0
+[ "X${gcver}" != "X" -o "X${tcver}" != "X2.6.1" ] || gcver=10.2.0
+[ "X${gcver}" != "X" -o "X${tcver}" != "X2.8.1" ] || gcver=10.4.0
+[ "X${gcver}" != "X" -o "X${tcver}" != "X2.10.2" ] || gcver=10.4.0
 gctgts="riscv64-linux
 riscv64-linux-musl
 riscv64-elf"

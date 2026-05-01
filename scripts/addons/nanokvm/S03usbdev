@@ -94,7 +94,6 @@ start_usb_dev(){
         ln -s functions/hid.GS2 configs/c.1
     fi
 
-    # dedicated for media
     if [ -e /boot/usb.disk0 ]
     then
             mkdir functions/mass_storage.disk0
@@ -107,19 +106,23 @@ start_usb_dev(){
             fi
             echo "NanoKVM USB Mass Storage0520" > functions/mass_storage.disk0/lun.0/inquiry_string
             disk=$(cat /boot/usb.disk0)
-            if [ -z "${disk}" ]
+            if [ -e /boot/usb.disk0.cdrom ]
             then
-                    echo "" > functions/mass_storage.disk0/lun.0/file
+                    echo "NanoKVM USB CD/DVD-ROM  0520" > functions/mass_storage.disk0/lun.0/inquiry_string
+                    echo 1 > functions/mass_storage.disk0/lun.0/ro
+                    echo 1 > functions/mass_storage.disk0/lun.0/cdrom
+                    cat /boot/usb.disk0.cdrom > functions/mass_storage.disk0/lun.0/file
+            elif [ -z "${disk}" ]
+            then
+                    # if [ ! -e /mnt/usbdisk.img ]
+                    # then
+                    #         fallocate -l 8G /mnt/usbdisk.img
+                    #         mkfs.vfat /mnt/usbdisk.img
+                    # fi
+                    echo /dev/mmcblk0p3 > functions/mass_storage.disk0/lun.0/file
             else
                     cat /boot/usb.disk0 > functions/mass_storage.disk0/lun.0/file
             fi
-    fi
-
-    # mount data partition
-    if [ -e /boot/usb.disk1 ]; then
-        mkdir functions/mass_storage.disk1
-        ln -s functions/mass_storage.disk1 configs/c.1/
-        echo /dev/mmcblk0p3 > functions/mass_storage.disk1/lun.0/file
     fi
 
     if [ ! -e /boot/udc.disable ]; then

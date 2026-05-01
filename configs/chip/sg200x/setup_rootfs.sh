@@ -10,27 +10,14 @@ HOSTNAME=$(cat /tmp/install/hostname)
 STORAGETYPE=$(cat /tmp/install/storage)
 
 
-export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
 export LC_ALL=C LANGUAGE=C LANG=C
 
-/var/lib/dpkg/info/base-passwd.preinst install || true
-/var/lib/dpkg/info/sgml-base.preinst install || true
-
-mkdir -p /etc/sgml
 mount proc -t proc /proc
 mount -B sys /sys
 mount -B run /run
 mount -B dev /dev
 #mount devpts -t devpts /dev/pts
-dpkg --configure -a
 
-for p in libnetplan1 netplan-generator python3-netplan networkd-dispatcher systemd-resolved ; do
-  if dpkg -s $p | grep -q '^Version: ' ; then
-    apt-get remove -y --purge $p
-  fi
-done
-
-unset DEBIAN_FRONTEND DEBCONF_NONINTERACTIVE_SEEN
 
 #
 # Change root password to 'rv'
@@ -168,9 +155,6 @@ cat >> /etc/systemd/journald.conf <<EOJ
 RuntimeMaxUse=16M
 RuntimeMaxFileSize=2M
 EOJ
-
-apt-get update
-apt-get install -y chrony
 
 
 #

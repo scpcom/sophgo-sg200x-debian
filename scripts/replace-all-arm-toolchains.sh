@@ -5,13 +5,13 @@ cd $d ; d=`pwd` ; cd - > /dev/null
 tcurl=$1
 [ "X${tcurl}" = "X" ] && tcurl=https://developer.arm.com/-/media/Files/downloads/gnu
 
-tcver=12.2.rel1
-tcdat=2022.12
+[ "X${tcver}" != "X" ] || tcver=12.2.rel1
+[ "X${tcdat}" != "X" -o "X${tcver}" != "X12.2.rel1" ] || tcdat=2022.12
 
 harch=`uname -m`
 
-gcver=12.2.rel1
-lcver=2.23
+gcver=${tcver}
+lcver=2.35
 gctgts="arm-none-linux-gnueabihf
 aarch64-none-linux-gnu
 aarch64-none-elf"

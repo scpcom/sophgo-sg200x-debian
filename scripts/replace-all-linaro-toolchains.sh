@@ -5,13 +5,16 @@ cd $d ; d=`pwd` ; cd - > /dev/null
 tcurl=$1
 [ "X${tcurl}" = "X" ] && tcurl=https://releases.linaro.org/components/toolchain/binaries
 
-tcver=6.3
-tcdat=2017.05
+[ "X${tcver}" != "X" ] || tcver=6.3
+[ "X${tcdat}" != "X" -o "X${tcver}" != "X6.3"  ] || tcdat=2017.05
+[ "X${tcdat}" != "X" -o "X${tcver}" != "X7.5"  ] || tcdat=2019.12
 
 harch=`uname -m`
 
-gcver=6.3.1
-lcver=2.23
+[ "X${gcver}" != "X" -o "X${tcver}" != "X6.3"  ] || gcver=6.3.1
+[ "X${lcver}" != "X" -o "X${tcver}" != "X6.3"  ] || lcver=2.23
+[ "X${gcver}" != "X" -o "X${tcver}" != "X7.5"  ] || gcver=7.5.0
+[ "X${lcver}" != "X" -o "X${tcver}" != "X7.5"  ] || lcver=2.25
 gctgts="arm-linux-gnueabihf
 aarch64-linux-gnu
 aarch64-elf"

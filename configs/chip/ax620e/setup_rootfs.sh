@@ -10,27 +10,14 @@ HOSTNAME=$(cat /tmp/install/hostname)
 STORAGETYPE=$(cat /tmp/install/storage)
 
 
-export DEBIAN_FRONTEND=noninteractive DEBCONF_NONINTERACTIVE_SEEN=true
 export LC_ALL=C LANGUAGE=C LANG=C
 
-/var/lib/dpkg/info/base-passwd.preinst install || true
-/var/lib/dpkg/info/sgml-base.preinst install || true
-
-mkdir -p /etc/sgml
 mount proc -t proc /proc
 mount -B sys /sys
 mount -B run /run
 mount -B dev /dev
 #mount devpts -t devpts /dev/pts
-dpkg --configure -a
 
-for p in libnetplan1 netplan-generator python3-netplan networkd-dispatcher systemd-resolved ; do
-  if dpkg -s $p | grep -q '^Version: ' ; then
-    apt-get remove -y --purge $p
-  fi
-done
-
-unset DEBIAN_FRONTEND DEBCONF_NONINTERACTIVE_SEEN
 
 #
 # Change root password
@@ -59,8 +46,14 @@ usermod --password "$(echo $password | openssl passwd -1 -stdin)" debian || true
 
 # Set up fstab
 cat > /etc/fstab <<EOF
-# <file system> <mount point>   <type>  <options>                 <dump>  <pass>
-/dev/root       /               auto    defaults                  1       1
+# <file system>	<mount pt>	<type>	<options>	<dump>	<pass>
+/dev/root	/		ext4	rw,noatime,nodiratime,errors=remount-ro	0	1
+proc		/proc		proc	defaults	0	0
+devpts		/dev/pts	devpts	defaults,gid=5,mode=620,ptmxmode=0666	0	0
+tmpfs		/dev/shm	tmpfs	mode=1777,nosuid,nodev	0	0
+tmpfs		/tmp		tmpfs	mode=1777,nosuid,nodev	0	0
+tmpfs		/run		tmpfs	mode=0755,nosuid,nodev	0	0
+sysfs		/sys		sysfs	defaults	0	0
 EOF
 
 if [ "$STORAGETYPE" = "sd" ]; then
@@ -70,15 +63,7 @@ EOF
 fi
 
 if [ "$STORAGETYPE" = "emmc" ]; then
-cat > /etc/fstab <<EOF
-# <file system>	<mount pt>	<type>	<options>	<dump>	<pass>
-/dev/root	/		ext4	rw,noatime,nodiratime,errors=remount-ro	0	1
-proc		/proc		proc	defaults	0	0
-devpts		/dev/pts	devpts	defaults,gid=5,mode=620,ptmxmode=0666	0	0
-tmpfs		/dev/shm	tmpfs	mode=1777,nosuid,nodev	0	0
-tmpfs		/tmp		tmpfs	mode=1777,nosuid,nodev	0	0
-tmpfs		/run		tmpfs	mode=0755,nosuid,nodev	0	0
-sysfs		/sys		sysfs	defaults	0	0
+  cat >> /etc/fstab <<EOF
 /dev/mmcblk0p16	/boot	vfat	defaults,umask=000,utf8=true	0	0
 EOF
 fi
@@ -148,10 +133,16 @@ fi
 kernel_image=${lib_dir##*/}
 
 # set default dtb file, please verify your board version
-mkdir -p /boot/fdt/${kernel_image}/${CHIP_VENDOR}
+mkdir -p /boot/fdt/${kernel_image}
 
-cp ${lib_dir}/${CHIP_VENDOR}/*.dtb /boot/fdt/${kernel_image}/${CHIP_VENDOR}/
-
+if [ -e ${lib_dir}/${CHIP_VENDOR} ]; then
+  mkdir -p /boot/fdt/${kernel_image}/${CHIP_VENDOR}
+  cp ${lib_dir}/${CHIP_VENDOR}/*.dtb /boot/fdt/${kernel_image}/${CHIP_VENDOR}/
+elif [ "${CHIP_VENDOR}" = "axera" ]; then
+  cp ${lib_dir}/AX6*.dtb /boot/fdt/${kernel_image}/
+else
+  cp ${lib_dir}/*.dtb /boot/fdt/${kernel_image}/
+fi
 
 cat /boot/extlinux/extlinux.conf
 
@@ -209,9 +200,6 @@ cat >> /etc/systemd/journald.conf <<EOJ
 RuntimeMaxUse=16M
 RuntimeMaxFileSize=2M
 EOJ
-
-apt-get update
-export DEBIAN_FRONTEND=noninteractive ; apt-get install -o Dpkg::Options::="--force-confdef" -o Dpkg::Options::="--force-confold" --force-yes -y chrony
 
 
 #

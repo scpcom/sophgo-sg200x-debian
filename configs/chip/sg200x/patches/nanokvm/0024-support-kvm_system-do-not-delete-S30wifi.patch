@@ -18,8 +18,8 @@ index 9b17d51..6648a8c 100644
 -	} else {
 -		system("rm -f /etc/init.d/S30wifi");
  	}
- 
- 	// rmmod soph_saradc
+ 	
+ 	// if exit /etc/init.d/S98tailscaled then cp -f /kvmapp/system/init.d/S98tailscaled /etc/init.d/
 -- 
 2.34.1
 

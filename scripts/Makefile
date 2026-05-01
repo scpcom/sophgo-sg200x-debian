@@ -45,7 +45,11 @@ KERNEL_ARCH = arm64
 UBOOT_ARCH = arm
 QEMU_ARCH = aarch64
 else ifeq ($(DEB_ARCH),armhf)
+ifeq ($(BOOT_CPU),aarch64)
 KERNEL_ARCH ?= arm64
+else
+KERNEL_ARCH ?= arm
+endif
 UBOOT_ARCH = arm
 QEMU_ARCH = arm
 else
