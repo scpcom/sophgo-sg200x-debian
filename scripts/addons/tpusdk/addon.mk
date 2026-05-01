@@ -45,13 +45,9 @@ cviruntime/scripts/toolchain.cmake \
 cviruntime/scripts/toolchain-riscv64-linux-musl-x86_64_legacy.cmake \
 cviruntime/scripts/toolchain-riscv64-linux-musl-x86_64.cmake \
 cviruntime/scripts/toolchain-riscv64-linux-x86_64.cmake \
-oss/run_build.sh \
 cvi_rtsp/Makefile.inc \
-tdl_sdk/lib/sample/Makefile \
-tdl_sdk/sample/Makefile \
-tdl_sdk/toolchain/toolchain-riscv64-linux.cmake \
-tdl_sdk/toolchain/toolchain-riscv64-musl.cmake \
-tdl_sdk/modules/app/Makefile
+tdl_sdk/toolchain/riscv64-unknown-linux-gnu.cmake \
+tdl_sdk/toolchain/riscv64-unknown-linux-musl.cmake
 
 $(BUILDDIR)/tpusdk-prepare-clone-stamp:
 	@echo "$(COLOUR_GREEN)Cloning TPU SDK for $(BOARD)$(END_COLOUR)"
