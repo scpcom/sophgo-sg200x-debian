@@ -125,6 +125,11 @@ for f in */.git ; do
       do_pull_push $x $u $s
     done
     git checkout $b
+  elif echo $d | grep -q -E '^ade$' ; then
+    for x in 3rd-4.5 master ; do
+      do_pull_push $x $u $s
+    done
+    git checkout $b
   elif echo $d | grep -q -E '^opensbi$' ; then
     for x in licheervnano-cvisdk-1.2 licheervnano-0.9 ; do
       do_pull_push $x $u $s
@@ -196,6 +201,8 @@ for f in */.git ; do
     do_push_tags 'json-c-*'
   elif echo $d | grep -q -E '^miniz$' ; then
     do_push_tags '[0-9]\.*'
+  elif echo $d | grep -q -E '^ade' ; then
+    do_push_tags 'v0\.*'
   elif echo $d | grep -q -E '^cvi_pinmux|^duo-pinmux$' ; then
     do_push_tags '[0-9]\.*'
   elif echo $d | grep -q -E '^capstone$' ; then

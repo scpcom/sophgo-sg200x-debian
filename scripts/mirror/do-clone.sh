@@ -78,6 +78,7 @@ git_subclone 3rdparty/json-c/json-c https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/js
 git_subclone 3rdparty/miniz/miniz https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/miniz -b 3rd
 git_subclone 3rdparty/zlib/zlib https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/zlib -b 3rd
 git_subclone 3rdparty/opencv/opencv https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/opencv -b 3rd
+git_subclone 3rdparty/opencv4.5/ade https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/ade -b 3rd-4.5
 #git_subclone 3rdparty/flatbuffers/flatbuffers https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/flatbuffers -b licheervnano-cvisdk
 git_subclone 3rdparty/nanomsg/nanomsg https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/nanomsg -b 3rd
 git_subclone 3rdparty/uv/uv https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/libuv -b 3rd
