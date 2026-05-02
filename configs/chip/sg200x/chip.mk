@@ -147,6 +147,8 @@ $(info $(blue)Packages: $(_PACKAGES)$(reset))
 
 NPROCS := $(shell nproc)
 
+$(info $(blue)Host Procs: $(NPROCS)$(reset))
+
 
 define update_dts_action
 	if [ "X$(findstring lichee,$(BOARD))" = "Xlichee" ]; then \
@@ -502,7 +504,7 @@ $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp: $(BUILDDIR)/buildroot-prepa
 
 $(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp
 	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout 67e7504
+	@cd $(BR_DIR) && git checkout 390f294
 	@touch $@
 
 $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
