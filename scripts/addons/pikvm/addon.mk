@@ -4,10 +4,10 @@ endif
 
 PIKVM_PACKAGES_GIT_REF = d660118d169e96075c33fb7ab90e0bc492c4064e
 PIKVM_JANUS_GATEWAY_GIT_REF = c1435cf670d422648edab7dd5f188f09f9df7fd5
-PIKVM_USTREAMER_GIT_REF = 48a9d00cab9e4ba1cc9357aad17d7382d9394ab6
+PIKVM_USTREAMER_GIT_REF = de6fe0399bee4974d240e24f35560e2afb194d69
 PIKVM_KVMD_GIT_REF = 8cc43887b430c5a982093afe3d14bd8b602c5fc2
 
-PIKVM_DEPENDS = $(BUILDDIR)/nanokvm-pro-package-prepare-stamp $(BUILDDIR)/python3-dev-install-stamp
+PIKVM_DEPENDS = $(BUILDDIR)/nanokvm-pro-package-prepare-stamp $(BUILDDIR)/python3-dev-install-stamp $(BUILDDIR)/tinyalsa-stamp
 
 ifneq ("$(findstring libgpiod,$(IMAGE_ADDITIONS))","")
 PIKVM_DEPENDS += $(BUILDDIR)/libgpiod-stamp
@@ -43,6 +43,8 @@ $(BUILDDIR)/pikvm-stamp: $(BUILDDIR)/middleware-package-stamp $(BUILDDIR)/pikvm-
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libgpiod-dev_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/gpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" -a "$(findstring maixcam2-python3,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs pip install gpiod==$(LIBGPIOD_VERSION)
+	@[ "$(findstring tinyalsa,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libtinyalsa2_$(TINYALSA_VERSION)-$(TINYALSA_BUILD)_$(DEB_ARCH).deb'
+	@[ "$(findstring tinyalsa,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libtinyalsa-dev_$(TINYALSA_VERSION)-$(TINYALSA_BUILD)_$(DEB_ARCH).deb'
 	@chroot /rootfs apt-get install -y libgpiod-dev
 	@chroot /rootfs bash -c 'cd /root/pikvm/ && DEB_ARCH=$(DEB_ARCH) bash -e pikvm-build.sh'
 	@umount /rootfs/proc || true

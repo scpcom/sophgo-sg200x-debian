@@ -13,7 +13,7 @@ STORAGE_TYPE=emmc
 VARIANT?=kvm
 
 PACKAGES += " certbot dnsmasq dos2unix hostapd ipmitool udhcpd v4l-utils wireless-regdb wpasupplicant zstd"
-PACKAGES += " build-essential libasound2-dev libbsd-dev libcjson-dev libconfig-dev libdbus-1-dev libdrm-dev libevent-dev libjpeg-dev libjson-c-dev libnice-dev libopus-dev libspeex-dev libspeexdsp-dev libsrtp2-dev libsystemd-dev libwebsockets-dev libxkbcommon-dev libx264-dev libyuv-dev nginx tesseract-ocr xz-utils"
+PACKAGES += " build-essential libasound2-dev libbsd-dev libcjson-dev libconfig-dev libdbus-1-dev libdrm-dev libevent-dev libjpeg-dev libjson-c-dev libnice-dev libopus-dev libsamplerate0-dev libspeex-dev libspeexdsp-dev libsrtp2-dev libsystemd-dev libwebsockets-dev libxkbcommon-dev libx264-dev libyuv-dev nginx tesseract-ocr xz-utils"
 DEV_PACKAGES += " autoconf autogen cmake debhelper git libfreetype-dev libglib2.0-dev libjansson-dev libldap-dev libsasl2-dev libssl-dev libtool"
 ifeq ("$(DEB_DISTRO)","trixie")
 PACKAGES += " python3-aiofiles python3-aiohttp python3-evdev python3-mako python3-netifaces python3-passlib python3-pil python3-psutil python3-pyghmi python3-pygments python3-pyotp python3-ruamel.yaml python3-serial python3-setproctitle python3-systemd python3-xlib python3-yaml python-is-python3"
@@ -44,6 +44,7 @@ DEV_PACKAGES += " libgpiod-dev"
 endif
 IMAGE_ADDITIONS += "opus"
 IMAGE_ADDITIONS += "python3-dev"
+IMAGE_ADDITIONS += "tinyalsa"
 IMAGE_ADDITIONS += "pikvm"
 IMAGE_ADDITIONS += "nanokvm-pro"
 #else
