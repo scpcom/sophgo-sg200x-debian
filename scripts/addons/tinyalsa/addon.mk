@@ -1,5 +1,6 @@
 ifneq ("$(findstring tinyalsa,$(IMAGE_ADDITIONS))","")
 BSPFILTER += "tinyalsa"
+DEV_PACKAGES += " doxygen"
 endif
 
 TINYALSA_VERSION = 2.0.0
@@ -25,7 +26,7 @@ $(BUILDDIR)/tinyalsa-prepare-stamp:
 
 $(BUILDDIR)/tinyalsa-stamp: $(BUILDDIR)/tinyalsa-prepare-stamp
 	@#chroot /rootfs apt-get update || true
-	@chroot /rootfs apt-get install -y debhelper doxygen graphviz
+	@chroot /rootfs apt-get install -y debhelper doxygen # graphviz
 	@chroot /rootfs bash -c 'cd /root/source-tinyalsa/tinyalsa-$(TINYALSA_VERSION)/ && dpkg-buildpackage'
 	@rm -rf /rootfs/root/source-tinyalsa/tinyalsa-$(TINYALSA_VERSION)/
 	@cp -p /rootfs/root/source-tinyalsa/libtinyalsa2_$(TINYALSA_VERSION)-$(TINYALSA_BUILD)_$(DEB_ARCH).deb /output/

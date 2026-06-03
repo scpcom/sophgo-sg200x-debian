@@ -1,0 +1,20 @@
+diff --git a/test/test_examples/test_cases.sh b/test/test_examples/test_cases.sh
+index 798c74a..22eed5b 100755
+--- a/test/test_examples/test_cases.sh
++++ b/test/test_examples/test_cases.sh
+@@ -19,11 +19,15 @@ function test_script()
+     echo "-- Test [$1] Start --"
+     echo "--------------------------------"
+     set -x
++    if [ ! -e ../stamps/$1.done ]; then
+     cd $1
+     maixcdk distclean
+     maixcdk build -p $platform
+     $run_cmd
+     cd ..
++    mkdir -p ../stamps
++    touch ../stamps/$1.done
++    fi
+     set +x
+     echo "--------------------------------"
+     echo "-- Test [$1] End --"

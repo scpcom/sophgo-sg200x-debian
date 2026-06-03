@@ -61,6 +61,8 @@ FSBL_TARGETS += $(patsubst %,$(BUILDDIR)/fsbl-%.package-stamp,$(PANEL_TUNING_EXT
 endif
 endif
 
+MIDDLEWARE_TARGET_DIR=/opt
+
 BSPDEPENDS = $(CHIP_VENDOR)-middleware-$(BOARD)\
  $(CHIP_VENDOR)-osdrv-$(BOARD)-$(VARIANT)\
  $(CHIP_VENDOR)-bsp-$(BOARD)-$(VARIANT)\
@@ -284,8 +286,8 @@ $(BUILDDIR)/middleware-prepare-configure-stamp: $(BUILDDIR)/middleware-prepare-p
 
 $(BUILDDIR)/middleware-compile-stamp: $(BUILDDIR)/middleware-prepare-configure-stamp
 	@echo "$(COLOUR_GREEN)Building Middleware for $(BOARD)$(END_COLOUR)"
-	@mkdir -pv $(BUILDDIR)/middleware/install/system/lib/
-	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/lib/*.so* $(BUILDDIR)/middleware/install/system/lib/
+	@mkdir -pv $(BUILDDIR)/middleware/install/system/usr/lib/
+	@cp -p $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/lib/*.so* $(BUILDDIR)/middleware/install/system/usr/lib/
 	@touch $@
 
 $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
@@ -293,21 +295,36 @@ $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
 	@echo "$(COLOUR_GREEN)Packaging Middleware for $(BOARD)$(END_COLOUR)"
 	@rm -rf $(BUILDDIR)/middleware/3rdparty/tmp/
 	@$(eval MV=$(shell cd $(BUILDDIR)/middleware && git log -1 --format="%at" | xargs -I{} date -d @{} +-%Y%m%d-${KERNELREV}))
-	@$(eval MIDDLEWARE_PACKAGE_DIR=$(BUILDDIR)/package/$(CHIP_VENDOR)-middleware-$(BOARD)-$(MIDDLEWAREVERSION))
-	@$(eval MIDDLEWARE_TARGET_DIR=/opt)
+	@$(eval MIDDLEWARE_PACKAGE_NAME=$(CHIP_VENDOR)-middleware-$(BOARD))
+	@$(eval MIDDLEWARE_PACKAGE_DIR=$(BUILDDIR)/package/$(MIDDLEWARE_PACKAGE_NAME)-$(MIDDLEWAREVERSION))
 	@mkdir -p $(MIDDLEWARE_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_PACKAGE_DIR)/
 	@mkdir -pv $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
-	@rsync -avpPxH $(BUILDDIR)/middleware/install/system/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rsync -avpPxH $(BUILDDIR)/middleware/install/system/usr/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
-	@sed -i 's/Package: cvitek-middleware/Package: $(CHIP_VENDOR)-middleware-$(BOARD)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_PACKAGE_NAME)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/CVITEK/$(CHIP_VENDOR)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/CV18xx and SG200X/$(CHIP)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/cv181x/$(CHIP)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/RISC-V/$(ARCH_NAME)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
-	@cd $(BUILDDIR)/package/ && dpkg-deb --build $(CHIP_VENDOR)-middleware-$(BOARD)-$(MIDDLEWAREVERSION) $(CHIP_VENDOR)-middleware-$(BOARD)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb
-	@cp $(BUILDDIR)/package/$(CHIP_VENDOR)-middleware-$(BOARD)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb /output/
+	@cd $(BUILDDIR)/package/ && dpkg-deb --build $(MIDDLEWARE_PACKAGE_NAME)-$(MIDDLEWAREVERSION) $(MIDDLEWARE_PACKAGE_NAME)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb
+	@cp $(BUILDDIR)/package/$(MIDDLEWARE_PACKAGE_NAME)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb /output/
+	@$(eval MIDDLEWARE_DEV_PACKAGE_NAME=$(CHIP_VENDOR)-middleware-dev-$(BOARD))
+	@$(eval MIDDLEWARE_DEV_PACKAGE_DIR=$(BUILDDIR)/package/$(MIDDLEWARE_DEV_PACKAGE_NAME)-$(MIDDLEWAREVERSION))
+	@mkdir -p $(MIDDLEWARE_DEV_PACKAGE_DIR)
+	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_DEV_PACKAGE_DIR)/
+	@mkdir -pv $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rsync -avpPxH $(BUILDDIR)/bsp/axerabin/$(CHIP)/rootfs/opt/include/ $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
+	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_DEV_PACKAGE_NAME)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CVITEK/$(CHIP_VENDOR)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/CV18xx and SG200X/$(CHIP)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/cv181x/$(CHIP)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/RISC-V/$(ARCH_NAME)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
+	@cd $(BUILDDIR)/package/ && dpkg-deb --build $(MIDDLEWARE_DEV_PACKAGE_NAME)-$(MIDDLEWAREVERSION) $(MIDDLEWARE_DEV_PACKAGE_NAME)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb
+	@cp $(BUILDDIR)/package/$(MIDDLEWARE_DEV_PACKAGE_NAME)_$(MIDDLEWAREVERSION)$(MV)_$(DEB_ARCH).deb /output/
 	@touch $@
 
 middleware: $(BUILDDIR)/middleware-package-stamp

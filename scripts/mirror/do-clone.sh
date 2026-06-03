@@ -96,6 +96,8 @@ git_subclone sdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/ireader-sdk -b maixcd
 git_subclone boringssl https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/boringssl -b main
 git_subclone pyca-cryptography https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/pyca-cryptography -b main
 git_subclone krb5 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/krb5 -b krb5-1.17
+git_subclone gost-engine https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/gost-engine -b master
+git_subclone wycheproof https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/wycheproof -b main
 
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/stb.git stb-src
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/googletest.git googletest-src
@@ -134,6 +136,13 @@ git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/libsrtp
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/plog
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/usrsctp
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/zxing-cpp
+
+git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/harfbuzz
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/marisa-trie
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/OpenCC opencc
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/quirc
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/rapidjson
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/uchardet
 
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/tinyalsa
 

@@ -1,0 +1,13 @@
+diff --git a/examples/nn_speech/main/src/main.cpp b/examples/nn_speech/main/src/main.cpp
+index 0d92c34..c20da2d 100644
+--- a/examples/nn_speech/main/src/main.cpp
++++ b/examples/nn_speech/main/src/main.cpp
+@@ -36,6 +36,8 @@ int _main(int argc, char* argv[])
+ {
+     nn::Speech speech("/root/models/am_3332_192_int8.mud");
+ 
++    time::sleep_ms(1);
++
+     speech.init(nn::SpeechDevice::DEVICE_MIC);                      // use mic device
+     // speech.init(nn::SpeechDevice::DEVICE_WAV, "test.wav");       // use wav file
+     // speech.init(nn::SpeechDevice::DEVICE_PCM, "test.pcm");       // use pcm file

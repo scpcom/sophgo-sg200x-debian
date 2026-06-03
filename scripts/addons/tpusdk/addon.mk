@@ -53,7 +53,7 @@ $(BUILDDIR)/tpusdk-prepare-clone-stamp:
 	@echo "$(COLOUR_GREEN)Cloning TPU SDK for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b develop $(GIT_CLONE_OPTS) --shallow-submodules $(GIT_USER_URL)/LicheeSG-Nano-Build.git $(BUILDDIR)/tpusdk
-	@cd $(BUILDDIR)/tpusdk && git checkout c8724af
+	@cd $(BUILDDIR)/tpusdk && git checkout 07cce30
 	@cd $(BUILDDIR)/tpusdk && git rm -r buildroot freertos fsbl isp_tuning linux_5.10 middleware opensbi osdrv ramdisk u-boot-2021.10
 	@touch $@
 

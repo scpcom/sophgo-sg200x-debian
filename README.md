@@ -174,6 +174,8 @@ Available debian packages:
  The boot loader (including opensbi and u-boot).
  - cvitek-middleware-licheervnano  
  Libs and samples for the ISP (vi/vo/venc/vdec etc.).
+ - cvitek-middleware-dev-licheervnano  
+ Headers for the ISP libs.
  - cvitek-osdrv-licheervnano-kvm  
  Additional kernel drivers (required for camera support etc.).
  - cvitek-tpusdk-licheervnano  

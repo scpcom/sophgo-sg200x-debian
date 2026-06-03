@@ -66,7 +66,7 @@ ethernet port in /etc/network/interfaces
 The images are based on the vendor 4.19 kernel and osdrv, also including the following drivers:
 - mipi-rx/csi drivers
 - mipi-tx/dsi drivers
-- TPU Drivers
+- NPU/TPU Drivers
 - Any of the Video Encoding Drivers
 
 The extra drivers are put on a separate package called axera-osdrv-(board), they will be installed to /soc/ko
@@ -96,7 +96,9 @@ Available debian packages:
  - axera-firmware-nanokvmpro  
  Signed u-boot, kernel and dtb.
  - axera-middleware-nanokvmpro  
- Libs and samples for the ISP (vi/vo/venc/vdec etc.).
+ Libs and samples for the ISP and NPU (vi/vo/venc/vdec etc.).
+ - axera-middleware-dev-nanokvmpro  
+ Headers for the ISP and NPU libs.
  - axera-osdrv-nanokvmpro-kvm  
  Additional kernel drivers (required for camera support etc.).
  - device-key-nanokvmpro  
@@ -109,6 +111,8 @@ Available debian packages:
  The kernel headers for the board.
  - linux-image-nanokvmpro-kvm  
  The kernel customized for the board.
+ - maixapp-maixcam2  
+ App(s) built with MaixCDK.
  - nanokvmpro  
  NanoKVM Server that provides the web interface to control your device.
  - pikvm  

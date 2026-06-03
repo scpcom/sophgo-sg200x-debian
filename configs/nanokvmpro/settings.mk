@@ -46,6 +46,8 @@ IMAGE_ADDITIONS += "opus"
 IMAGE_ADDITIONS += "python3-dev"
 IMAGE_ADDITIONS += "tinyalsa"
 IMAGE_ADDITIONS += "pikvm"
+IMAGE_ADDITIONS += "maixcdk"
+IMAGE_ADDITIONS += "maixapp"
 IMAGE_ADDITIONS += "nanokvm-pro"
 #else
 #IMAGE_ADDITIONS += "maixapp"

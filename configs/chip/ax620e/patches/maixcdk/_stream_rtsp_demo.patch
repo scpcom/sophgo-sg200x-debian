@@ -1,0 +1,56 @@
+diff --git a/examples/stream_rtsp_demo/main/src/main.cpp b/examples/stream_rtsp_demo/main/src/main.cpp
+index b5df785..18a5716 100644
+--- a/examples/stream_rtsp_demo/main/src/main.cpp
++++ b/examples/stream_rtsp_demo/main/src/main.cpp
+@@ -39,11 +39,14 @@ int _main(int argc, char* argv[])
+ 
+     camera::Camera cam = camera::Camera(cam_w, cam_h, cam_fmt, "", cam_fps, cam_buffer_num);
+     camera::Camera *cam2 = cam.add_channel(640, 480);
++#if 0
+     display::Display disp = display::Display();
++#endif
+     auto audio_recorder = audio::Recorder();
+     rtsp::Rtsp rtsp = rtsp::Rtsp();
+     rtsp.bind_camera(&cam);
+     rtsp.bind_audio_recorder(&audio_recorder);
++#if 1
+     rtsp::Region *region = rtsp.add_region(0, 0, 200, 100);
+     rtsp::Region *region3 = rtsp.add_region(400, 200, 200, 100);
+ 
+@@ -53,6 +56,7 @@ int _main(int argc, char* argv[])
+         rgn_img->draw_string(0, 0, "hello");
+         region3->update_canvas();
+     }
++#endif
+ 
+     log::info("url:%s", rtsp.get_url().c_str());
+     std::vector<std::string> url = rtsp.get_urls();
+@@ -76,12 +80,14 @@ int _main(int argc, char* argv[])
+             color = image::COLOR_BLUE;
+             cnt = 0;
+         }
++#if 1
+         rgn_img = region->get_canvas();
+         if (rgn_img) {
+             rgn_img->draw_rect(0, 0, rgn_img->width(), rgn_img->height(), color, -1);
+             region->update_canvas();
+             delete rgn_img;
+         }
++#endif
+ 
+         maix::image::Image *img = nullptr;
+         try {
+@@ -91,10 +97,12 @@ int _main(int argc, char* argv[])
+             continue;
+         }
+ 
++#if 0
+         disp.show(*img);
++#endif
+         delete img;
+         uint64_t curr_ms = time::ticks_ms();
+-        // log::info("loop use %lld ms\r\n", curr_ms - last_ms);
++        log::info("loop use %lld ms\r\n", curr_ms - last_ms);
+         last_ms = curr_ms;
+     }
+ 

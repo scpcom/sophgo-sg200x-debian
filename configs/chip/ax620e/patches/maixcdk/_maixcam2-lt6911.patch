@@ -1,0 +1,199 @@
+diff --git a/components/maixcam_lib/include/maixcam2/ax_middleware.hpp b/components/maixcam_lib/include/maixcam2/ax_middleware.hpp
+index 226a122..d1db3ba 100644
+--- a/components/maixcam_lib/include/maixcam2/ax_middleware.hpp
++++ b/components/maixcam_lib/include/maixcam2/ax_middleware.hpp
+@@ -513,6 +513,7 @@ namespace maix::middleware::maixcam2 {
+         SAMPLE_VIN_SINGLE_OS04D10 = 4,
+         SAMPLE_VIN_SINGLE_SC850SL_1080P60 = 5,
+         SAMPLE_VIN_SINGLE_OS04D10_720P60 = 6,
++        SAMPLE_VIN_SINGLE_LT6911 = 7,
+         SAMPLE_VIN_BUTT
+     } SAMPLE_VIN_CASE_E;
+ 
+@@ -588,6 +589,16 @@ namespace maix::middleware::maixcam2 {
+         .tCompressInfo = {AX_COMPRESS_MODE_LOSSY, 4},
+         .tFrameRateCtrl = {AX_INVALID_FRMRATE, AX_INVALID_FRMRATE},
+     };
++
++    // LT6911
++    static COMMON_SYS_POOL_CFG_T gtSysCommPoolSingleLt6911Sdr[] = {
++        {3840, 2400, 3840, AX_FORMAT_BAYER_RAW_16BPP, 6, AX_COMPRESS_MODE_NONE, 0},    /* vin nv21/nv21 use */
++        {3840, 2400, 3840, AX_FORMAT_YUV420_SEMIPLANAR, 6, AX_COMPRESS_MODE_NONE, 0},
++    };
++
++    static COMMON_SYS_POOL_CFG_T gtPrivatePoolSingleLt6911Sdr[] = {
++        {3840, 2400, 3840, AX_FORMAT_BAYER_RAW_16BPP, 8, AX_COMPRESS_MODE_NONE, 0},      /* vin raw16 use */
++    };
+ 
+     static AX_VOID __cal_dump_pool(COMMON_SYS_POOL_CFG_T pool[], AX_SNS_HDR_MODE_E eHdrMode, AX_S32 nFrameNum)
+     {
+@@ -987,6 +998,19 @@ namespace maix::middleware::maixcam2 {
+             /* cams config */
+             __sample_case_single_sc850sl_1080p60(pCamList, eSnsType, pVinParam, pCommonArgs);
+             break;
++        case SAMPLE_VIN_SINGLE_LT6911:
++            eSnsType = SAMPLE_SNS_LT6911;
++            /* pool config */
++            pCommonArgs->nPoolCfgCnt = sizeof(gtSysCommPoolSingleLt6911Sdr) / sizeof(gtSysCommPoolSingleLt6911Sdr[0]);
++            pCommonArgs->pPoolCfg = gtSysCommPoolSingleLt6911Sdr;
++
++            /* private pool config */
++            pPrivArgs->nPoolCfgCnt = sizeof(gtPrivatePoolSingleLt6911Sdr) / sizeof(gtPrivatePoolSingleLt6911Sdr[0]);
++            pPrivArgs->pPoolCfg = gtPrivatePoolSingleLt6911Sdr;
++
++            /* cams config */
++            __sample_case_single_dummy(pCamList, eSnsType, pVinParam, pCommonArgs);
++            break;
+         default:
+             eSnsType = SAMPLE_SNS_DUMMY;
+             /* pool config */
+@@ -1014,6 +1038,11 @@ namespace maix::middleware::maixcam2 {
+                 fps = 30;
+                 return SAMPLE_VIN_SINGLE_OS04D10;
+             }
++        } else if (strcmp(sensor_name, "lt6911") == 0) {
++            w = 1920;
++            h = 1080;
++            fps = 60;
++            return SAMPLE_VIN_SINGLE_LT6911;
+         } else {
+             log::error("Can't find sensor %s", sensor_name);
+             return SAMPLE_VIN_NONE;
+@@ -1129,6 +1155,9 @@ namespace maix::middleware::maixcam2 {
+                     break;
+             }
+         }
++        if (fs::exists("/proc/lt6911_info/status")) {
++            return {true, "lt6911"};
++        }
+ 
+         // AX_ISP_CloseSnsClk(0);
+         // return {false, ""};
+diff --git a/components/3rd_party/maixcam2_msp/msp/sample/common/common_config.h b/components/3rd_party/maixcam2_msp/msp/sample/common/common_config.h
+index 9fce214..cbdcb4a 100755
+--- a/components/3rd_party/maixcam2_msp/msp/sample/common/common_config.h
++++ b/components/3rd_party/maixcam2_msp/msp/sample/common/common_config.h
+@@ -1075,4 +1075,79 @@ AX_VIN_CHN_ATTR_T gSc200aiChn0Attr = {
+     .tFrameRateCtrl = {AX_INVALID_FRMRATE, AX_INVALID_FRMRATE},
+ };
+ 
++#define G_LT6911_WIDTH 1920
++#define G_LT6911_HEIGHT 1080
++#define G_LT6911_FPS 60.0
++
++AX_MIPI_RX_ATTR_T gLt6911MipiAttr = {
++    .ePhyMode = AX_MIPI_PHY_TYPE_DPHY,
++    .eLaneNum = AX_MIPI_DATA_LANE_4,
++    .nDataRate =  600,
++    .nDataLaneMap = {0, 1, 3, 4},
++    .nClkLane = {2, 5},
++};
++
++AX_SNS_ATTR_T gLt6911SnsAttr = {
++    .nWidth = G_LT6911_WIDTH,
++    .nHeight = G_LT6911_HEIGHT,
++    .fFrameRate = G_LT6911_FPS,
++    .eSnsMode = AX_SNS_LINEAR_ONLY_MODE,
++    .eRawType = AX_RT_RAW16,
++    .eBayerPattern = AX_BP_BGGR,
++    .bTestPatternEnable = AX_FALSE,
++};
++
++AX_SNS_CLK_ATTR_T gLt6911SnsClkAttr = {
++    .nSnsClkIdx = 0,
++    .eSnsClkRate = AX_SNS_CLK_NOT_CFG,
++};
++
++AX_VIN_DEV_ATTR_T gLt6911DevAttr = {
++    .eDevMode = AX_VIN_DEV_ONLINE,
++    .bImgDataEnable = AX_TRUE,
++    .bNonImgDataEnable = AX_FALSE,
++    .eSnsIntfType = AX_SNS_INTF_TYPE_MIPI_RAW,
++
++    .eSnsMode = AX_SNS_LINEAR_ONLY_MODE,
++    .eBayerPattern = AX_BP_BGGR,
++    .ePixelFmt = AX_FORMAT_BAYER_RAW_16BPP,
++
++    .tDevImgRgn = {
++        {0, 0, G_LT6911_WIDTH, G_LT6911_HEIGHT},
++        {0, 0, G_LT6911_WIDTH, G_LT6911_HEIGHT},
++        {0, 0, G_LT6911_WIDTH, G_LT6911_HEIGHT},
++        {0, 0, G_LT6911_WIDTH, G_LT6911_HEIGHT},
++    },
++
++    .eSnsOutputMode = AX_SNS_NORMAL,
++    .tFrameRateCtrl = {1.0, 1.0},
++    .tCompressInfo = {AX_COMPRESS_MODE_NONE, 0},
++
++    .tMipiIntfAttr = {
++        .szImgDt = {0x1e, 0, 0, 0},
++    },
++};
++
++AX_VIN_PIPE_ATTR_T gLt6911PipeAttr = {
++    .ePipeWorkMode = AX_VIN_PIPE_ISP_BYPASS_MODE,
++    .tPipeImgRgn = {0, 0, G_LT6911_WIDTH, G_LT6911_HEIGHT},
++    .nWidthStride = G_LT6911_WIDTH,
++    .eBayerPattern = AX_BP_BGGR,
++    .ePixelFmt =  AX_FORMAT_BAYER_RAW_16BPP,
++    .eSnsMode = AX_SNS_LINEAR_ONLY_MODE,
++    .tCompressInfo = {AX_COMPRESS_MODE_NONE, 0},
++    .tNrAttr = {{(AX_BOOL)0, {AX_COMPRESS_MODE_NONE, 0}}, {(AX_BOOL)0, {AX_COMPRESS_MODE_NONE, 0}}},
++    .tFrameRateCtrl = {AX_INVALID_FRMRATE, AX_INVALID_FRMRATE},
++};
++
++AX_VIN_CHN_ATTR_T gLt6911Chn0Attr = {
++    .nWidth = G_LT6911_WIDTH,
++    .nHeight = G_LT6911_HEIGHT,
++    .nWidthStride = G_LT6911_WIDTH,
++    .eImgFormat = AX_FORMAT_YUV420_SEMIPLANAR,
++    .nDepth = 1,
++    .tCompressInfo = {AX_COMPRESS_MODE_NONE, 0},
++    .tFrameRateCtrl = {AX_INVALID_FRMRATE, AX_INVALID_FRMRATE},
++};
++
+ #endif //_COMMON_CONFIG_H__
+diff --git a/components/3rd_party/maixcam2_msp/msp/sample/common/common_isp.c b/components/3rd_party/maixcam2_msp/msp/sample/common/common_isp.c
+index 5675dcc..f0d77c2 100644
+--- a/components/3rd_party/maixcam2_msp/msp/sample/common/common_isp.c
++++ b/components/3rd_party/maixcam2_msp/msp/sample/common/common_isp.c
+@@ -65,6 +65,7 @@ const static AX_SENSOR_LIB_TAB s_libSensorTab[] = {
+     {SAMPLE_SNS_BT656,              "libsns_dummy.so",          "gSnsdummyObj"},
+     {SAMSUNG_S5KJN1SQ03,            "libsns_s5kjn1sq03.so",     "gSnss5kjn1sq03Obj"},
+     {SAMPLE_SNS_BT1120,             "libsns_dummy.so",          "gSnsdummyObj"},
++    {SAMPLE_SNS_LT6911,             "libsns_dummy.so",          "gSnsdummyObj"},
+     {SAMPLE_SNS_TYPE_BUTT,          "NULL",                     "NULL"},
+ };
+ #endif
+diff --git a/components/3rd_party/maixcam2_msp/msp/sample/common/common_vin.c b/components/3rd_party/maixcam2_msp/msp/sample/common/common_vin.c
+index 9bfaf74..f9a2c1b 100644
+--- a/components/3rd_party/maixcam2_msp/msp/sample/common/common_vin.c
++++ b/components/3rd_party/maixcam2_msp/msp/sample/common/common_vin.c
+@@ -81,6 +81,14 @@ AX_S32 COMMON_VIN_GetSnsConfig(SAMPLE_SNS_TYPE_E eSnsType,
+         memcpy(pPipeAttr, &gBT1120PipeAttr, sizeof(AX_VIN_PIPE_ATTR_T));
+         memcpy(&pChnAttr[0], &gBT1120Chn0Attr, sizeof(AX_VIN_CHN_ATTR_T));
+         break;
++   case SAMPLE_SNS_LT6911:
++        memcpy(ptMipiAttr, &gLt6911MipiAttr, sizeof(AX_MIPI_RX_ATTR_T));
++        memcpy(ptSnsAttr, &gLt6911SnsAttr, sizeof(AX_SNS_ATTR_T));
++        memcpy(ptSnsClkAttr, &gLt6911SnsClkAttr, sizeof(AX_SNS_CLK_ATTR_T));
++        memcpy(pDevAttr, &gLt6911DevAttr, sizeof(AX_VIN_DEV_ATTR_T));
++        memcpy(pPipeAttr, &gLt6911PipeAttr, sizeof(AX_VIN_PIPE_ATTR_T));
++        memcpy(&pChnAttr[0], &gLt6911Chn0Attr, sizeof(AX_VIN_CHN_ATTR_T));
++        break;
+     case SAMPLE_SNS_LVDS:
+         memcpy(ptSnsAttr, &gLvdsSnsAttr, sizeof(AX_SNS_ATTR_T));
+         memcpy(ptSnsClkAttr, &gLvdsSnsClkAttr, sizeof(AX_SNS_CLK_ATTR_T));
+diff --git a/components/3rd_party/maixcam2_msp/msp/sample/common/common_vin.h b/components/3rd_party/maixcam2_msp/msp/sample/common/common_vin.h
+index a108003..c2f689d 100755
+--- a/components/3rd_party/maixcam2_msp/msp/sample/common/common_vin.h
++++ b/components/3rd_party/maixcam2_msp/msp/sample/common/common_vin.h
+@@ -48,6 +48,8 @@ typedef enum {
+     SAMPLE_SNS_BT1120 = 57,
+     /* lvds sensor */
+     SAMPLE_SNS_LVDS = 60,
++    /* lt sensor */
++    SAMPLE_SNS_LT6911 = 70,
+ 
+     /* dummy sensor */
+     SAMPLE_SNS_DUMMY = 100,
