@@ -173,7 +173,7 @@ setproctitle
 six
 spidev
 systemd-python
-xlib
+python_xlib
 pyyaml
 pyotp
 qrcode
@@ -182,8 +182,8 @@ evdev
 pyusb
 ruamel.yaml
 pyserial
-pyserial-asyncio
-python-pam
+pyserial_asyncio
+python_pam
 pyrad
 python-ldap
 pyudev
@@ -206,7 +206,7 @@ EOF
 
   if [ $partialpip = true ]; then
     pip install async_lru
-    pip install dbus-next
+    pip install dbus_next
     pip install zstandard
   fi
 

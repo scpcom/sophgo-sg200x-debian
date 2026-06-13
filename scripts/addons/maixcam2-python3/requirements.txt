@@ -3,8 +3,8 @@ aiohttp
 async_lru
 async_timeout
 charset_normalizer
-dbus-next
-dbus_python
+dbus_next
+dbus-python
 evdev
 future
 hidapi
@@ -23,7 +23,7 @@ pyrad
 pyserial
 pyserial_asyncio
 python-ldap
-python-pam
+python_pam
 pyudev
 pyusb
 pyyaml
@@ -34,5 +34,5 @@ setuptools
 spidev
 systemd-python
 typing_extensions
-xlib
+python_xlib
 zstandard

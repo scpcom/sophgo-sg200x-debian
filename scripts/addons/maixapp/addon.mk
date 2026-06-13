@@ -3,6 +3,7 @@ BSPRECOMMENDS += maixapp-$(BOARD)
 BSPFILTER += "maixapp"
 MAIXAPP_PACKAGES = libasound2t64 libatopology2t64 libpng16-16t64
 MAIXAPP_PACKAGE_DEPENDS = $(subst $(SPACE),$(COMMA)$(SPACE),$(sort $(MAIXAPP_PACKAGES))), ffmpeg-maixapp-$(BOARD), libjpeg-maixapp-$(BOARD), opencv-maixapp-$(BOARD)
+DEV_PACKAGES += " libasound2-dev libatopology-dev libpng-dev"
 PACKAGES += " $(MAIXAPP_PACKAGES)"
 endif
 

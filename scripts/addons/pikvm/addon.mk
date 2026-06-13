@@ -4,13 +4,16 @@ endif
 
 PIKVM_PACKAGES_GIT_REF = d660118d169e96075c33fb7ab90e0bc492c4064e
 PIKVM_JANUS_GATEWAY_GIT_REF = c1435cf670d422648edab7dd5f188f09f9df7fd5
-PIKVM_USTREAMER_GIT_REF = 49980fd01e18088843311e6dd8e686b02250fa0e
+PIKVM_USTREAMER_GIT_REF = 211be21a1fe8e54a88d0bd09b844924d69579521
 PIKVM_KVMD_GIT_REF = 8cc43887b430c5a982093afe3d14bd8b602c5fc2
 
 PIKVM_DEPENDS = $(BUILDDIR)/nanokvm-pro-package-prepare-stamp $(BUILDDIR)/python3-dev-install-stamp
 
 ifneq ("$(findstring libgpiod,$(IMAGE_ADDITIONS))","")
 PIKVM_DEPENDS += $(BUILDDIR)/libgpiod-stamp
+endif
+ifneq ("$(findstring libgpiod,$(IMAGE_ADDITIONS))$(findstring maixcam2-python3,$(IMAGE_ADDITIONS))","")
+PIKVM_DEPENDS += $(BUILDDIR)/python3-gpiod-stamp
 endif
 
 PIKVM_BUILD_DIR = /rootfs/root/pikvm
@@ -46,7 +49,6 @@ $(BUILDDIR)/pikvm-prepare-gpiod-stamp: $(BUILDDIR)/pikvm-prepare-stamp
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libgpiod3_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/libgpiod-dev_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
 	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs bash -c 'dpkg -i /tmp/install/gpiod_$(LIBGPIOD_VERSION)-$(LIBGPIOD_BUILD)_$(DEB_ARCH).deb'
-	@[ "$(findstring libgpiod,$(IMAGE_ADDITIONS))" = "" -a "$(findstring maixcam2-python3,$(IMAGE_ADDITIONS))" = "" ] || chroot /rootfs pip install gpiod==$(LIBGPIOD_VERSION)
 	@chroot /rootfs apt-get install -y libgpiod-dev
 	@umount /rootfs/proc || true
 	@touch $@

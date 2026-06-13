@@ -73,6 +73,7 @@ git_subclone sample/test_mmf/media_server-1.0.x https://$GIT_SOURCE_HOST/$GIT_SO
 git_subclone sample/kvm_stream https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/streameye -b kvm_stream
 #git_subclone modules/bin/cvi_json-c https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json-c -b cvi
 #git_subclone modules/bin/cvi_miniz https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/miniz -b cvi
+git_subclone 3rdparty/alsa_lib/alsa_lib https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/alsa-lib -b 3rd
 git_subclone 3rdparty/live/live555 https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/live555 -b sg200x-dev
 git_subclone 3rdparty/json-c/json-c https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/json-c -b 3rd
 git_subclone 3rdparty/miniz/miniz https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/miniz -b 3rd
@@ -139,10 +140,15 @@ git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/zxing-cpp
 
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/harfbuzz
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/marisa-trie
+git_clone -b 3rd https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/onnxruntime
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/OpenCC opencc
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/quirc
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/rapidjson
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/uchardet
+
+git_subclone cmake/external/onnx https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/onnx -b main
+git_subclone cmake/external/libprotobuf-mutator https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/libprotobuf-mutator -b master
+git_subclone cmake/external/emsdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/emsdk -b main
 
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/tinyalsa
 

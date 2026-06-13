@@ -16,18 +16,36 @@ CROSS_COMPILE_PATH_32 = /usr
 CROSS_COMPILE_PATH_GLIBC_RISCV64 = /usr
 CROSS_COMPILE_PATH_MUSL_RISCV64 = /host-tools/gcc/riscv64-linux-musl-x86_64
 
+SDK_SYSROOT_64 = /rootfs
+SDK_SYSROOT_32 = /rootfs
+SDK_SYSROOT_GLIBC_RISCV64 = /rootfs
+SDK_SYSROOT_MUSL_RISCV64 = $(CROSS_COMPILE_PATH_MUSL_RISCV64)/sysroot
+
+SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53
+SDK_TARGET_LDFLAGS_32 = -march=armv7-a
+SDK_TARGET_LDFLAGS_GLIBC_RISCV64 = -mcpu=thead-c906 -march=rv64imafdc_xtheadba_xtheadbb_xtheadbs_xtheadcmo -mcmodel=medany -mabi=lp64d
+SDK_TARGET_LDFLAGS_MUSL_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d
+
 ifeq ($(SDK_VER),glibc_riscv64)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_GLIBC_RISCV64)
+SDK_SYSROOT = $(SDK_SYSROOT_GLIBC_RISCV64)
+SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_GLIBC_RISCV64)
 else ifeq ($(SDK_VER),musl_riscv64)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_MUSL_RISCV64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_MUSL_RISCV64)
+SDK_SYSROOT = $(SDK_SYSROOT_MUSL_RISCV64)
+SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_MUSL_RISCV64)
 else ifeq ($(SDK_VER),64bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
+SDK_SYSROOT = $(SDK_SYSROOT_64)
+SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_64)
 else ifeq ($(SDK_VER),32bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_32)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_32)
+SDK_SYSROOT = $(SDK_SYSROOT_32)
+SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_32)
 else
 $(error $(red)SDK_VER is invalid$(reset))
 endif
@@ -93,6 +111,10 @@ BUILDROOT_ENV = CROSS_COMPILE_KERNEL=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX
 CROSS_COMPILE_SDK=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
+ifeq ($(findstring maixcdk,$(IMAGE_ADDITIONS)),)
+BR_ENABLE_MAIXAPP = $(findstring maixapp,$(IMAGE_ADDITIONS))
+endif
+
 TOOLCHAIN_URL_ARM ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g' | sed 's|/linaro|/arm/gnu|g')
 
 FSBL_MAKE_OPTS = $(UBOOT_MAKE_OPTS) \
@@ -116,6 +138,7 @@ endif
 
 MIDDLEWARE_ENV = $(OSDRV_ENV) $(SENSOR_ENV)
 
+MIDDLEWARE_OUT_DIR=$(BUILDDIR)/middleware/install/system/usr
 MIDDLEWARE_TARGET_DIR=/mnt/system/usr
 
 BSPDEPENDS = $(CHIP_VENDOR)-middleware-$(BOARD)\
@@ -126,6 +149,8 @@ BSPRECOMMENDS = $(CHIP_VENDOR)-fsbl-$(BOARD_EXT)
 BSPFILTER =
 
 include $(wildcard /builder/addons/*/addon.mk)
+
+SDK_OSS_TARBALL_DIR = $(BUILDDIR)/tpusdk/oss/oss_release_tarball/$(SDK_VER)
 
 addon-targets = $(patsubst "%,$(BUILDDIR)/%-stamp,$(patsubst %",%,$(IMAGE_ADDITIONS)))
 _PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(PACKAGES)))
@@ -147,6 +172,7 @@ $(info $(blue)ION Size: $(ION_SIZE)M$(reset))
 $(info $(blue)Default Panel: $(PANEL_TUNING_DEFAULT)$(reset))
 $(info $(blue)Image Addons: $(IMAGE_ADDITIONS)$(reset))
 $(info $(blue)Packages: $(_PACKAGES)$(reset))
+$(info $(blue)Development Packages: $(_DEV_PACKAGES)$(reset))
 
 NPROCS := $(shell nproc)
 
@@ -369,7 +395,8 @@ $(BUILDDIR)/middleware-prepare-clone-stamp:
 
 $(BUILDDIR)/middleware-prepare-checkout-root-stamp: $(BUILDDIR)/middleware-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out Middleware for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/middleware && git checkout 4808b58
+	@cd $(BUILDDIR)/middleware && git checkout 4ab774a
+	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/alsa_lib/alsa_lib $(GIT_USER_URL)/alsa-lib
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/curl/curl $(GIT_USER_URL)/curl
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/ffmpeg/ffmpeg $(GIT_USER_URL)/FFmpeg
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/flatbuffers/flatbuffers $(GIT_USER_URL)/flatbuffers
@@ -434,14 +461,16 @@ $(BUILDDIR)/middleware-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/middleware/*.patch), cd $(BUILDDIR)/middleware && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/middleware/*.patch), cd $(BUILDDIR)/middleware && git apply --ignore-whitespace $(file);)
 	sed -i 's|$$(ROOT_DIR)/../host-tools|/host-tools|g' $(BUILDDIR)/middleware/Makefile.param
-	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-aarch64-linux-gnu|/rootfs|g' $(BUILDDIR)/middleware/Makefile.param
-	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf|/rootfs|g' $(BUILDDIR)/middleware/Makefile.param
-	sed -i 's|/host-tools/gcc/riscv64-linux-x86_64/sysroot|/rootfs|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-aarch64-linux-gnu|$(SDK_SYSROOT_64)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf|$(SDK_SYSROOT_32)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|/host-tools/gcc/riscv64-linux-x86_64/sysroot|$(SDK_SYSROOT_GLIBC_RISCV64)|g' $(BUILDDIR)/middleware/Makefile.param
+	sed -i 's|/host-tools/gcc/riscv64-linux-musl-x86_64/sysroot|$(SDK_SYSROOT_MUSL_RISCV64)|g' $(BUILDDIR)/middleware/Makefile.param
 	[ "$(DEB_ARCH)" != "arm64" ] || sed -i s/'OPT_LEVEL := -O3$$'/'OPT_LEVEL := -O3 -mno-outline-atomics'/g $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/common/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/sample/common/Makefile
+	[ "X$(findstring maixcdk,$(IMAGE_ADDITIONS))" = "X" ] || sed -i s/TRD_BUILD_OPTIONAL_MODULE/TRD_BUILD_TPUSDK_MODULE/g $(BUILDDIR)/middleware/3rdparty/ffmpeg/Makefile
 	cd $(BUILDDIR)/middleware/3rdparty/flatbuffers/ && sed -i s/'-Werror=unused-parameter"'/'-Werror=unused-parameter -Wno-class-memaccess -Wno-stringop-overflow"'/g flatbuffers/CMakeLists.txt
 	@touch $@
 
@@ -456,6 +485,9 @@ $(BUILDDIR)/middleware-compile-stamp: $(BUILDDIR)/middleware-prepare-configure-s
 	@cd $(BUILDDIR)/middleware && $(MIDDLEWARE_ENV) $(MAKE) KERNEL_DIR=$(KERNEL_OUTPUT_DIR) install DESTDIR=$(BUILDDIR)/middleware/install/system
 	@find $(BUILDDIR)/middleware/install/system -name "*.so*" -type f ! -path "*libtinyalsa.so" ! -path "*libaac*.so" ! -path "*libcvi_audio.so" ! -path "*libcvi_*ssp*.so" ! -path "*libcvi_*vqe*.so" ! -path "*libcvi_RES1.so" ! -path "*libcvi_VoiceEngine.so" ! -path "*libae.so" ! -path "*libaf.so" ! -path "*libawb.so" ! -path "*libisp_algo.so" -printf 'striping %p\n' -exec $(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)strip --strip-all {} \;
 	@find $(BUILDDIR)/middleware/install/system -executable -type f ! -name "*.sh" ! -path "*etc*" ! -path "*.ko" ! -path "*.so*" -printf 'striping %p\n' -exec $(SDK_CROSS_COMPILE_PATH)/bin/$(SDK_CROSS_COMPILE_PREFIX)strip --strip-all {} 2>/dev/null \;
+	@rsync -avpPxH $(BUILDDIR)/middleware/include/ $(MIDDLEWARE_OUT_DIR)/include/
+	@mkdir -p $(MIDDLEWARE_OUT_DIR)/include/linux
+	$(call copy_header_action, $(MIDDLEWARE_OUT_DIR)/include)
 	@touch $@
 
 $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
@@ -468,7 +500,8 @@ $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
 	@mkdir -p $(MIDDLEWARE_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_PACKAGE_DIR)/
 	@mkdir -pv $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
-	@rsync -avpPxH $(BUILDDIR)/middleware/install/system/usr/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/ $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
+	@rm -rf $(MIDDLEWARE_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_PACKAGE_NAME)/' $(MIDDLEWARE_PACKAGE_DIR)/DEBIAN/control
@@ -479,9 +512,7 @@ $(BUILDDIR)/middleware-package-stamp: $(BUILDDIR)/middleware-compile-stamp
 	@mkdir -p $(MIDDLEWARE_DEV_PACKAGE_DIR)
 	@cp -r /builder/deb/cvitek-middleware/* $(MIDDLEWARE_DEV_PACKAGE_DIR)/
 	@mkdir -pv $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/
-	@rsync -avpPxH $(BUILDDIR)/middleware/include/ $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
-	@mkdir -p $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/linux
-	$(call copy_header_action, $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include)
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/include/ $(MIDDLEWARE_DEV_PACKAGE_DIR)$(MIDDLEWARE_TARGET_DIR)/include/
 	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.0.0/Version: $(MIDDLEWAREVERSION)$(MV)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Package: cvitek-middleware/Package: $(MIDDLEWARE_DEV_PACKAGE_NAME)/' $(MIDDLEWARE_DEV_PACKAGE_DIR)/DEBIAN/control
@@ -558,7 +589,7 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-arm/toolchain-external-arm-arm.mk
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
-	@if [ "X$(findstring kvm,$(VARIANT))$(findstring maixapp,$(IMAGE_ADDITIONS))" = "X" ]; then \
+	@if [ "X$(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_CCACHE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_CA_CERTIFICATES/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_LIBOPENSSL/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -566,8 +597,10 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 		sed -i /BR2_PACKAGE_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_HOST_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_MAIX_CDK/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+		sed -i /BR2_PACKAGE_JPEG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+		sed -i /BR2_PACKAGE_LIBQRENCODE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
-	@if [ "X$(findstring maixapp,$(IMAGE_ADDITIONS))" = "X" ]; then \
+	@if [ "X$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_PACKAGE_MPG123/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_LIBWEBSOCKETS/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_NANOMSG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \

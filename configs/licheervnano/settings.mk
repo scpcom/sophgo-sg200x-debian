@@ -33,6 +33,7 @@ else
 IMAGE_ADDITIONS += "maixapp"
 IMAGE_ADDITIONS += "tpusdk"
 endif
+IMAGE_ADDITIONS += "python3-dev"
 IMAGE_ADDITIONS += "python3-textual"
 IMAGE_ADDITIONS += "usb-device"
 IMAGE_ADDITIONS += "zram-config"
