@@ -21,7 +21,7 @@ SDK_SYSROOT_32 = /rootfs
 SDK_SYSROOT_GLIBC_RISCV64 = /rootfs
 SDK_SYSROOT_MUSL_RISCV64 = $(CROSS_COMPILE_PATH_MUSL_RISCV64)/sysroot
 
-SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53
+SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53 -mno-outline-atomics
 SDK_TARGET_LDFLAGS_32 = -march=armv7-a
 SDK_TARGET_LDFLAGS_GLIBC_RISCV64 = -mcpu=thead-c906 -march=rv64imafdc_xtheadba_xtheadbb_xtheadbs_xtheadcmo -mcmodel=medany -mabi=lp64d
 SDK_TARGET_LDFLAGS_MUSL_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d
@@ -395,7 +395,7 @@ $(BUILDDIR)/middleware-prepare-clone-stamp:
 
 $(BUILDDIR)/middleware-prepare-checkout-root-stamp: $(BUILDDIR)/middleware-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out Middleware for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/middleware && git checkout 4ab774a
+	@cd $(BUILDDIR)/middleware && git checkout cd8bb74
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/alsa_lib/alsa_lib $(GIT_USER_URL)/alsa-lib
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/curl/curl $(GIT_USER_URL)/curl
 	@cd $(BUILDDIR)/middleware && git submodule set-url 3rdparty/ffmpeg/ffmpeg $(GIT_USER_URL)/FFmpeg
@@ -558,7 +558,7 @@ $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp: $(BUILDDIR)/buildroot-prepa
 
 $(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp
 	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout 9b46139
+	@cd $(BR_DIR) && git checkout 578e9b9
 	@touch $@
 
 $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
