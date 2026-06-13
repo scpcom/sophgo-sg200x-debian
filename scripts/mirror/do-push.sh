@@ -291,6 +291,8 @@ for f in */.git ; do
     do_push_tags 'v2.*'
   elif echo $d | grep -q -E '^nanomsg$' ; then
     do_push_tags '[0-9]\.*'
+  elif echo $d | grep -q -E '^onnxruntime$' ; then
+    do_push_tags 'v1.2?.*'
   elif echo $d | grep -q -E '^opencc$' ; then
     do_push_tags 'ver.1.1.*'
   elif echo $d | grep -q -E '^opencv$' ; then

@@ -1,0 +1,50 @@
+diff --git a/onnxruntime/core/optimizer/qdq_transformer/selectors_actions/qdq_actions.cc b/onnxruntime/core/optimizer/qdq_transformer/selectors_actions/qdq_actions.cc
+index 8f99b74..16e9841 100644
+--- a/onnxruntime/core/optimizer/qdq_transformer/selectors_actions/qdq_actions.cc
++++ b/onnxruntime/core/optimizer/qdq_transformer/selectors_actions/qdq_actions.cc
+@@ -93,18 +93,25 @@ std::vector<NodeAndMoveInfo> WhereMoves() {
+       MoveAll(q, ArgType::kOutput)};
+   return moves;
+ }
+-QDQReplaceWithNew SplitReplacer(bool has_split_as_input) {
++QDQReplaceWithNew SplitReplacerNoInput() {
+   NTO::NodeLocation dq{NTO::NodeType::kInput, 0};
+-  NTO::NodeLocation target{NTO::NodeType::kTarget, 0};
+   NTO::NodeLocation q{NTO::NodeType::kOutput, 0};
+-  std::vector<NodeAndMoveInfo> moves{MoveAndAppend(dq, ArgType::kInput, 0, ArgType::kInput)};
+ 
+-  if (has_split_as_input) {
+-    // Move the optional split input to the new node.
+-    moves.push_back(MoveAndAppend(target, ArgType::kInput, 1, ArgType::kInput, true));
+-  }
++  std::vector<NodeAndMoveInfo> moves{
++      MoveAndAppend(dq, ArgType::kInput, 0, ArgType::kInput),
++      MoveAll(q, ArgType::kOutput)};
+ 
+-  moves.push_back(MoveAll(q, ArgType::kOutput));
++  return QDQReplaceWithNew(kOnnxDomain, "Split", std::move(moves));
++}
++QDQReplaceWithNew SplitReplacerWithInput() {
++  NTO::NodeLocation dq{NTO::NodeType::kInput, 0};
++  NTO::NodeLocation target{NTO::NodeType::kTarget, 0};
++  NTO::NodeLocation q{NTO::NodeType::kOutput, 0};
++
++  std::vector<NodeAndMoveInfo> moves{
++      MoveAndAppend(dq, ArgType::kInput, 0, ArgType::kInput),
++      MoveAndAppend(target, ArgType::kInput, 1, ArgType::kInput, true),
++      MoveAll(q, ArgType::kOutput)};
+ 
+   return QDQReplaceWithNew(kOnnxDomain, "Split", std::move(moves));
+ }
+@@ -264,7 +271,10 @@ Status SplitReplaceWithQuant::Run(Graph& graph, const NodesToOptimize& selected_
+ 
+   // The 'split' attribute became an optional input at opset 13.
+   bool has_split_as_input = target_node.SinceVersion() >= 13 && input_defs.size() == 2;
+-  return SplitReplacer(has_split_as_input).Run(graph, selected_nodes);
++  if (has_split_as_input) {
++    return SplitReplacerWithInput().Run(graph, selected_nodes);
++  }
++  return SplitReplacerNoInput().Run(graph, selected_nodes);
+ }
+ 
+ Status MatMulReplaceWithQLinear::Run(Graph& graph, const NodesToOptimize& selected_nodes) const {

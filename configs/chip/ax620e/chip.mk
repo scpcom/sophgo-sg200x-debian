@@ -76,7 +76,7 @@ AIC8800_TARGET_DIR ?= /opt/firmware
 
 include $(wildcard /builder/addons/*/addon.mk)
 
-SDK_OSS_TARBALL_DIR = $(BUILDDIR)/oss/oss_release_tarball/$(TPUSDK_VER)
+SDK_OSS_TARBALL_DIR = $(BUILDDIR)/oss/oss_release_tarball/$(SDK_VER)
 
 addon-targets = $(patsubst "%,$(BUILDDIR)/%-stamp,$(patsubst %",%,$(IMAGE_ADDITIONS)))
 _PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(PACKAGES)))

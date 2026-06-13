@@ -79,18 +79,29 @@ get_tag()
       rel_set=$(echo ${repo} | tr / -)-releases-${tag}
       rel_sha256=${scriptdir}/${rel_set}.sha256
       rel_files="${tag}.tar.gz ${tag}.zip"
+      rel_dir=${tag}
+      echo ${tag} | grep -q -E '^[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]*$' || rel_dir=refs/tags
       echo "Parsing repo $repo at $tag"
       for rel_file in $rel_files ; do
       if [ -n "$rel_file" ]
       then
         echo "Getting ${rel_file}"
-        mkdir -p "${r}/${repo}/archive"
+        mkdir -p "${r}/${repo}/archive/${rel_dir}"
         pushd "${r}/${repo}/archive" >/dev/null
         wget -q -N "https://github.com/${repo}/archive/${rel_file}"
+        rm -f ${rel_dir}/${rel_file}
+        if [ "${rel_dir}" = "refs/tags" ]
+        then
+          ln -s ../../${rel_file} ${rel_dir}/${rel_file}
+        else
+          ln -s ../${rel_file} ${rel_dir}/${rel_file}
+        fi
         popd >/dev/null
       fi
       done
       pushd "${r}/${repo}/archive" >/dev/null
+      [ -e $rel_sha256 ] || echo "WARNING: $rel_sha256 not found, generating it."
+      [ -e $rel_sha256 ] || sha256sum *.tar.gz *.zip > $rel_sha256
       sha256sum -c $rel_sha256
       popd >/dev/null
    fi
@@ -104,6 +115,24 @@ for f in scripts/addons/python3-*/addon.mk ; do
   t=$(grep '^'$v $f | cut -d '=' -f 2- | tr -d '\t ')
   [ "X$t" = "X" ] || get_pip $b $t
 done
+
+get_tag abseil/abseil-cpp 20240722.0
+get_tag abseil/abseil-cpp 20250814.0
+get_tag eigen-mirror/eigen 1d8b82b0740839c0de7f1242a3585e3390ff5f33
+get_tag google/re2 2024-07-02
+get_tag google/googletest v1.17.0
+get_tag nlohmann/json v3.11.3
+get_tag protocolbuffers/protobuf v21.12
+get_tag HowardHinnant/date v3.0.1
+get_tag boostorg/mp11 boost-1.82.0
+get_tag pytorch/cpuinfo 403d652dca4c1046e8145950b1c0997a9f748b57
+get_tag pytorch/cpuinfo 8a1772a0c5c447df2d18edf33ec4603a8c9c04a6
+get_tag microsoft/GSL v4.0.0
+get_tag microsoft/GSL v4.2.1
+get_tag dcleblanc/SafeInt 3.0.28
+get_tag google/flatbuffers v23.5.26
+get_tag onnx/onnx v1.17.0
+get_tag onnx/onnx v1.21.0
 
 get_tag scpcom/ade v0.1.1f-gcc-13
 get_tag opencv/ade v0.1.1f

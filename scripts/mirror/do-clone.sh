@@ -140,10 +140,15 @@ git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/zxing-cpp
 
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/harfbuzz
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/marisa-trie
+git_clone -b 3rd https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/onnxruntime
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/OpenCC opencc
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/quirc
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/rapidjson
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/uchardet
+
+git_subclone cmake/external/onnx https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/onnx -b main
+git_subclone cmake/external/libprotobuf-mutator https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/libprotobuf-mutator -b master
+git_subclone cmake/external/emsdk https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/emsdk -b main
 
 git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/tinyalsa
 

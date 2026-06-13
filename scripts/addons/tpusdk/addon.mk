@@ -89,6 +89,24 @@ $(BUILDDIR)/tpusdk-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stam
 	$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/tpusdk/cviruntime-*.patch), cd $(BUILDDIR)/tpusdk/cviruntime && git apply --ignore-whitespace $(file);)
 	$(foreach file, $(wildcard /configs/common/patches/tpusdk/tdl_sdk-*.patch), cd $(BUILDDIR)/tpusdk/tdl_sdk && git apply --ignore-whitespace $(file);)
 	$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/tpusdk/tdl_sdk-*.patch), cd $(BUILDDIR)/tpusdk/tdl_sdk && git apply --ignore-whitespace $(file);)
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|"$$TOOLCHAIN_PATH"/gcc/gcc-linaro-6.3.1-2017.05-x86_64_aarch64-linux-gnu|$(CROSS_COMPILE_PATH_64)|g' build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|"$$TOOLCHAIN_PATH"/gcc/gcc-linaro-6.3.1-2017.05-x86_64_arm-linux-gnueabihf|$(CROSS_COMPILE_PATH_32)|g' build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|"$$TOOLCHAIN_PATH"/gcc/riscv64-linux-x86_64|$(CROSS_COMPILE_PATH_GLIBC_RISCV64)|g' build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|"$$RAMDISK_PATH"/sysroot/sysroot-glibc-linaro-2.23-2017.05-aarch64-linux-gnu|$(SDK_SYSROOT_64)|g' build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|"$$RAMDISK_PATH"/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf|$(SDK_SYSROOT_32)|g' build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|"$$RAMDISK_PATH"/sysroot/sysroot-glibc-riscv64|$(SDK_SYSROOT_GLIBC_RISCV64)|g' build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'aarch64-linux-gnu-'/'$(CROSS_COMPILE_64)'/g build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'aarch64-linux-gnu-'/'$(CROSS_COMPILE_64)'/g build/Kconfig
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'arm-linux-gnueabihf-'/'$(CROSS_COMPILE_32)'/g build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'arm-linux-gnueabihf-'/'$(CROSS_COMPILE_32)'/g build/Kconfig
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'riscv64-unknown-linux-gnu-'/'$(CROSS_COMPILE_GLIBC_RISCV64)'/g build/envsetup_soc.sh
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'riscv64-unknown-linux-gnu-'/'$(CROSS_COMPILE_GLIBC_RISCV64)'/g build/Kconfig
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|$$ENV{TOP_DIR}/ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-aarch64-linux-gnu|$(SDK_SYSROOT_64)|g' cviruntime/scripts/toolchain.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|$$ENV{TOP_DIR}/ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf|$(SDK_SYSROOT_32)|g' cviruntime/scripts/toolchain.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i 's|$$ENV{TOP_DIR}/host-tools/gcc/riscv64-linux-x86_64/sysroot|$(SDK_SYSROOT_GLIBC_RISCV64)|g' cviruntime/scripts/toolchain.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'aarch64-linux-gnu-'/'$(CROSS_COMPILE_64)'/g cviruntime/scripts/toolchain.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'arm-linux-gnueabihf-'/'$(CROSS_COMPILE_32)'/g cviruntime/scripts/toolchain.cmake
+	@cd $(BUILDDIR)/tpusdk && sed -i s/'riscv64-unknown-linux-gnu-'/'$(CROSS_COMPILE_GLIBC_RISCV64)'/g cviruntime/scripts/toolchain.cmake
 	@touch $@
 
 $(BUILDDIR)/tpusdk-prepare-configure-stamp: $(BUILDDIR)/tpusdk-prepare-patch-stamp
