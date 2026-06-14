@@ -104,6 +104,7 @@ CONFIG_SENSOR_LONTIUM_LT6911=y
 BR_BOARD = $(CHIP_VENDOR)_$(SDK_CHIP)_$(SDK_VER)
 BR_DEFCONFIG = $(BR_BOARD)_defconfig
 BR_DIR = $(BUILDDIR)/buildroot
+BR_OVERLAY_DIR = $(BUILDDIR)/buildroot/board/$(CHIP_VENDOR)/$(SDK_CHIP)/overlay
 BR_OUTPUT_DIR = $(BR_DIR)/output/$(BR_BOARD)
 
 BUILDROOT_ENV = CROSS_COMPILE_KERNEL=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
@@ -112,6 +113,11 @@ TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
 ifeq ($(findstring maixcdk,$(IMAGE_ADDITIONS)),)
 BR_ENABLE_MAIXAPP = $(findstring maixapp,$(IMAGE_ADDITIONS))
+endif
+ifneq ($(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP),)
+ifeq ($(TPU_REL),1)
+BR_DEPENDS = $(BUILDDIR)/tpusdk-stamp
+endif
 endif
 
 TOOLCHAIN_URL_ARM ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g' | sed 's|/linaro|/arm/gnu|g')
@@ -561,7 +567,7 @@ $(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-chec
 	@cd $(BR_DIR) && git checkout 578e9b9
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp
+$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp $(BR_DEPENDS)
 	@echo "$(COLOUR_GREEN)Patching Buildroot for $(BOARD)$(END_COLOUR)"
 	@$(foreach file, $(wildcard /configs/common/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
@@ -618,7 +624,16 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@if [ "$(BOARD)" = "duos" ]; then \
 		sed -i s/'BR2_PACKAGE_DUO_PINMUX_DUO256M=y'/'BR2_PACKAGE_DUO_PINMUX_DUOS=y'/g $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
-	@mkdir -pv $(BUILDDIR)/buildroot/board/$(CHIP_VENDOR)/$(SDK_CHIP)/overlay/usr/share/fw_vcodec
+	@if [ "$(TPU_REL)" = "1" ]; then \
+		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/lib && \
+		cp -arf $(TPUSDK_INSTALL_DIR)/rootfs/mnt/system/lib/* $(BR_OVERLAY_DIR)/mnt/system/lib/ && \
+		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/include && \
+		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/lib && \
+		cp -arf $(TPUSDK_INSTALL_DIR)/tpu_$(SDK_VER)/cvitek_tpu_sdk/include/* $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/include/ && \
+		cp -arf $(TPUSDK_INSTALL_DIR)/tpu_$(SDK_VER)/cvitek_tpu_sdk/lib/* $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/lib/ && \
+		sed -i s/'# BR2_PACKAGE_SOPHGO_LIBRARY is not set'/'BR2_PACKAGE_SOPHGO_LIBRARY=y\nBR2_PACKAGE_SOPHGO_LIBRARY_SG200X=y'/g $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+	fi
+	@mkdir -pv $(BR_OVERLAY_DIR)/usr/share/fw_vcodec
 	@mkdir -pv $(BUILDDIR)/ramdisk/tools/cvi_pinmux
 	@touch $@
 

@@ -38,6 +38,8 @@ endif
 
 TPUSDK_BOARD_LINK ?= $(TPUSDK_CHIP)_$(TPUSDK_CONFIG)_$(STORAGE_TYPE)
 
+TPUSDK_INSTALL_DIR = $(BUILDDIR)/tpusdk/install/soc_$(TPUSDK_BOARD_LINK)
+
 $(BUILDDIR)/tpusdk-prepare-clone-stamp:
 	@echo "$(COLOUR_GREEN)Cloning TPU SDK for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)

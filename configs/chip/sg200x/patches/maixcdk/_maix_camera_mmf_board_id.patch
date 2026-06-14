@@ -1,0 +1,22 @@
+diff --git a/components/vision/port/maixcam/maix_camera_mmf.cpp b/components/vision/port/maixcam/maix_camera_mmf.cpp
+index 094bef7..03b725f 100644
+--- a/components/vision/port/maixcam/maix_camera_mmf.cpp
++++ b/components/vision/port/maixcam/maix_camera_mmf.cpp
+@@ -510,7 +510,7 @@ _retry:
+         return poolIdCount;
+     }
+ 
+-    static int _mmf_vi_init(const char *board_id, int width, int height, double fps, camera_priv_t *priv)
++    static int _mmf_vi_init(const char *_board_id, int width, int height, double fps, camera_priv_t *priv)
+     {
+         SIZE_S stSize;
+         PIC_SIZE_E enPicSize;
+@@ -518,6 +518,8 @@ _retry:
+         SAMPLE_VI_CONFIG_S	stViConfig;
+         PIXEL_FORMAT_E vi_format = PIXEL_FORMAT_NV21;
+         PIXEL_FORMAT_E vi_vpss_format = PIXEL_FORMAT_NV21;
++        string board_name = _board_id;
++        const char *board_id = board_name.c_str();
+ 
+         // config vi param
+         char *sensor_name = getenv(MMF_SENSOR_NAME);
