@@ -465,7 +465,6 @@ $(BUILDDIR)/middleware-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-
 	sed -i 's|$$(ROOT_DIR)/../ramdisk/sysroot/sysroot-glibc-linaro-2.23-2017.05-arm-linux-gnueabihf|$(SDK_SYSROOT_32)|g' $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|/host-tools/gcc/riscv64-linux-x86_64/sysroot|$(SDK_SYSROOT_GLIBC_RISCV64)|g' $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|/host-tools/gcc/riscv64-linux-musl-x86_64/sysroot|$(SDK_SYSROOT_MUSL_RISCV64)|g' $(BUILDDIR)/middleware/Makefile.param
-	[ "$(DEB_ARCH)" != "arm64" ] || sed -i s/'OPT_LEVEL := -O3$$'/'OPT_LEVEL := -O3 -mno-outline-atomics'/g $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/Makefile.param
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/Makefile
 	sed -i 's|^include $$(BUILD_PATH)/.config|-include $$(BUILD_PATH)/.config|g' $(BUILDDIR)/middleware/component/isp/common/Makefile
