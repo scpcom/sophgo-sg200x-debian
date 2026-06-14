@@ -1,0 +1,16 @@
+diff --git a/components/3rd_party/sophgo-middleware/CMakeLists.txt b/components/3rd_party/sophgo-middleware/CMakeLists.txt
+index 8f7745a..bcb037b 100644
+--- a/components/3rd_party/sophgo-middleware/CMakeLists.txt
++++ b/components/3rd_party/sophgo-middleware/CMakeLists.txt
+@@ -74,4 +74,10 @@ list(APPEND ADD_DEFINITIONS_PRIVATE -DSENSOR_LONTIUM_LT6911)
+ list(APPEND ADD_DEFINITIONS_PRIVATE -DSENSOR_GCORE_GC02M1)
+ list(APPEND ADD_DEFINITIONS_PRIVATE -DSENSOR_GCORE_GC030A)
+ list(APPEND ADD_DEFINITIONS_PRIVATE -DSENSOR_GCORE_GC2083)
++
++if(PLATFORM_MAIXCAM)
++set(MW_FLAGS "-L${mmf_lib_dir} -L${mmf_lib_dir}/3rd  -lsample -lsys -lvpss -lcvi_bin -lvi -lvo -lgdc -lrgn -lsns_full -lisp -lvenc -lvdec -lawb -lae -laf -lcvi_bin_isp -lini -lmisc -lisp_algo -lcvi_ssp2 -lcvi_ssp  ")
++set(CMAKE_CXX_STANDARD_LIBRARIES ${MW_FLAGS} ${CMAKE_CXX_STANDARD_LIBRARIES} PARENT_SCOPE)
++endif()
++
+ register_component(DYNAMIC)
+\ No newline at end of file
