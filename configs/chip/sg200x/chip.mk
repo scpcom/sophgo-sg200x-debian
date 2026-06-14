@@ -112,15 +112,6 @@ BUILDROOT_ENV = CROSS_COMPILE_KERNEL=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX
 CROSS_COMPILE_SDK=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
-ifeq ($(findstring maixcdk,$(IMAGE_ADDITIONS)),)
-BR_ENABLE_MAIXAPP = $(findstring maixapp,$(IMAGE_ADDITIONS))
-endif
-ifneq ($(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP),)
-ifeq ($(TPU_REL),1)
-BR_DEPENDS = $(BUILDDIR)/tpusdk-stamp
-endif
-endif
-
 TOOLCHAIN_URL_ARM ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g' | sed 's|/linaro|/arm/gnu|g')
 
 FSBL_MAKE_OPTS = $(UBOOT_MAKE_OPTS) \
@@ -157,6 +148,15 @@ BSPFILTER =
 include $(wildcard /builder/addons/*/addon.mk)
 
 SDK_OSS_TARBALL_DIR = $(BUILDDIR)/tpusdk/oss/oss_release_tarball/$(SDK_VER)
+
+ifeq ($(findstring maixcdk,$(IMAGE_ADDITIONS)),)
+BR_ENABLE_MAIXAPP = $(findstring maixapp,$(IMAGE_ADDITIONS))
+endif
+ifneq ($(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP),)
+ifeq ($(TPU_REL),1)
+BR_DEPENDS = $(BUILDDIR)/tpusdk-stamp
+endif
+endif
 
 addon-targets = $(patsubst "%,$(BUILDDIR)/%-stamp,$(patsubst %",%,$(IMAGE_ADDITIONS)))
 _PACKAGES = $(patsubst "%,%,$(patsubst %",%,$(PACKAGES)))
