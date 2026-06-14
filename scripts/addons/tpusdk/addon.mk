@@ -38,6 +38,8 @@ endif
 
 TPUSDK_BOARD_LINK ?= $(TPUSDK_CHIP)_$(TPUSDK_CONFIG)_$(STORAGE_TYPE)
 
+TPUSDK_INSTALL_DIR = $(BUILDDIR)/tpusdk/install/soc_$(TPUSDK_BOARD_LINK)
+
 TPUSDK_MAKE_FILES = build-sdk.sh \
 ive/toolchain/toolchain-riscv64-linux.cmake \
 ive/toolchain/toolchain-riscv64-musl.cmake \
