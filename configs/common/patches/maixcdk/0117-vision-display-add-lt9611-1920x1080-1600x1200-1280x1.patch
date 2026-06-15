@@ -1,0 +1,39 @@
+From 6c200ee1744d91aa7cb9f46f22418edac1edcd0f Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Thu, 12 Jun 2025 00:36:26 +0200
+Subject: [PATCH] vision: display: add lt9611 1920x1080/1600x1200/1280x1024
+
+---
+ .../vision/port/maixcam/maix_display_mmf.hpp     | 16 ++++++++++++++++
+ 1 file changed, 16 insertions(+)
+
+diff --git a/components/vision/port/maixcam/maix_display_mmf.hpp b/components/vision/port/maixcam/maix_display_mmf.hpp
+index b504a92..2c1d9ee 100644
+--- a/components/vision/port/maixcam/maix_display_mmf.hpp
++++ b/components/vision/port/maixcam/maix_display_mmf.hpp
+@@ -83,6 +83,22 @@ namespace maix::display
+         } else if (!strcmp(panel_value, "st7701_d300fpc9307a")) {
+             w = 480;
+             h = 854;
++        } else if (!strcmp(panel_value, "lt9611_1920x1080_30hz") ||
++                   !strcmp(panel_value, "lt9611_1920x1080_60hz")) {
++            /* for LT9611 1920x1080 */
++            w = 1080;
++            h = 1920;
++            __g_panel_type = PanelType::LT9611;
++        } else if (!strcmp(panel_value, "lt9611_1600x1200_60hz")) {
++            /* for LT9611 1600x1200 */
++            w = 1200;
++            h = 1600;
++            __g_panel_type = PanelType::LT9611;
++        } else if (!strcmp(panel_value, "lt9611_1280x1024_60hz")) {
++            /* for LT9611 1280x1024 */
++            w = 1024;
++            h = 1280;
++            __g_panel_type = PanelType::LT9611;
+         } else if (!strcmp(panel_value, "lt9611_1024x768_60hz")) {
+             /* for LT9611 1024x768 */
+             w = 768;
+-- 
+2.34.1
+

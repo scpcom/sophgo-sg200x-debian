@@ -1,0 +1,26 @@
+From 34e8664cefc63431bb3385d9233a3fbd0e17a74c Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Sun, 8 Jun 2025 20:41:55 +0200
+Subject: [PATCH] vision: display: add alias for d240si31
+
+---
+ components/vision/port/maixcam/maix_display_mmf.hpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/components/vision/port/maixcam/maix_display_mmf.hpp b/components/vision/port/maixcam/maix_display_mmf.hpp
+index 69dbd68..230f367 100644
+--- a/components/vision/port/maixcam/maix_display_mmf.hpp
++++ b/components/vision/port/maixcam/maix_display_mmf.hpp
+@@ -62,7 +62,8 @@ namespace maix::display
+         if (!strcmp(panel_value, "st7701_hd228001c31")) { // maixcam
+             w = 368;
+             h = 552;
+-        } else if (!strcmp(panel_value, "st7701_lct024bsi20")) { // maixcam_pro
++        } else if (!strcmp(panel_value, "d240si31") ||
++                   !strcmp(panel_value, "st7701_lct024bsi20")) { // maixcam_pro
+             w = 480;
+             h = 640;
+         } else if (!strcmp(panel_value, "zct2133v1")) {
+-- 
+2.34.1
+

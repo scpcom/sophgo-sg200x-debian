@@ -1,0 +1,24 @@
+From 5aba893c9418ba011209e710c1b846160237453e Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Mon, 9 Jun 2025 23:20:00 +0200
+Subject: [PATCH 2/2] vision: display: add st7701_lhcm228ts003a
+
+---
+ components/vision/port/maixcam/maix_display_mmf.hpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/components/vision/port/maixcam/maix_display_mmf.hpp b/components/vision/port/maixcam/maix_display_mmf.hpp
+index 3d3ae09..b504a92 100644
+--- a/components/vision/port/maixcam/maix_display_mmf.hpp
++++ b/components/vision/port/maixcam/maix_display_mmf.hpp
+@@ -59,6 +59,7 @@ namespace maix::display
+ 
+         __g_panel_type = PanelType::NORMAL;
+         if (!strcmp(panel_value, "st7701_hd228001c31_alt0") ||
++            !strcmp(panel_value, "st7701_lhcm228ts003a") ||
+             !strcmp(panel_value, "st7701_hd228001c31")) { // maixcam
+             w = 368;
+             h = 552;
+-- 
+2.34.1
+
