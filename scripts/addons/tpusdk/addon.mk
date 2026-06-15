@@ -167,3 +167,4 @@ tpusdk-clean:
 	@rm -f $(BUILDDIR)/tpusdk-*-stamp
 
 $(BUILDDIR)/tpusdk-stamp: $(BUILDDIR)/tpusdk-package-stamp
+	@touch $@
