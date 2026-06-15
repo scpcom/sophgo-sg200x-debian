@@ -1,4 +1,4 @@
-FROM ubuntu:noble AS builder
+FROM debian:trixie AS builder
 
 ARG DEBIAN_FRONTEND=noninteractive
 
