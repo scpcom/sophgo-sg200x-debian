@@ -101,7 +101,7 @@ get_tag()
       done
       pushd "${r}/${repo}/archive" >/dev/null
       [ -e $rel_sha256 ] || echo "WARNING: $rel_sha256 not found, generating it."
-      [ -e $rel_sha256 ] || sha256sum *.tar.gz *.zip > $rel_sha256
+      [ -e $rel_sha256 ] || sha256sum ${tag}.tar.gz ${tag}.zip > $rel_sha256
       sha256sum -c $rel_sha256
       popd >/dev/null
    fi
