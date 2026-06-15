@@ -624,7 +624,7 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@if [ "$(BOARD)" = "duos" ]; then \
 		sed -i s/'BR2_PACKAGE_DUO_PINMUX_DUO256M=y'/'BR2_PACKAGE_DUO_PINMUX_DUOS=y'/g $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
-	@if [ "$(TPU_REL)" = "1" ]; then \
+	@if [ "X$(findstring tpusdk,$(BR_DEPENDS))" != "X" ]; then \
 		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/lib && \
 		cp -arf $(TPUSDK_INSTALL_DIR)/rootfs/mnt/system/lib/* $(BR_OVERLAY_DIR)/mnt/system/lib/ && \
 		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/opt/cvitek_tpu_sdk/include && \
