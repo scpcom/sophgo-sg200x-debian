@@ -134,6 +134,9 @@ get_tag google/flatbuffers v23.5.26
 get_tag onnx/onnx v1.17.0
 get_tag onnx/onnx v1.21.0
 
+get_tag Tencent/rapidjson v1.1.0
+get_tag Tencent/rapidjson 9bd618f545ab647e2c3bcbf2f1d87423d6edf800
+
 get_tag scpcom/ade v0.1.1f-gcc-13
 get_tag opencv/ade v0.1.1f
 get_tag opencv/ade v0.1.2a
