@@ -80,7 +80,11 @@ get_tag()
       rel_sha256=${scriptdir}/${rel_set}.sha256
       rel_files="${tag}.tar.gz ${tag}.zip"
       rel_dir=${tag}
-      echo ${tag} | grep -q -E '^[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]*$' || rel_dir=refs/tags
+      rel_dir=refs/tags
+      rep_prefix=
+      ! echo ${tag} | grep -q -E '^[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]*$' || rel_dir=${tag}
+      ! echo ${tag} | grep -q -E '.*-g[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]*$' || rel_dir=${tag}
+      ! echo ${tag} | grep -q -E '.*-g[0-9a-z][0-9a-z][0-9a-z][0-9a-z][0-9a-z]*$' || rel_prefix=$(echo ${repo} | cut -d / -f 2-)-
       echo "Parsing repo $repo at $tag"
       for rel_file in $rel_files ; do
       if [ -n "$rel_file" ]
@@ -94,7 +98,7 @@ get_tag()
         then
           ln -s ../../${rel_file} ${rel_dir}/${rel_file}
         else
-          ln -s ../${rel_file} ${rel_dir}/${rel_file}
+          ln -s ../${rel_file} ${rel_dir}/${rel_prefix}${rel_file}
         fi
         popd >/dev/null
       fi
@@ -115,6 +119,8 @@ for f in scripts/addons/python3-*/addon.mk ; do
   t=$(grep '^'$v $f | cut -d '=' -f 2- | tr -d '\t ')
   [ "X$t" = "X" ] || get_pip $b $t
 done
+
+get_tag bminor/glibc 2.41-70-g1502c248d58cb99a203731707987a4342926e830
 
 get_tag abseil/abseil-cpp 20240722.0
 get_tag abseil/abseil-cpp 20250814.0
