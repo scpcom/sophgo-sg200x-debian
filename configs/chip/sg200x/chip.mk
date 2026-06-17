@@ -597,7 +597,8 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-aarch64/toolchain-external-arm-aarch64.mk
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-arm/toolchain-external-arm-arm.mk
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|http://www.mpfr.org|$(TOOLCHAIN_URL_GNU)|g' package/mpfr/mpfr.mk
-	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|$(BR2_KERNEL_MIRROR)/linux/kernel|$(TOOLCHAIN_URL_GNU)/linux|g' package/linux-headers/linux-headers.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|$$(BR2_KERNEL_MIRROR)/linux/kernel|$(TOOLCHAIN_URL_GNU)/linux|g' package/linux-headers/linux-headers.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|https://github.com|$(GIT_RELEASES_URL)|g' package/pkg-download.mk
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@[ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || echo 'BR2_GNU_MIRROR="$(TOOLCHAIN_URL_GNU)"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
