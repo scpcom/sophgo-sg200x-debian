@@ -112,6 +112,9 @@ CROSS_COMPILE_SDK=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
 TOOLCHAIN_URL_ARM ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g' | sed 's|/linaro|/arm/gnu|g')
+ifneq ($(TOOLCHAIN_URL),)
+TOOLCHAIN_URL_GNU ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*||g' | sed 's|/linaro||g')/gnu
+endif
 
 FSBL_MAKE_OPTS = $(UBOOT_MAKE_OPTS) \
 CHIP_ARCH=$(CHIP) \
@@ -593,8 +596,12 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@cd $(BR_DIR) && sed -i 's|https://github.com/wlhe|$(GIT_USER_URL)|g' package/uvc-gadget/uvc-gadget.mk
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-aarch64/toolchain-external-arm-aarch64.mk
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-arm/toolchain-external-arm-arm.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|http://www.mpfr.org|$(TOOLCHAIN_URL_GNU)|g' package/mpfr/mpfr.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|$$(BR2_KERNEL_MIRROR)/linux/kernel|$(TOOLCHAIN_URL_GNU)/linux|g' package/linux-headers/linux-headers.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|https://github.com|$(GIT_RELEASES_URL)|g' package/pkg-download.mk
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
+	@[ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || echo 'BR2_GNU_MIRROR="$(TOOLCHAIN_URL_GNU)"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@if [ "X$(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_CCACHE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_CA_CERTIFICATES/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \

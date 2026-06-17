@@ -473,7 +473,7 @@ $(BUILDDIR)/bsp-prepare-clone-stamp:
 
 $(BUILDDIR)/bsp-prepare-checkout-stamp: $(BUILDDIR)/bsp-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out BSP for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/bsp && git checkout 8222716
+	@cd $(BUILDDIR)/bsp && git checkout bbe6d0d
 	@cd $(BUILDDIR)/bsp && git submodule set-url axerabin $(GIT_USER_URL)/axerabin
 	@cd $(BUILDDIR)/bsp && git submodule set-url linux $(GIT_USER_URL)/linux
 	@cd $(BUILDDIR)/bsp && git submodule set-url u-boot $(GIT_USER_URL)/u-boot

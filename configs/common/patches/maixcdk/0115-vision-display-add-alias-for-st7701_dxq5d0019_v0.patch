@@ -1,0 +1,26 @@
+From d39992d6cf707ba8f86e1b4467079e564dd9d8a3 Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Mon, 9 Jun 2025 23:15:33 +0200
+Subject: [PATCH 1/2] vision: display: add alias for st7701_dxq5d0019_v0
+
+---
+ components/vision/port/maixcam/maix_display_mmf.hpp | 3 ++-
+ 1 file changed, 2 insertions(+), 1 deletion(-)
+
+diff --git a/components/vision/port/maixcam/maix_display_mmf.hpp b/components/vision/port/maixcam/maix_display_mmf.hpp
+index 230f367..3d3ae09 100644
+--- a/components/vision/port/maixcam/maix_display_mmf.hpp
++++ b/components/vision/port/maixcam/maix_display_mmf.hpp
+@@ -72,7 +72,8 @@ namespace maix::display
+         } else if (!strcmp(panel_value, "mtd700920b")) {
+             w = 800;
+             h = 1280;
+-        } else if (!strcmp(panel_value, "st7701_dxq5d0019_V0")) {
++        } else if (!strcmp(panel_value, "st7701_dxq5d0019_v0") ||
++                   !strcmp(panel_value, "st7701_dxq5d0019_V0")) {
+             w = 480;
+             h = 854;
+         } else if (!strcmp(panel_value, "st7701_dxq5d0019b480854")) {
+-- 
+2.34.1
+

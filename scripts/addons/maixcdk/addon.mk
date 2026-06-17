@@ -178,6 +178,7 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@[ ! -e $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py ] || sed -i 's|https://github.com/sipeed/MaixCDK/releases|'$(GIT_RELEASES_URL)'/sipeed/MaixCDK/releases|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py
 	@sed -i 's|https://github.com/opencv/ade/archive|$(GIT_RELEASES_URL)/opencv/ade/archive|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
 	@sed -i 's|https://github.com/opencv/opencv/archive|$(GIT_RELEASES_URL)/opencv/opencv/archive|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/opencv/component.py
+	@sed -i 's|https://github.com/Tencent/rapidjson/archive|$(GIT_RELEASES_URL)/Tencent/rapidjson/archive|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/rapidjson/component.py
 	@[ "X$(MAIXCDK_TOOLCHAIN_URL)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(MAIXCDK_TOOLCHAIN_URL)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@# use cross compile toolchain
 	@sed -i s/'^    url: .*'/'    url:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
