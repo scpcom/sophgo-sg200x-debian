@@ -27,10 +27,12 @@ else
 MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE ?= n
 endif
 
-ifneq ($(SDK_TARGET_LDFLAGS),)
-MAIXCDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS)
+ifneq ($(SDK_TARGET_CFLAGS),)
+MAIXCDK_TARGET_CFLAGS = $(SDK_TARGET_CFLAGS)
+MAIXCDK_TARGET_CXXFLAGS = $(SDK_TARGET_CXXFLAGS)
 else
-MAIXCDK_TARGET_LDFLAGS = ""
+MAIXCDK_TARGET_CFLAGS = ""
+MAIXCDK_TARGET_CXXFLAGS = ""
 endif
 
 ifneq ("$(CHIP_FAMILY)","sg200x")
@@ -187,8 +189,8 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@sed -i s/'^    path: .*'/'    path:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@sed -i 's|^    bin_path: .*|    bin_path: '$(SDK_CROSS_COMPILE_PATH)/bin'|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@sed -i 's|^    prefix: .*|    prefix: '$(SDK_CROSS_COMPILE_PREFIX)'|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i 's|^    c_flags: .*|    c_flags: $(MAIXCDK_TARGET_LDFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i 's|^    cxx_flags: .*|    cxx_flags: $(MAIXCDK_TARGET_LDFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i 's|^    c_flags: .*|    c_flags: $(MAIXCDK_TARGET_CFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i 's|^    cxx_flags: .*|    cxx_flags: $(MAIXCDK_TARGET_CXXFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-ax620e-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
