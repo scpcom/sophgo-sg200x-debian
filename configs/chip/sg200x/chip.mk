@@ -22,7 +22,7 @@ SDK_SYSROOT_GLIBC_RISCV64 = $(CROSS_COMPILE_PATH_GLIBC_RISCV64)/sysroot
 SDK_SYSROOT_MUSL_RISCV64 = $(CROSS_COMPILE_PATH_MUSL_RISCV64)/sysroot
 
 SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53 -mno-outline-atomics
-SDK_TARGET_LDFLAGS_32 = -march=armv7-a
+SDK_TARGET_LDFLAGS_32 = -march=armv7-a+fp
 SDK_TARGET_LDFLAGS_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d
 
 ifeq ($(SDK_VER),glibc_riscv64)
