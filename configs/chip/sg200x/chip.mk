@@ -652,9 +652,6 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@if [ "X$(findstring kvm,$(VARIANT))" = "X" ]; then \
 		sed -i /BR2_PACKAGE_NANOKVM/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
-	@if [ "$(BOARD)" = "duos" ]; then \
-		sed -i s/'BR2_PACKAGE_DUO_PINMUX_DUO256M=y'/'BR2_PACKAGE_DUO_PINMUX_DUOS=y'/g $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
-	fi
 	@if [ "X$(findstring tpusdk,$(BR_DEPENDS))" != "X" ]; then \
 		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/lib && \
 		cp -arf $(TPUSDK_INSTALL_DIR)/rootfs/mnt/system/lib/* $(BR_OVERLAY_DIR)/mnt/system/lib/ && \
