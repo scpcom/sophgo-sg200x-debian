@@ -566,7 +566,12 @@ $(BUILDDIR)/buildroot-prepare-clone-stamp:
 	@git clone -b nanokvm-2025.02 $(GIT_CLONE_OPTS) --recursive $(GIT_USER_URL)/buildroot.git $(BUILDDIR)/buildroot
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-clone-dl-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
+$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
+	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
+	@cd $(BR_DIR) && git checkout 578e9b9
+	@touch $@
+
+$(BUILDDIR)/buildroot-prepare-clone-dl-stamp: $(BUILDDIR)/buildroot-prepare-checkout-stamp
 	@echo "$(COLOUR_GREEN)Cloning Buildroot dl for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b maixcdk --depth=1 $(GIT_USER_URL)/buildroot-dl.git $(BR_DIR)/dl
@@ -578,23 +583,7 @@ $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp: $(BUILDDIR)/buildroot-prepare-c
 	@cd $(BR_DIR)/dl && [ "$(GIT_REF)" = "develop" ] || rm -rf .git
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-clone-pinmux-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
-	@echo "$(COLOUR_GREEN)Cloning Buildroot pinmux for $(BOARD)$(END_COLOUR)"
-	@mkdir -p $(BUILDDIR)/ramdisk/tools
-	@git clone -b main $(GIT_USER_URL)/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
-	@touch $@
-
-$(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp: $(BUILDDIR)/buildroot-prepare-clone-pinmux-stamp
-	@echo "$(COLOUR_GREEN)Checking out Buildroot pinmux for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/ramdisk/tools/cvi_pinmux && git checkout 5b90da9
-	@touch $@
-
-$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp
-	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout 578e9b9
-	@touch $@
-
-$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp $(BR_DEPENDS)
+$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/middleware-compile-stamp $(BR_DEPENDS)
 	@echo "$(COLOUR_GREEN)Patching Buildroot for $(BOARD)$(END_COLOUR)"
 	@$(foreach file, $(wildcard /configs/common/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
