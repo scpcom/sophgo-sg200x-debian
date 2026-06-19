@@ -8,6 +8,7 @@ MAIXCDK_DLPKGS_GIT_REF = a7e320a6bb28ce2b9c4cd2d3f64d7713c9f9a3fc
 MAIXCDK_SAMPLE ?= stream_rtsp_demo
 
 MAIXCDK_BUILD_DIR = $(BUILDDIR)/MaixCDK
+MAIXCDK_MIDDLEWARE_SRC_DIR = $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware
 
 MAIXCDK_TOOLCHAIN_URL ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g')
 
@@ -226,19 +227,21 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@# disable __ARM_ARCH on arm64
 	@[ "$(DEB_ARCH)" != "arm64" ] || sed -i s/'ADD_DEFINITIONS_PRIVATE -DPLATFORM_MAIXCAM=1'/'ADD_DEFINITIONS_PRIVATE -D__ARM_ARCH=0 -DPLATFORM_MAIXCAM=1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/omv/CMakeLists.txt
 	@# use middleware libs from sdk
-	@sed -i 's|$${middleware_src_path}/v2/lib|$(MIDDLEWARE_OUT_DIR)/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
-	@sed -i 's|$${middleware_src_path}/v2/include|$(MIDDLEWARE_OUT_DIR)/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
-	@sed -i 's|$${middleware_src_path}/v2/uapi|$(MIDDLEWARE_OUT_DIR)/include/linux|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@rm -rf $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/include/
+	@rm -rf $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/lib/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/include/ $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/include/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/lib/ $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/lib/
+	@sed -i 's|$${middleware_src_path}/v2/uapi|$${middleware_src_path}/v2/include/linux|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@# small changes related to weekly rls 2024.10.14
 	@sed -i /'$${mmf_lib_dir}.3rd.libcli.so'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i s/'libdnvqe.so'/'libcvi_dnvqe.so'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i 's|$${mmf_lib_dir}/libcvi_dnvqe.so|\$${mmf_lib_dir}/libcvi_dnvqe.so $${mmf_lib_dir}/libcvi_ssp2.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i /'$${mmf_lib_dir}.libjson-c.so.5'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i 's|^list.APPEND ADD_INCLUDE $${middleware_include_dir}.|list(APPEND ADD_INCLUDE $${middleware_include_dir})\n\nlist(APPEND ADD_DEFINITIONS -D__$(SDK_CHIP)__)|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
-	@sed -i /'#include "cvi_comm_ao.h"'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_comm.h
-	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/component/isp/sensor/sg200x/gcore_gc02m1/gc02m1_cmos.c
-	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_common_sensor.c
-	@sed -i s/'#include "mipi_tx.h"'/'#include "cvi_mipi_tx.h"'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_common_vo.c
+	@sed -i /'#include "cvi_comm_ao.h"'/d $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/sample/common/sample_comm.h
+	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/component/isp/sensor/sg200x/gcore_gc02m1/gc02m1_cmos.c
+	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/sample/common/sample_common_sensor.c
+	@sed -i s/'#include "mipi_tx.h"'/'#include "cvi_mipi_tx.h"'/g $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/sample/common/sample_common_vo.c
 	@# use ms_asr built from source
 	@rsync -avpPxH $(MS_ASR_OUT_DIR)/libms_asr_*.so $(MAIXCDK_BUILD_DIR)/components/nn/lib/
 	@# add -ldl for glibc cross compile toolchain
