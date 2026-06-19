@@ -58,6 +58,21 @@ endif
 endif
 SDK_TARGET_CXXFLAGS ?= $(SDK_TARGET_CFLAGS)
 
+SDK_MESON_LDFLAGS ?= ['$(shell echo $(SDK_TARGET_LDFLAGS) | sed "s/ /', '/g")']
+SDK_MESON_CFLAGS ?= ['$(shell echo $(SDK_TARGET_CFLAGS) -g0 | sed "s/ /', '/g")']
+SDK_MESON_CXXFLAGS ?= ['$(shell echo $(SDK_TARGET_CXXFLAGS) -g0 | sed "s/ /', '/g")']
+
+ifeq ($(SDK_VER),64bit)
+SDK_MESON_ARCH ?= aarch64
+SDK_MESON_CPU ?= cortex-a53
+else ifeq ($(SDK_VER),32bit)
+SDK_MESON_ARCH ?= arm
+SDK_MESON_CPU ?= cortex-a53
+else
+SDK_MESON_ARCH ?= $(DEB_ARCH)
+SDK_MESON_CPU ?=
+endif
+
 ifeq ($(BOOT_CPU),aarch64)
 SBL_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SBL_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
