@@ -1,0 +1,40 @@
+# Note: Buildroot's and Meson's terminologies differ about the meaning
+# of 'build', 'host' and 'target':
+# - Buildroot's 'host' is Meson's 'build'
+# - Buildroot's 'target' is Meson's 'host'
+
+[binaries]
+c = '{{SDK_CROSS_COMPILE_PATH}}/bin/{{SDK_CROSS_COMPILE_PREFIX}}gcc'
+cpp = '{{SDK_CROSS_COMPILE_PATH}}/bin/{{SDK_CROSS_COMPILE_PREFIX}}g++'
+ar = '{{SDK_CROSS_COMPILE_PATH}}/bin/{{SDK_CROSS_COMPILE_PREFIX}}gcc-ar'
+strip = '{{SDK_CROSS_COMPILE_PATH}}/bin/{{SDK_CROSS_COMPILE_PREFIX}}strip'
+cmake = '/usr/bin/cmake'
+fortran = '/bin/false'
+pkg-config = '{{SDK_CROSS_COMPILE_PATH}}/bin/pkgconf'
+g-ir-compiler = '{{SDK_SYSROOT}}/usr/bin/g-ir-compiler'
+g-ir-scanner = '{{SDK_SYSROOT}}/usr/bin/g-ir-scanner'
+
+[built-in options]
+c_args = {{SDK_MESON_CFLAGS}}
+c_link_args = {{SDK_MESON_LDFLAGS}}
+cpp_args = {{SDK_MESON_CXXFLAGS}}
+cpp_link_args = {{SDK_MESON_LDFLAGS}}
+fortran_args = ['-O2', '-g0']
+fortran_link_args = {{SDK_MESON_LDFLAGS}}
+wrap_mode = 'nodownload'
+cmake_prefix_path = '{{SDK_SYSROOT}}/usr/lib/cmake'
+
+[properties]
+needs_exe_wrapper = true
+sys_root = '{{SDK_SYSROOT}}'
+pkg_config_libdir = '{{SDK_SYSROOT}}/usr/lib/pkgconfig:{{SDK_SYSROOT}}/usr/share/pkgconfig'
+pkg_config_static = 'false'
+# enable meson build to pass a toolchain file to cmake
+#cmake_toolchain_file = '{{SDK_CMAKE_TOOLCHAIN_FILE}}'
+#cmake_defaults = false
+
+[host_machine]
+system = 'linux'
+cpu_family = '{{SDK_MESON_ARCH}}'
+cpu = '{{SDK_MESON_CPU}}'
+endian = 'little'
