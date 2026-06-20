@@ -27,15 +27,19 @@ else
 MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE ?= n
 endif
 
-ifneq ($(SDK_TARGET_LDFLAGS),)
-MAIXCDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS)
+ifneq ($(SDK_TARGET_CFLAGS),)
+MAIXCDK_TARGET_CFLAGS = $(SDK_TARGET_CFLAGS)
+MAIXCDK_TARGET_CXXFLAGS = $(SDK_TARGET_CXXFLAGS)
 else
-MAIXCDK_TARGET_LDFLAGS = ""
+MAIXCDK_TARGET_CFLAGS = ""
+MAIXCDK_TARGET_CXXFLAGS = ""
 endif
 
 ifneq ("$(CHIP_FAMILY)","sg200x")
 # ax620e
 MAIXCDK_PLATFORM ?= maixcam2
+
+MAIXCDK_MIDDLEWARE_SRC_DIR = $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/msp
 
 # we only need ustreamer customized branch from pikvm to build maixcam_lib
 MAIXCAMLIB_BUILD_DIR = $(PIKVM_BUILD_DIR)/ustreamer
@@ -71,6 +75,8 @@ $(BUILDDIR)/msasr-stamp: $(BUILDDIR)/maixcamlib-stamp
 else
 # sg200x
 MAIXCDK_PLATFORM ?= maixcam
+
+MAIXCDK_MIDDLEWARE_SRC_DIR = $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware
 
 MAIXCAMLIB_BUILD_DIR = $(BUILDDIR)/middleware/sample/test_mmf
 MAIXCAMLIB_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/maixcam_lib/release.linux
@@ -142,8 +148,11 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/component.py
 	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/CMakeLists.txt
 	@# use msp libs from sdk
-	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "$(MIDDLEWARE_OUT_DIR)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
-	@sed -i 's|$${msp_local_path}/out/.*_glibc/include|$(MIDDLEWARE_OUT_DIR)/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
+	@rm -rf $(MAIXCDK_MIDDLEWARE_SRC_DIR)/out/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/include/ $(MAIXCDK_MIDDLEWARE_SRC_DIR)/include/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/lib/ $(MAIXCDK_MIDDLEWARE_SRC_DIR)/lib/
+	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "msp")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
+	@sed -i 's|$${msp_local_path}/out/.*_glibc/include|$${msp_local_path}/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
 	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/component.py
 	@# disable ARM_MATH_DSP on ARM 32 bit
 	@[ "$(DEB_ARCH)" != "armhf" ] || sed -i s/'#define ARM_MATH_DSP'/'#define BROKEN_ARM_MATH_DSP'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/omv/omv/ports/common/arm_math_types.h
@@ -187,8 +196,8 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@sed -i s/'^    path: .*'/'    path:'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@sed -i 's|^    bin_path: .*|    bin_path: '$(SDK_CROSS_COMPILE_PATH)/bin'|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@sed -i 's|^    prefix: .*|    prefix: '$(SDK_CROSS_COMPILE_PREFIX)'|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i 's|^    c_flags: .*|    c_flags: $(MAIXCDK_TARGET_LDFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
-	@sed -i 's|^    cxx_flags: .*|    cxx_flags: $(MAIXCDK_TARGET_LDFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i 's|^    c_flags: .*|    c_flags: $(MAIXCDK_TARGET_CFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@sed -i 's|^    cxx_flags: .*|    cxx_flags: $(MAIXCDK_TARGET_CXXFLAGS)|g' $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@touch $@
 
 $(BUILDDIR)/maixcdk-prepare-ax620e-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stamp
@@ -224,23 +233,25 @@ $(BUILDDIR)/maixcdk-prepare-sg200x-stamp: $(BUILDDIR)/maixcdk-prepare-patch-stam
 	@# disable __ARM_ARCH on arm64
 	@[ "$(DEB_ARCH)" != "arm64" ] || sed -i s/'ADD_DEFINITIONS_PRIVATE -DPLATFORM_MAIXCAM=1'/'ADD_DEFINITIONS_PRIVATE -D__ARM_ARCH=0 -DPLATFORM_MAIXCAM=1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/omv/CMakeLists.txt
 	@# use middleware libs from sdk
-	@sed -i 's|$${middleware_src_path}/v2/lib|$(MIDDLEWARE_OUT_DIR)/lib|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
-	@sed -i 's|$${middleware_src_path}/v2/include|$(MIDDLEWARE_OUT_DIR)/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
-	@sed -i 's|$${middleware_src_path}/v2/uapi|$(MIDDLEWARE_OUT_DIR)/include/linux|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
+	@rm -rf $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/include/
+	@rm -rf $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/lib/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/include/ $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/include/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/lib/ $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/lib/
+	@sed -i 's|$${middleware_src_path}/v2/uapi|$${middleware_src_path}/v2/include/linux|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@# small changes related to weekly rls 2024.10.14
 	@sed -i /'$${mmf_lib_dir}.3rd.libcli.so'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i s/'libdnvqe.so'/'libcvi_dnvqe.so'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i 's|$${mmf_lib_dir}/libcvi_dnvqe.so|\$${mmf_lib_dir}/libcvi_dnvqe.so $${mmf_lib_dir}/libcvi_ssp2.so|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i /'$${mmf_lib_dir}.libjson-c.so.5'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
 	@sed -i 's|^list.APPEND ADD_INCLUDE $${middleware_include_dir}.|list(APPEND ADD_INCLUDE $${middleware_include_dir})\n\nlist(APPEND ADD_DEFINITIONS -D__$(SDK_CHIP)__)|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/CMakeLists.txt
-	@sed -i /'#include "cvi_comm_ao.h"'/d $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_comm.h
-	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/component/isp/sensor/sg200x/gcore_gc02m1/gc02m1_cmos.c
-	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_common_sensor.c
-	@sed -i s/'#include "mipi_tx.h"'/'#include "cvi_mipi_tx.h"'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware/v2/sample/common/sample_common_vo.c
+	@sed -i /'#include "cvi_comm_ao.h"'/d $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/sample/common/sample_comm.h
+	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/component/isp/sensor/sg200x/gcore_gc02m1/gc02m1_cmos.c
+	@sed -i s/stSnsGc02m1_Obj/stSnsGc02m1b_Obj/g $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/sample/common/sample_common_sensor.c
+	@sed -i s/'#include "mipi_tx.h"'/'#include "cvi_mipi_tx.h"'/g $(MAIXCDK_MIDDLEWARE_SRC_DIR)/v2/sample/common/sample_common_vo.c
 	@# use ms_asr built from source
 	@rsync -avpPxH $(MS_ASR_OUT_DIR)/libms_asr_*.so $(MAIXCDK_BUILD_DIR)/components/nn/lib/
 	@# add -ldl for glibc cross compile toolchain
-	@[ "X$(findstring musl,$(SDK_VER))" != "X" ] || sed -i s/'-mabi=lp64d$$'/'-mabi=lp64d -ldl'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
+	@[ "X$(findstring musl,$(SDK_VER))" != "X" ] || sed -i s/'-mabi=lp64d'/'-mabi=lp64d -ldl'/g $(MAIXCDK_BUILD_DIR)/platforms/$(MAIXCDK_PLATFORM).yaml
 	@touch $@
 
 $(BUILDDIR)/maixcdk-compile-one-example-stamp: $(BUILDDIR)/maixcdk-prepare-$(CHIP_FAMILY)-stamp
