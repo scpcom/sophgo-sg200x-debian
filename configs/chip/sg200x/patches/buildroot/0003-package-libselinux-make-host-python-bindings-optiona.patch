@@ -1,0 +1,89 @@
+From 8cc944162e2ab13fd931889c89296cbf1f024e4f Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Fri, 19 Jun 2026 21:16:28 +0200
+Subject: [PATCH 3/4] package/libselinux: make host python bindings optional
+
+---
+ package/libselinux/libselinux.mk | 42 ++++++++++++++++++++------------
+ 1 file changed, 27 insertions(+), 15 deletions(-)
+
+diff --git a/package/libselinux/libselinux.mk b/package/libselinux/libselinux.mk
+index 360ab063ca..7d6c39a8a0 100644
+--- a/package/libselinux/libselinux.mk
++++ b/package/libselinux/libselinux.mk
+@@ -30,7 +30,7 @@ LIBSELINUX_DEPENDENCIES += musl-fts
+ LIBSELINUX_MAKE_OPTS += FTS_LDLIBS=-lfts
+ endif
+ 
+-ifeq ($(BR2_PACKAGE_PYTHON3),y)
++ifeq ($(BR2_PACKAGE_PYTHON_LIBSELINUX),y)
+ LIBSELINUX_DEPENDENCIES += \
+ 	python3 \
+ 	python-setuptools \
+@@ -72,37 +72,49 @@ define LIBSELINUX_INSTALL_TARGET_CMDS
+ 		echo "none /sys/fs/selinux selinuxfs noauto 0 0" >> $(TARGET_DIR)/etc/fstab ; fi
+ endef
+ 
++HOST_LIBSELINUX_MAKE_INSTALL_TARGETS = install
++
+ HOST_LIBSELINUX_DEPENDENCIES = \
+ 	host-pkgconf \
+ 	host-libsepol \
+-	host-pcre2 \
+-	host-swig \
+-	host-python3 \
+-	host-python-pip \
+-	host-python-setuptools
++	host-pcre2
+ 
+ HOST_LIBSELINUX_MAKE_OPTS = \
+ 	$(HOST_CONFIGURE_OPTS) \
+ 	PREFIX=$(HOST_DIR) \
+ 	SHLIBDIR=$(HOST_DIR)/lib \
+-	$(HOST_PKG_PYTHON_SETUPTOOLS_ENV) \
+-	PYTHON=python$(PYTHON3_VERSION_MAJOR) \
+ 	USE_PCRE2=y
+ 
++ifeq ($(BR2_PACKAGE_HOST_PYTHON_LIBSELINUX),y)
++HOST_LIBSELINUX_DEPENDENCIES += \
++	host-swig \
++	host-python3 \
++	host-python-pip \
++	host-python-setuptools
++
++HOST_LIBSELINUX_MAKE_OPTS += \
++	$(HOST_PKG_PYTHON_SETUPTOOLS_ENV) \
++	PYTHON=python$(PYTHON3_VERSION_MAJOR)
++
++# Generate python interface wrapper
++define HOST_LIBSELINUX_BUILD_PYTHON_BINDINGS
++	$(HOST_MAKE_ENV) $(MAKE1) -C $(@D) \
++		$(HOST_LIBSELINUX_MAKE_OPTS) swigify pywrap
++endef
++
++HOST_LIBSELINUX_MAKE_INSTALL_TARGETS += install-pywrap
++endif
++
+ define HOST_LIBSELINUX_BUILD_CMDS
+ 	$(HOST_MAKE_ENV) $(MAKE1) -C $(@D) \
+ 		$(HOST_LIBSELINUX_MAKE_OPTS) all
+-	# Generate python interface wrapper
+-	$(HOST_MAKE_ENV) $(MAKE1) -C $(@D) \
+-		$(HOST_LIBSELINUX_MAKE_OPTS) swigify pywrap
++	$(HOST_LIBSELINUX_BUILD_PYTHON_BINDINGS)
+ endef
+ 
+ define HOST_LIBSELINUX_INSTALL_CMDS
+ 	$(HOST_MAKE_ENV) $(MAKE) -C $(@D) \
+-		$(HOST_LIBSELINUX_MAKE_OPTS) install
+-	# Install python interface wrapper
+-	$(HOST_MAKE_ENV) $(MAKE) -C $(@D) \
+-		$(HOST_LIBSELINUX_MAKE_OPTS) install-pywrap
++		$(HOST_LIBSELINUX_MAKE_OPTS) \
++		$(HOST_LIBSELINUX_MAKE_INSTALL_TARGETS)
+ endef
+ 
+ define LIBSELINUX_LINUX_CONFIG_FIXUPS
+-- 
+2.34.1
+

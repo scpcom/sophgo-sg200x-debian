@@ -1,0 +1,29 @@
+diff --git a/components/3rd_party/rapidjson/component.py b/components/3rd_party/rapidjson/component.py
+index f7eb5f9..42fe376 100644
+--- a/components/3rd_party/rapidjson/component.py
++++ b/components/3rd_party/rapidjson/component.py
+@@ -4,18 +4,18 @@ def add_file_downloads(confs : dict) -> list:
+         @param confs kconfig vars, dict type
+         @return list type, items is dict type
+     '''
+-    version = "1.1.0"
+-    url = f"https://github.com/Tencent/rapidjson/archive/refs/tags/v{version}.zip"
+-    if version == "1.1.0":
+-        sha256sum = "8e00c38829d6785a2dfb951bb87c6974fa07dfe488aa5b25deec4b8bc0f6a3ab"
++    version = "1.1.0-3"
++    url = f"https://github.com/Tencent/rapidjson/archive/9bd618f545ab647e2c3bcbf2f1d87423d6edf800.zip"
++    if version == "1.1.0-3":
++        sha256sum = "169b68938e883ded0a4bbe673ddeb7fed162a529a3b08d564c77e97ec947e5d3"
+     else:
+         raise Exception(f"version {version} not support")
+     sites = ["https://github.com/Tencent/rapidjson"]
+-    filename = f"rapidjson-{version}.zip"
++    filename = f"rapidjson-9bd618f545ab647e2c3bcbf2f1d87423d6edf800.zip"
+     path = f"rapidjson_srcs"
+     check_file = 'rapidjson'
+     rename = {
+-        f"rapidjson-{version}": 'rapidjson'
++        f"rapidjson-9bd618f545ab647e2c3bcbf2f1d87423d6edf800": 'rapidjson'
+     }
+ 
+     return [

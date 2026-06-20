@@ -1,0 +1,30 @@
+From 34375e3eb4e3d72c37fd59e99caaf0094fbc723d Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Thu, 27 Nov 2025 21:19:11 +0100
+Subject: [PATCH] vision: display: add milkv_8hd and milkv_st7796s
+
+---
+ components/vision/port/maixcam/maix_display_mmf.hpp | 7 +++++++
+ 1 file changed, 7 insertions(+)
+
+diff --git a/components/vision/port/maixcam/maix_display_mmf.hpp b/components/vision/port/maixcam/maix_display_mmf.hpp
+index 278d5f45..b7148bba 100644
+--- a/components/vision/port/maixcam/maix_display_mmf.hpp
++++ b/components/vision/port/maixcam/maix_display_mmf.hpp
+@@ -72,6 +72,13 @@ namespace maix::display
+         } else if (!strcmp(panel_value, "zct2133v1")) {
+             w = 800;
+             h = 1280;
++        } else if (!strcmp(panel_value, "milkv_8hd") ||
++                   !strcmp(panel_value, "milkv_8hd_2lane")) {
++            w = 800;
++            h = 1280;
++        } else if (!strcmp(panel_value, "milkv_st7796s")) {
++            w = 320;
++            h = 480;
+         } else if (!strcmp(panel_value, "mtd700920b")) {
+             w = 800;
+             h = 1280;
+-- 
+2.34.1
+

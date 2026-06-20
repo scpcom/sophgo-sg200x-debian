@@ -22,7 +22,7 @@ SDK_SYSROOT_GLIBC_RISCV64 = /rootfs
 SDK_SYSROOT_MUSL_RISCV64 = $(CROSS_COMPILE_PATH_MUSL_RISCV64)/sysroot
 
 SDK_TARGET_LDFLAGS_64 = -mcpu=cortex-a53 -mno-outline-atomics
-SDK_TARGET_LDFLAGS_32 = -march=armv7-a
+SDK_TARGET_LDFLAGS_32 = -march=armv7-a+fp
 SDK_TARGET_LDFLAGS_GLIBC_RISCV64 = -mcpu=thead-c906 -march=rv64imafdc_xtheadba_xtheadbb_xtheadbs_xtheadcmo -mcmodel=medany -mabi=lp64d
 SDK_TARGET_LDFLAGS_MUSL_RISCV64 = -mcpu=c906fdv -march=rv64imafdcv0p7xthead -mcmodel=medany -mabi=lp64d
 
@@ -48,6 +48,30 @@ SDK_SYSROOT = $(SDK_SYSROOT_32)
 SDK_TARGET_LDFLAGS = $(SDK_TARGET_LDFLAGS_32)
 else
 $(error $(red)SDK_VER is invalid$(reset))
+endif
+
+ifeq ($(SDK_TARGET_CFLAGS),)
+SDK_TARGET_CFLAGS = $(SDK_TARGET_LDFLAGS)
+SDK_TARGET_CFLAGS += -D_LARGEFILE_SOURCE -D_LARGEFILE64_SOURCE -D_FILE_OFFSET_BITS=64 -O2
+ifeq ($(SDK_VER),32bit)
+SDK_TARGET_CFLAGS += -D_TIME_BITS=32
+endif
+endif
+SDK_TARGET_CXXFLAGS ?= $(SDK_TARGET_CFLAGS)
+
+SDK_MESON_LDFLAGS ?= ['$(shell echo $(SDK_TARGET_LDFLAGS) | sed "s/ /', '/g")']
+SDK_MESON_CFLAGS ?= ['$(shell echo $(SDK_TARGET_CFLAGS) -g0 | sed "s/ /', '/g")']
+SDK_MESON_CXXFLAGS ?= ['$(shell echo $(SDK_TARGET_CXXFLAGS) -g0 | sed "s/ /', '/g")']
+
+ifeq ($(SDK_VER),64bit)
+SDK_MESON_ARCH ?= aarch64
+SDK_MESON_CPU ?= cortex-a53
+else ifeq ($(SDK_VER),32bit)
+SDK_MESON_ARCH ?= arm
+SDK_MESON_CPU ?= cortex-a53
+else
+SDK_MESON_ARCH ?= $(DEB_ARCH)
+SDK_MESON_CPU ?=
 endif
 
 ifeq ($(BOOT_CPU),aarch64)
@@ -113,6 +137,9 @@ CROSS_COMPILE_SDK=$(patsubst "%",%,$(SDK_CROSS_COMPILE_PREFIX)) \
 TARGET_OUTPUT_DIR=$(BR_OUTPUT_DIR)
 
 TOOLCHAIN_URL_ARM ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g' | sed 's|/linaro|/arm/gnu|g')
+ifneq ($(TOOLCHAIN_URL),)
+TOOLCHAIN_URL_GNU ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*||g' | sed 's|/linaro||g')/gnu
+endif
 
 FSBL_MAKE_OPTS = $(UBOOT_MAKE_OPTS) \
 CHIP_ARCH=$(CHIP) \
@@ -538,7 +565,12 @@ $(BUILDDIR)/buildroot-prepare-clone-stamp:
 	@git clone -b nanokvm-2025.02 $(GIT_CLONE_OPTS) --recursive $(GIT_USER_URL)/buildroot.git $(BUILDDIR)/buildroot
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-clone-dl-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
+$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
+	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
+	@cd $(BR_DIR) && git checkout 2139ae1
+	@touch $@
+
+$(BUILDDIR)/buildroot-prepare-clone-dl-stamp: $(BUILDDIR)/buildroot-prepare-checkout-stamp
 	@echo "$(COLOUR_GREEN)Cloning Buildroot dl for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b maixcdk --depth=1 $(GIT_USER_URL)/buildroot-dl.git $(BR_DIR)/dl
@@ -550,23 +582,7 @@ $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp: $(BUILDDIR)/buildroot-prepare-c
 	@cd $(BR_DIR)/dl && [ "$(GIT_REF)" = "develop" ] || rm -rf .git
 	@touch $@
 
-$(BUILDDIR)/buildroot-prepare-clone-pinmux-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
-	@echo "$(COLOUR_GREEN)Cloning Buildroot pinmux for $(BOARD)$(END_COLOUR)"
-	@mkdir -p $(BUILDDIR)/ramdisk/tools
-	@git clone -b main $(GIT_USER_URL)/cvi-pinmux $(BUILDDIR)/ramdisk/tools/cvi_pinmux
-	@touch $@
-
-$(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp: $(BUILDDIR)/buildroot-prepare-clone-pinmux-stamp
-	@echo "$(COLOUR_GREEN)Checking out Buildroot pinmux for $(BOARD)$(END_COLOUR)"
-	@cd $(BUILDDIR)/ramdisk/tools/cvi_pinmux && git checkout 5b90da9
-	@touch $@
-
-$(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/buildroot-prepare-checkout-pinmux-stamp
-	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout 578e9b9
-	@touch $@
-
-$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-stamp $(BUILDDIR)/middleware-compile-stamp $(BR_DEPENDS)
+$(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/buildroot-prepare-checkout-dl-stamp $(BUILDDIR)/middleware-compile-stamp $(BR_DEPENDS)
 	@echo "$(COLOUR_GREEN)Patching Buildroot for $(BOARD)$(END_COLOUR)"
 	@$(foreach file, $(wildcard /configs/common/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/buildroot/*.patch), cd $(BR_DIR) && git apply --ignore-whitespace $(file);)
@@ -592,8 +608,12 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	@cd $(BR_DIR) && sed -i 's|https://github.com/wlhe|$(GIT_USER_URL)|g' package/uvc-gadget/uvc-gadget.mk
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-aarch64/toolchain-external-arm-aarch64.mk
 	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_ARM)" = "X" ] || sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(TOOLCHAIN_URL_ARM)|g' toolchain/toolchain-external/toolchain-external-arm-arm/toolchain-external-arm-arm.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|http://www.mpfr.org|$(TOOLCHAIN_URL_GNU)|g' package/mpfr/mpfr.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|$$(BR2_KERNEL_MIRROR)/linux/kernel|$(TOOLCHAIN_URL_GNU)/linux|g' package/linux-headers/linux-headers.mk
+	@cd $(BR_DIR) && [ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || sed -i 's|https://github.com|$(GIT_RELEASES_URL)|g' package/pkg-download.mk
 	@cp /configs/common/buildroot/$(ARCH)_defconfig $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@echo 'BR2_TOOLCHAIN_EXTERNAL_PATH="'$(SDK_CROSS_COMPILE_PATH)'"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
+	@[ "X$(TOOLCHAIN_URL_GNU)" = "X" ] || echo 'BR2_GNU_MIRROR="$(TOOLCHAIN_URL_GNU)"' >> $(BR_DIR)/configs/$(BR_DEFCONFIG)
 	@if [ "X$(findstring kvm,$(VARIANT))$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_CCACHE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_CA_CERTIFICATES/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -602,8 +622,6 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 		sed -i /BR2_PACKAGE_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_HOST_PYTHON/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_MAIX_CDK/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
-		sed -i /BR2_PACKAGE_JPEG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
-		sed -i /BR2_PACKAGE_LIBQRENCODE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
 	@if [ "X$(BR_ENABLE_MAIXAPP)" = "X" ]; then \
 		sed -i /BR2_PACKAGE_MPG123/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -612,6 +630,8 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 		sed -i /BR2_PACKAGE_WATCHDOG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_OPENCV4/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_FFMPEG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+		sed -i /BR2_PACKAGE_JPEG/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
+		sed -i /BR2_PACKAGE_LIBQRENCODE/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	else \
 		sed -i /BR2_PACKAGE_MAIX_CDK_ALL_DEPENDENCIES/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 		sed -i /BR2_PACKAGE_MAIX_CDK_ALL_PROJECTS/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
@@ -619,9 +639,6 @@ $(BUILDDIR)/buildroot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-s
 	fi
 	@if [ "X$(findstring kvm,$(VARIANT))" = "X" ]; then \
 		sed -i /BR2_PACKAGE_NANOKVM/d $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
-	fi
-	@if [ "$(BOARD)" = "duos" ]; then \
-		sed -i s/'BR2_PACKAGE_DUO_PINMUX_DUO256M=y'/'BR2_PACKAGE_DUO_PINMUX_DUOS=y'/g $(BR_DIR)/configs/$(BR_DEFCONFIG) ; \
 	fi
 	@if [ "X$(findstring tpusdk,$(BR_DEPENDS))" != "X" ]; then \
 		mkdir -p $(BR_OVERLAY_DIR)/mnt/system/lib && \
