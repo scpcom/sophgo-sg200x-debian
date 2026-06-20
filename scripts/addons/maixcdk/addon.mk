@@ -8,7 +8,6 @@ MAIXCDK_DLPKGS_GIT_REF = a7e320a6bb28ce2b9c4cd2d3f64d7713c9f9a3fc
 MAIXCDK_SAMPLE ?= stream_rtsp_demo
 
 MAIXCDK_BUILD_DIR = $(BUILDDIR)/MaixCDK
-MAIXCDK_MIDDLEWARE_SRC_DIR = $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware
 
 MAIXCDK_TOOLCHAIN_URL ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g')
 
@@ -39,6 +38,8 @@ endif
 ifneq ("$(CHIP_FAMILY)","sg200x")
 # ax620e
 MAIXCDK_PLATFORM ?= maixcam2
+
+MAIXCDK_MIDDLEWARE_SRC_DIR = $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/msp
 
 # we only need ustreamer customized branch from pikvm to build maixcam_lib
 MAIXCAMLIB_BUILD_DIR = $(PIKVM_BUILD_DIR)/ustreamer
@@ -74,6 +75,8 @@ $(BUILDDIR)/msasr-stamp: $(BUILDDIR)/maixcamlib-stamp
 else
 # sg200x
 MAIXCDK_PLATFORM ?= maixcam
+
+MAIXCDK_MIDDLEWARE_SRC_DIR = $(MAIXCDK_BUILD_DIR)/components/3rd_party/sophgo-middleware/sophgo-middleware
 
 MAIXCAMLIB_BUILD_DIR = $(BUILDDIR)/middleware/sample/test_mmf
 MAIXCAMLIB_OUT_DIR = $(MAIXCAMLIB_BUILD_DIR)/maixcam_lib/release.linux
@@ -145,8 +148,11 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@sed -i s/'confs.get("CONFIG_COMPONENTS_COMPILE_FROM_SOURCE", None)'/'1'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/component.py
 	@sed -i s/CONFIG_COMPONENTS_COMPILE_FROM_SOURCE/1/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/harfbuzz/CMakeLists.txt
 	@# use msp libs from sdk
-	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "$(MIDDLEWARE_OUT_DIR)")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
-	@sed -i 's|$${msp_local_path}/out/.*_glibc/include|$(MIDDLEWARE_OUT_DIR)/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
+	@rm -rf $(MAIXCDK_MIDDLEWARE_SRC_DIR)/out/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/include/ $(MAIXCDK_MIDDLEWARE_SRC_DIR)/include/
+	@rsync -avpPxH $(MIDDLEWARE_OUT_DIR)/lib/ $(MAIXCDK_MIDDLEWARE_SRC_DIR)/lib/
+	@sed -i 's|set(msp_glibc_path ".*")|set(msp_glibc_path "msp")|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
+	@sed -i 's|$${msp_local_path}/out/.*_glibc/include|$${msp_local_path}/include|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/CMakeLists.txt
 	@rm -f $(MAIXCDK_BUILD_DIR)/components/3rd_party/maixcam2_msp/component.py
 	@# disable ARM_MATH_DSP on ARM 32 bit
 	@[ "$(DEB_ARCH)" != "armhf" ] || sed -i s/'#define ARM_MATH_DSP'/'#define BROKEN_ARM_MATH_DSP'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/omv/omv/ports/common/arm_math_types.h
