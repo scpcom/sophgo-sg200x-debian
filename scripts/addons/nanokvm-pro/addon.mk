@@ -62,15 +62,9 @@ NANOKVM_PRO_BASE_URL ?= $(NANOKVM_PRO_STABLE_URL)
 NANOKVM_PRO_UPDATE_URL = $(USER_SITE_URL)/nanokvm_pro
 NANOKVM_PRO_ARCH_URL = $(NANOKVM_PRO_UPDATE_URL)/glibc_$(DEB_ARCH)
 
-NANOKVM_PRO_TOOLCHAIN_URL ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g')
-
 ifeq ($(DEB_ARCH),arm64)
-NANOKVM_PRO_TOOLCHAIN_SHA256 = 6e8112dce0d4334d93bd3193815f16abe6a2dd5e7872697987a0b12308f876a4
-NANOKVM_PRO_TOOLCHAIN_TARGET = aarch64-none-linux-gnu
 NANOKVM_PRO_LIB_TARGET = aarch64-linux-gnu
 else
-NANOKVM_PRO_TOOLCHAIN_SHA256 = d73f230bb946231b648a960b719f2cc1afc792ec2e36f9abc25552f00923a926
-NANOKVM_PRO_TOOLCHAIN_TARGET = arm-none-linux-gnueabihf
 NANOKVM_PRO_LIB_TARGET = arm-linux-gnueabihf
 endif
 
@@ -188,18 +182,20 @@ $(BUILDDIR)/nanokvm-pro-package-prepare-stamp: $(BUILDDIR)/nanokvm-pro-prepare-s
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/application/service.go
 	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/extensions/kvmadmin/install.go
-	@if [ "X$(NANOKVM_PRO_TOOLCHAIN_URL)" != "X" ]; then \
-		cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts && sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(NANOKVM_PRO_TOOLCHAIN_URL)|g' config.ini ; \
-	fi
 	@cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts && sed -i 's|curl -sL -o libopus0.deb ".libopus_url"|cp /output/libopus0_1.3.1-0.1build2_$(DEB_ARCH).deb libopus0.deb|g' toolchain_setup.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts && sed -i 's|curl -sL -o libopus-dev.deb ".libopus_dev_url"|cp /output/libopus-dev_1.3.1-0.1build2_$(DEB_ARCH).deb libopus-dev.deb|g' toolchain_setup.sh
 	@sed -i s/'local arch="arm64"'/'local arch="$(GOLANG_TARGET_ARCH)"'/g $(NANOKVM_PRO_BUILD_DIR)/server/build.sh
-	@sed -i s/aarch64-none-linux-gnu/$(NANOKVM_PRO_TOOLCHAIN_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/server/build.sh
-	@sed -i s/aarch64-none-linux-gnu/$(NANOKVM_PRO_TOOLCHAIN_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/config.ini
-	@sed -i s/aarch64-none-linux-gnu/$(NANOKVM_PRO_TOOLCHAIN_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
-	@#sed -i s/aarch64-none-linux-gnu/$(NANOKVM_PRO_TOOLCHAIN_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/support/tools/version_fix/Makefile
+	@# use cross-compile toolchain
+	@sed -i 's|curl -.L -o ".temp_file" ".url"|true|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|.. ".computed_sha256" != ".sha256" ..|! true|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|tar -xJf ".temp_file" -C ".target_dir" --strip-components=1|true|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|validate_toolchain ".target_dir"|true|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i /'sha256sum ".temp_file"'/d $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|$${toolchain_dir}/aarch64-none-linux-gnu/libc|$(SDK_SYSROOT)|g' $(NANOKVM_PRO_BUILD_DIR)/server/build.sh
+	@sed -i 's|aarch64-none-linux-gnu-|$(SDK_CROSS_COMPILE_PREFIX)|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/config.ini
+	@sed -i 's|$${target_dir}/aarch64-none-linux-gnu/libc|$(SDK_SYSROOT)|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|="$${target_dir}/|="$(SDK_CROSS_COMPILE_PATH)/|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
 	@sed -i s/arm64/$(DEB_ARCH)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/config.ini
-	@sed -i s/6e8112dce0d4334d93bd3193815f16abe6a2dd5e7872697987a0b12308f876a4/$(NANOKVM_PRO_TOOLCHAIN_SHA256)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/config.ini
 	@sed -i s/aarch64-linux-gnu/$(NANOKVM_PRO_LIB_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
 	@sed -i s/'_arm64.deb'/'_$(DEB_ARCH).deb'/g $(NANOKVM_PRO_BUILD_DIR)/server/service/application/update.go
 	@[ "$(DEB_ARCH)" = "arm64" ] || sed -i s/ARM64/$(ARCH_NAME)/g $(NANOKVM_PRO_BUILD_DIR)/server/build.sh
