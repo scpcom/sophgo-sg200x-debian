@@ -11,36 +11,11 @@ NANOKVM_PRO_XDG_DATA_DIR = $(NANOKVM_PRO_XDG_HOME_DIR)/.local/share
 
 NANOKVM_PRO_PNPM_SHARE_DIR = $(NANOKVM_PRO_XDG_DATA_DIR)/pnpm
 
-GOLANG_HOST_ARCH ?= amd64
-GOLANG_TOOLCHAIN_URL ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/golang.org|g' | sed 's|/linaro/.*|/golang.org|g')
-
-ifeq ($(GOLANG_HOST_ARCH),riscv64)
-GOLANG_TOOLCHAIN_SHA256 = 82cfe15a11d65090cdcdfec6e1ebb54cc89398c1059d9948f483c378bb0864de
-else ifeq ($(GOLANG_HOST_ARCH),arm64)
-GOLANG_TOOLCHAIN_SHA256 = 46bb31df41009439c8333aa223dacde912c8fa7cf6dd0ab338e5efa17b790471
-else
-GOLANG_TOOLCHAIN_SHA256 = 39ad33636fa17d737bac55a2971239ce8bc0c9e5fb600012a630c3875813a767
-endif
-GOLANG_TOOLCHAIN_VERSION = 1.24.0
-
-GOLANG_TOOLCHAIN_CACHE = $(NANOKVM_PRO_XDG_HOME_DIR)/go/pkg/mod/cache/download
-GOLANG_TOOLCHAIN_DL_DIR = $(BUILDDIR)/golang-toolchain
-GOLANG_TOOLCHAIN_FILE = v0.0.1-go$(GOLANG_TOOLCHAIN_VERSION).linux-$(GOLANG_HOST_ARCH)
-
-ifeq ($(DEB_ARCH),arm64)
-GOLANG_TARGET_ARCH ?= arm64
-else
-GOLANG_TARGET_ARCH ?= arm
-endif
-
 NANOKVM_PRO_GO_ENV = \
 	XDG_CACHE_HOME=$(NANOKVM_PRO_XDG_CACHE_DIR) \
 	XDG_CONFIG_HOME=$(NANOKVM_PRO_XDG_CONFIG_DIR) \
 	XDG_DATA_HOME=$(NANOKVM_PRO_XDG_DATA_DIR) \
-	GOCACHE=$(NANOKVM_PRO_XDG_CACHE_DIR)/go-build \
-	GOENV=$(NANOKVM_PRO_XDG_CONFIG_DIR)/go/env \
-	GOMODCACHE=$(NANOKVM_PRO_XDG_HOME_DIR)/go/pkg/mod \
-	GOPATH=$(NANOKVM_PRO_XDG_HOME_DIR)/go
+	$(GOLANG_TOOLCHAIN_GO_ENV)
 
 NANOKVM_PRO_GIT_REF = d2b8ed0d68b04ca0396eaacddeeb9aded2e60996
 NANOKVM_PRO_GIT_URL ?= $(GIT_USER_URL)/NanoKVM-Pro
@@ -62,15 +37,9 @@ NANOKVM_PRO_BASE_URL ?= $(NANOKVM_PRO_STABLE_URL)
 NANOKVM_PRO_UPDATE_URL = $(USER_SITE_URL)/nanokvm_pro
 NANOKVM_PRO_ARCH_URL = $(NANOKVM_PRO_UPDATE_URL)/glibc_$(DEB_ARCH)
 
-NANOKVM_PRO_TOOLCHAIN_URL ?= $(shell echo $(TOOLCHAIN_URL) | sed 's|/arm/.*|/arm/gnu|g')
-
 ifeq ($(DEB_ARCH),arm64)
-NANOKVM_PRO_TOOLCHAIN_SHA256 = 6e8112dce0d4334d93bd3193815f16abe6a2dd5e7872697987a0b12308f876a4
-NANOKVM_PRO_TOOLCHAIN_TARGET = aarch64-none-linux-gnu
 NANOKVM_PRO_LIB_TARGET = aarch64-linux-gnu
 else
-NANOKVM_PRO_TOOLCHAIN_SHA256 = d73f230bb946231b648a960b719f2cc1afc792ec2e36f9abc25552f00923a926
-NANOKVM_PRO_TOOLCHAIN_TARGET = arm-none-linux-gnueabihf
 NANOKVM_PRO_LIB_TARGET = arm-linux-gnueabihf
 endif
 
@@ -97,36 +66,6 @@ HOST_NODEJS_BIN_ENV = \
 HOST_COREPACK = $(HOST_NODEJS_BIN_ENV) corepack
 HOST_NPM = $(HOST_NODEJS_BIN_ENV) npm
 HOST_PNPM = $(HOST_NODEJS_BIN_ENV) pnpm
-
-$(BUILDDIR)/golang-toolchain-stamp:
-	@if [ "X$(GOLANG_TOOLCHAIN_URL)" != "X" ]; then \
-		mkdir -p $(GOLANG_TOOLCHAIN_DL_DIR) && \
-		cd $(GOLANG_TOOLCHAIN_DL_DIR) && \
-		wget -N $(GOLANG_TOOLCHAIN_URL)/toolchain/@v/$(GOLANG_TOOLCHAIN_FILE).zip || \
-		rm -f $(GOLANG_TOOLCHAIN_FILE).zip ; \
-	fi
-	@if [ -e $(GOLANG_TOOLCHAIN_DL_DIR)/$(GOLANG_TOOLCHAIN_FILE).zip ]; then \
-		cd $(GOLANG_TOOLCHAIN_DL_DIR) && \
-		if [ "`sha256sum "$(GOLANG_TOOLCHAIN_FILE).zip" | cut -d ' ' -f 1`" != "$(GOLANG_TOOLCHAIN_SHA256)" ]; then \
-			echo "$(GOLANG_TOOLCHAIN_FILE).zip: checksum mismatch!" ; \
-			rm -f $(GOLANG_TOOLCHAIN_FILE).zip ; \
-		fi ; \
-	fi
-	@if [ -e $(GOLANG_TOOLCHAIN_DL_DIR)/$(GOLANG_TOOLCHAIN_FILE).zip ]; then \
-		cd $(GOLANG_TOOLCHAIN_DL_DIR) && \
-		mkdir -p $(GOLANG_TOOLCHAIN_CACHE)/golang.org/toolchain/\@v && \
-		cp $(GOLANG_TOOLCHAIN_FILE).zip $(GOLANG_TOOLCHAIN_CACHE)/golang.org/toolchain/\@v/ && \
-		touch $(GOLANG_TOOLCHAIN_CACHE)/$(GOLANG_TOOLCHAIN_FILE).lock && \
-		wget -N $(GOLANG_TOOLCHAIN_URL)/toolchain/@v/$(GOLANG_TOOLCHAIN_FILE)-sumdb.zip || \
-		rm -f $(GOLANG_TOOLCHAIN_FILE)-sumdb.zip ; \
-	fi
-	@if [ -e $(GOLANG_TOOLCHAIN_DL_DIR)/$(GOLANG_TOOLCHAIN_FILE)-sumdb.zip -a \
-	    ! -e $(GOLANG_TOOLCHAIN_CACHE)/sumdb/sum.golang.org ]; then \
-		cd $(GOLANG_TOOLCHAIN_DL_DIR) && \
-		mkdir -p $(GOLANG_TOOLCHAIN_CACHE)/sumdb/sum.golang.org && \
-		unzip -d $(GOLANG_TOOLCHAIN_CACHE)/sumdb/sum.golang.org $(GOLANG_TOOLCHAIN_FILE)-sumdb.zip lookup/golang.org/toolchain\@$(GOLANG_TOOLCHAIN_FILE) 'tile/*' ; \
-	fi
-	@touch $@
 
 $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json:
 	@mkdir -p $(BUILDDIR)/nanokvm-pro
@@ -188,18 +127,20 @@ $(BUILDDIR)/nanokvm-pro-package-prepare-stamp: $(BUILDDIR)/nanokvm-pro-prepare-s
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
 	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/application/service.go
 	@sed -i 's|https://cdn.sipeed.com/nanokvm|$(NANOKVM_PRO_ARCH_URL)|g' $(NANOKVM_PRO_BUILD_DIR)/$(NANOKVM_PRO_GOMOD)/service/extensions/kvmadmin/install.go
-	@if [ "X$(NANOKVM_PRO_TOOLCHAIN_URL)" != "X" ]; then \
-		cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts && sed -i 's|https://developer.arm.com/-/media/Files/downloads/gnu|$(NANOKVM_PRO_TOOLCHAIN_URL)|g' config.ini ; \
-	fi
 	@cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts && sed -i 's|curl -sL -o libopus0.deb ".libopus_url"|cp /output/libopus0_1.3.1-0.1build2_$(DEB_ARCH).deb libopus0.deb|g' toolchain_setup.sh
 	@cd $(NANOKVM_PRO_BUILD_DIR)/support/scripts && sed -i 's|curl -sL -o libopus-dev.deb ".libopus_dev_url"|cp /output/libopus-dev_1.3.1-0.1build2_$(DEB_ARCH).deb libopus-dev.deb|g' toolchain_setup.sh
 	@sed -i s/'local arch="arm64"'/'local arch="$(GOLANG_TARGET_ARCH)"'/g $(NANOKVM_PRO_BUILD_DIR)/server/build.sh
-	@sed -i s/aarch64-none-linux-gnu/$(NANOKVM_PRO_TOOLCHAIN_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/server/build.sh
-	@sed -i s/aarch64-none-linux-gnu/$(NANOKVM_PRO_TOOLCHAIN_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/config.ini
-	@sed -i s/aarch64-none-linux-gnu/$(NANOKVM_PRO_TOOLCHAIN_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
-	@#sed -i s/aarch64-none-linux-gnu/$(NANOKVM_PRO_TOOLCHAIN_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/support/tools/version_fix/Makefile
+	@# use cross-compile toolchain
+	@sed -i 's|curl -.L -o ".temp_file" ".url"|true|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|.. ".computed_sha256" != ".sha256" ..|! true|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|tar -xJf ".temp_file" -C ".target_dir" --strip-components=1|true|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|validate_toolchain ".target_dir"|true|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i /'sha256sum ".temp_file"'/d $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|$${toolchain_dir}/aarch64-none-linux-gnu/libc|$(SDK_SYSROOT)|g' $(NANOKVM_PRO_BUILD_DIR)/server/build.sh
+	@sed -i 's|aarch64-none-linux-gnu-|$(SDK_CROSS_COMPILE_PREFIX)|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/config.ini
+	@sed -i 's|$${target_dir}/aarch64-none-linux-gnu/libc|$(SDK_SYSROOT)|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
+	@sed -i 's|="$${target_dir}/|="$(SDK_CROSS_COMPILE_PATH)/|g' $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
 	@sed -i s/arm64/$(DEB_ARCH)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/config.ini
-	@sed -i s/6e8112dce0d4334d93bd3193815f16abe6a2dd5e7872697987a0b12308f876a4/$(NANOKVM_PRO_TOOLCHAIN_SHA256)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/config.ini
 	@sed -i s/aarch64-linux-gnu/$(NANOKVM_PRO_LIB_TARGET)/g $(NANOKVM_PRO_BUILD_DIR)/support/scripts/toolchain_setup.sh
 	@sed -i s/'_arm64.deb'/'_$(DEB_ARCH).deb'/g $(NANOKVM_PRO_BUILD_DIR)/server/service/application/update.go
 	@[ "$(DEB_ARCH)" = "arm64" ] || sed -i s/ARM64/$(ARCH_NAME)/g $(NANOKVM_PRO_BUILD_DIR)/server/build.sh
