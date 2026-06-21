@@ -157,10 +157,15 @@ $(BUILDDIR)/maixcdk-prepare-patch-stamp: $(BUILDDIR)/maixcdk-prepare-checkout-st
 	@# disable ARM_MATH_DSP on ARM 32 bit
 	@[ "$(DEB_ARCH)" != "armhf" ] || sed -i s/'#define ARM_MATH_DSP'/'#define BROKEN_ARM_MATH_DSP'/g $(MAIXCDK_BUILD_DIR)/components/3rd_party/omv/omv/ports/common/arm_math_types.h
 	@# use maixcam2 onnxruntime on ARM 64 bit
-	@[ "$(DEB_ARCH)" != "arm64" -o "$(MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE)" = "y" ] || \
+	@if [ "$(DEB_ARCH)" = "arm64" -a "$(MAIXCDK_BUILD_ONNXRUNTIME_FROM_SOURCE)" != "y" -a "$(MAIXCDK_PLATFORM)" != "maixcam2" ]; then \
 		sed -i 's|maixcam_onnxruntime_v$${onnxruntime_version_str}|maixcam2_onnxruntime_v$${onnxruntime_version_str}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/CMakeLists.txt && \
+		sed -i 's/PLATFORM = "maixcam"/PLATFORM = "maixcamrv"/g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/Kconfig && \
+		sed -i 's/PLATFORM = "maixcam2"/PLATFORM = "maixcam"/g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/Kconfig && \
+		sed -i "s/'PLATFORM_MAIXCAM'/'PLATFORM_MAIXCAMRV'/g" $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py && \
+		sed -i "s/'PLATFORM_MAIXCAM2'/'PLATFORM_MAIXCAM'/g" $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py && \
 		sed -i 's|maixcam_onnxruntime_v{version}|maixcam2_onnxruntime_v{version}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py && \
-		sed -i 's|sg2002_onnxruntime_v{version}|maixcam2_onnxruntime_v{version}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py
+		sed -i 's|sg2002_onnxruntime_v{version}|maixcam2_onnxruntime_v{version}|g' $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/component.py ; \
+	fi
 	@# use onnxruntime build from source
 	@if [ -e $(SDK_OSS_TARBALL_DIR)/onnxruntime.tar.gz ]; then \
 		mkdir -p $(MAIXCDK_BUILD_DIR)/components/3rd_party/onnxruntime/onnxruntime && \
