@@ -8,12 +8,17 @@ CROSS_COMPILE_32 = arm-none-linux-gnueabihf-
 CROSS_COMPILE_PATH_64 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-aarch64-none-linux-gnu
 CROSS_COMPILE_PATH_32 = /host-tools/gcc/arm-gnu-toolchain-11.3.rel1-x86_64-arm-none-linux-gnueabihf
 
+SDK_SYSROOT_64 = $(CROSS_COMPILE_PATH_64)/aarch64-none-linux-gnu/libc
+SDK_SYSROOT_32 = $(CROSS_COMPILE_PATH_32)/arm-none-linux-gnueabihf/libc
+
 ifeq ($(SDK_VER),64bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_64)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_64)
+SDK_SYSROOT = $(SDK_SYSROOT_64)
 else ifeq ($(SDK_VER),32bit)
 SDK_CROSS_COMPILE_PATH = $(CROSS_COMPILE_PATH_32)
 SDK_CROSS_COMPILE_PREFIX = $(CROSS_COMPILE_32)
+SDK_SYSROOT = $(SDK_SYSROOT_32)
 else
 $(error $(red)SDK_VER is invalid$(reset))
 endif
