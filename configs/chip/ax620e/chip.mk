@@ -440,18 +440,18 @@ define firmware_package_action
 	@$(eval FIRMWARE_PACKAGE_DIR=$(BUILDDIR)/package/$(FIRMWARE_PACKAGE_NAME)-$(FIRMWAREVERSION))
 	@$(eval PANEL_NAME_FIRMWARE=$(shell echo '${2}' | cut -d '-' -f 2- | tr '-' '_'))
 	@mkdir -p $(FIRMWARE_PACKAGE_DIR)
-	@cp -r /builder/deb/cvitek-fsbl/* $(FIRMWARE_PACKAGE_DIR)/
+	@cp -r /builder/deb/axera-firmware/* $(FIRMWARE_PACKAGE_DIR)/
 	@mkdir -p $(FIRMWARE_PACKAGE_DIR)/usr/lib/$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}/
 	@cp $(BSP_INSTALL_DIR)/uboot.bin $(FIRMWARE_PACKAGE_DIR)/usr/lib/$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}/u-boot_signed.bin
 	@cp $(BSP_INSTALL_DIR)/dtb.img $(FIRMWARE_PACKAGE_DIR)/usr/lib/$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}/fdt_signed.dtb
 	@cp $(BSP_INSTALL_DIR)/kernel.img $(FIRMWARE_PACKAGE_DIR)/usr/lib/$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}/boot_signed.bin
-	@sed -i 's|cvitek-fsbl/licheervnano|$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}|g' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
-	@[ "X$(PANEL_NAME_FIRMWARE)" = "X" ] || sed -i s/'^panel='/'panel='$(PANEL_NAME_FIRMWARE)/g $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
+	@sed -i 's|axera-firmware/maixcam2|$(CHIP_VENDOR)-firmware/$(BOARD_EXT)${2}|g' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
+	@[ "X$(findstring kvm,$(VARIANT))" = "X" ] || sed -i s/'^panel=.*'/'panel='jd9853/g $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
+	@[ "X$(PANEL_NAME_FIRMWARE)" = "X" ] || sed -i s/'^panel=.*'/'panel='$(PANEL_NAME_FIRMWARE)/g $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
 	@chmod ugo+rx $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
-	@rm -f $(FIRMWARE_PACKAGE_DIR)/DEBIAN/postinst
-	@sed -i 's/Architecture: riscv64/Architecture: $(DEB_ARCH)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Architecture: arm64/Architecture: $(DEB_ARCH)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
 	@sed -i 's/Version: 1.1.0/Version: $(FIRMWAREVERSION)$(FV)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
-	@sed -i 's/Package: cvitek-fsbl/Package: $(FIRMWARE_PACKAGE_NAME)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
+	@sed -i 's/Package: axera-firmware/Package: $(FIRMWARE_PACKAGE_NAME)/' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control
 	@if [ "$(BOARD)" = "$(BOARD_EXT)" ]; then \
 		sed -i '/Provides: .*/d' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control && \
 		sed -i '/Replaces: .*/d' $(FIRMWARE_PACKAGE_DIR)/DEBIAN/control ; \

@@ -1,0 +1,9 @@
+Package: axera-firmware
+Architecture: arm64
+Maintainer: @fishwaldo
+Depends: libubootenv-tool, u-boot-menu, u-boot-tools
+Provides: axera-firmware-maixcam2
+Replaces: axera-firmware-maixcam2
+Priority: optional
+Version: 1.1.0
+Description: First Stage Boot Loader for the ax620e series of ARM SoC's

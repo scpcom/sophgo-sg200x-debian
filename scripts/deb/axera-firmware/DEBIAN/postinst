@@ -1,0 +1,11 @@
+#!/bin/sh
+panel=
+[ -e /boot/board ] || echo "id=maixcam2" > /boot/board
+grep -q '^name=' /boot/board || echo "name=MaixCAM2" >> /boot/board
+if [ "X${panel}" != "X" ]; then
+  if grep -q '^panel=' /boot/board ; then
+    sed -i s/'^panel=.*'/'panel='${panel}/g /boot/board
+  else
+    echo "panel=${panel}" >> /boot/board
+  fi
+fi

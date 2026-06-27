@@ -1,0 +1,145 @@
+diff --git a/components/maixcam_lib/include/maixcam2/ax_middleware.hpp b/components/maixcam_lib/include/maixcam2/ax_middleware.hpp
+index e577787..1be69c3 100644
+--- a/components/maixcam_lib/include/maixcam2/ax_middleware.hpp
++++ b/components/maixcam_lib/include/maixcam2/ax_middleware.hpp
+@@ -474,6 +474,10 @@ namespace maix::middleware::maixcam2 {
+         switch (format) {
+             case AX_FORMAT_YUV400:
+                 return image::FMT_GRAYSCALE;
++            case AX_FORMAT_RGB565:
++                return image::FMT_RGB565;
++            case AX_FORMAT_BGR565:
++                return image::FMT_BGR565;
+             case AX_FORMAT_RGB888:
+                 return image::FMT_BGR888;   // actualy is rgb888
+             case AX_FORMAT_BGR888:
+@@ -496,6 +500,10 @@ namespace maix::middleware::maixcam2 {
+         {
+         case image::FMT_GRAYSCALE:
+             return AX_FORMAT_YUV400;
++        case image::FMT_RGB565:
++            return AX_FORMAT_RGB565;
++        case image::FMT_BGR565:
++            return AX_FORMAT_BGR565;
+         case image::FMT_RGB888:
+             return AX_FORMAT_BGR888;       // actualy is rgb888
+         case image::FMT_BGR888:
+diff --git a/components/vision/port/maixcam2/maix_display_maixcam2.hpp b/components/vision/port/maixcam2/maix_display_maixcam2.hpp
+index 26165e9..0b01522 100644
+--- a/components/vision/port/maixcam2/maix_display_maixcam2.hpp
++++ b/components/vision/port/maixcam2/maix_display_maixcam2.hpp
+@@ -109,6 +109,33 @@ namespace maix::display
+     {
+         int w = 480, h = 640;
+ 
++        char panel_value[256];
++        ::memset(panel_value, 0x00, std::size(panel_value));
++
++        char *panel_env = getenv("MMF_PANEL_NAME");
++        if (panel_env) {
++            log::info("Found panel env MMF_PANEL_NAME=%s\r\n", panel_env);
++            strncpy(panel_value, panel_env, sizeof(panel_value));
++        } else {
++            for (const auto& [k, v] : sys::device_configs()) {
++                if (k == "panel") {
++                    std::copy(v.begin(), v.end(), panel_value);
++                }
++            }
++        }
++
++        if (strlen(panel_value) > 0) {
++            // printf("panel= %s\n", panel_value);
++        } else {
++            printf("panel value not found\n");
++        }
++
++        //__g_panel_type = PanelType::NORMAL;
++        if (!strcmp(panel_value, "jd9853")) { // nanokvmpro
++            w = 172;
++            h = 320;
++        }
++
+         if (rotate) {
+             *width = h;
+             *height = w;
+@@ -344,6 +371,11 @@ namespace maix::display
+             vo_cfg.stVoLayer[0].stVoLayerAttr.u32DispatchMode = 1;
+             vo_cfg.stVoLayer[0].stVoLayerAttr.f32FrmRate = 60.0;
+             vo_cfg.stVoLayer[0].u32ChnNr = 1;
++            if (width * height < 352 * 288) {
++                vo_cfg.stVoDev[0].enVoIntfType = AX_VO_INTF_DPI;
++                vo_cfg.stVoDev[0].enVoOutfmt = AX_VO_OUT_FMT_RGB565;
++                vo_cfg.stGraphicLayer[0].stFbConf[0].u32Fmt = AX_FORMAT_RGB565;
++            }
+             memcpy(&new_param->vo_cfg, &vo_cfg, sizeof(vo_cfg));
+             memcpy(&new_param->sync_info, &sync_info, sizeof(sync_info));
+         }
+@@ -458,6 +490,10 @@ namespace maix::display
+                                 || _format == image::FMT_YVU420SP
+                                 || _format == image::FMT_YUV420SP
+                                 || _format == image::FMT_BGRA8888, "Format not support");
++            if (width * height < 352 * 288) {
++                this->_layer = 1;
++                _format == image::FMT_RGB565;
++            }
+ 
+             _get_disp_configs(this->_invert_flip, this->_invert_mirror, _max_backlight);
+ 
+@@ -474,9 +510,13 @@ namespace maix::display
+             _bl_pwm = nullptr;
+             // int pwm_id = 5; // for MaixCAM2 alpha version board
+             // pinmap::set_pin_function("B24", "PWM5")
+-            int pwm_id = 3;
+-            pinmap::set_pin_function("B22", "PWM3");
+-            _bl_pwm = new pwm::PWM(pwm_id, 10000, 50);
++            if (this->_layer == 0) {
++                int pwm_id = 3;
++                pinmap::set_pin_function("B22", "PWM3");
++                _bl_pwm = new pwm::PWM(pwm_id, 10000, 50);
++            } else {
++                _bl_pwm = nullptr;
++            }
+ 
+             _dst_pool.reset(this->_width*this->_height*image::fmt_size[this->format()], 1);
+ 
+@@ -877,6 +916,8 @@ namespace maix::display
+                 switch (format)
+                 {
+                 case image::FMT_GRAYSCALE:  // fall through
++                case image::FMT_RGB565:
++                case image::FMT_BGR565:
+                 case image::FMT_RGB888:
+                 case image::FMT_YVU420SP:
+                 case image::FMT_YUV420SP:
+@@ -934,13 +975,16 @@ namespace maix::display
+             } else if (this->_layer == 1) {
+                 image::Image *new_img = input_img;
+                 bool need_delete_new_img = false;
+-                if (format != image::FMT_BGRA8888) {
++                if (format != image::FMT_BGRA8888 && format != image::FMT_RGB565 && format != image::FMT_BGR565) {
+                     new_img = input_img->to_format(image::FMT_BGRA8888);
+                     err::check_null_raise(new_img, "This image format is not supported, try image::Format::FMT_BGRA8888");
+                     need_delete_new_img = true;
+                 }
+ 
+-                if (input_img->width() != _width || input_img->height() != _height) {
++                int _rot_width = ((int)(_height) + 0xfU) & 0xfff0;
++                int _rot_height = ((int)(_width) + 1U) & 0xfffe;
++                if ((input_img->width() != _width || input_img->height() != _height) &&
++                    (input_img->width() != _rot_width || input_img->height() != _rot_height)) {
+                     log::error("image size not match, you must pass in an image of size %dx%d", _width, _height);
+                     err::check_raise(err::ERR_RUNTIME, "image size not match");
+                 }
+diff --git a/components/vision/src/maix_display.cpp b/components/vision/src/maix_display.cpp
+index fff0f7a..e016434 100644
+--- a/components/vision/src/maix_display.cpp
++++ b/components/vision/src/maix_display.cpp
+@@ -204,6 +204,8 @@ namespace maix::display
+ #if defined(PLATFORM_MAIXCAM) || defined(PLATFORM_MAIXCAM2)
+         maix::image::Format show_img_format = img.format();
+         if (show_img_format != maix::image::Format::FMT_RGB888
++        && show_img_format != maix::image::Format::FMT_RGB565
++        && show_img_format != maix::image::Format::FMT_BGR565
+         && show_img_format != maix::image::Format::FMT_YVU420SP
+         && show_img_format != maix::image::Format::FMT_YUV420SP
+         && show_img_format != maix::image::Format::FMT_BGRA8888
