@@ -116,7 +116,7 @@ for f in */.git ; do
     done
     git checkout $b
   elif echo $d | grep -q -E '^kernel$|^linux' ; then
-    for x in licheervnano-merged-5.10.y nanokvmpro-4.19.y licheervnano-cvisdk-5.10.y licheervnano-5.10.y ; do
+    for x in licheervnano-merged-5.10.y nanokvmpro-4.19.y licheervnano-cvisdk-5.10.y licheervnano-5.10.y sbc-6.6.y spacemit-6.6.y ; do
       do_pull_push $x $u $s
     done
     git checkout $b
@@ -251,6 +251,7 @@ for f in */.git ; do
   elif echo $d | grep -q -E '^kernel$|^linux' ; then
     do_push_tags 'v4.19*'
     do_push_tags 'v5.10*'
+    do_push_tags 'v6.6*'
   elif echo $d | grep -q -E '^krb5$' ; then
     do_push_tags 'krb5-1.17*'
   elif echo $d | grep -q -E '^eigen|^libeigen$' ; then
