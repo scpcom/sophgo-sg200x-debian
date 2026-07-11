@@ -183,6 +183,9 @@ git_clone -b licheervnano https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/sophgo-oss o
 git_clone -b main https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/maix_ax620e_sdk maix_ax620e_sdk
 git_subclone maix_ax620e_msp https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/maix_ax620e_sdk_msp.git -b main
 git_subclone maix_ax620e_kernel https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/maix_ax620e_sdk_kernel.git -b main
+
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/android_bootimg_tools android_bootimg_tools
+git_clone -b master https://$GIT_SOURCE_HOST/$GIT_SOURCE_USER/meson-firmware
 fi
 
 if [ $clonetoolchain != false ]; then
