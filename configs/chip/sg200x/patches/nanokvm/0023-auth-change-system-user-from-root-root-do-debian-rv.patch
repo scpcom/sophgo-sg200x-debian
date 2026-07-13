@@ -127,12 +127,12 @@ index 05cfb99..78eb3ed 100644
 --- a/web/src/i18n/locales/cz.ts
 +++ b/web/src/i18n/locales/cz.ts
 @@ -36,7 +36,7 @@ const cz = {
-         reset4: 'SSH default account:',
-         change1: 'Please note that this action will change the following passwords:',
-         change2: 'Web login password',
--        change3: 'System root password (SSH login password)',
-+        change3: 'System debian password (SSH login password)',
-         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+         reset4: 'Výchozí účet SSH:',
+         change1: 'Upozorňujeme, že tato akce změní následující hesla:',
+         change2: 'Heslo pro webové přihlášení',
+-        change3: 'Heslo systémového uživatele root (heslo pro přihlášení SSH)',
++        change3: 'Heslo systémového uživatele debian (heslo pro přihlášení SSH)',
+         change4: 'Chcete-li hesla resetovat, podržte tlačítko BOOT na NanoKVM.'
        }
      },
 @@ -102,7 +102,7 @@ const cz = {
@@ -149,12 +149,12 @@ index 5617dab..1ea7d2d 100644
 --- a/web/src/i18n/locales/da.ts
 +++ b/web/src/i18n/locales/da.ts
 @@ -35,7 +35,7 @@ const da = {
-         reset4: 'SSH default account:',
-         change1: 'Please note that this action will change the following passwords:',
-         change2: 'Web login password',
--        change3: 'System root password (SSH login password)',
-+        change3: 'System debian password (SSH login password)',
-         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+         reset4: 'Standard SSH-konto:',
+         change1: 'Bemærk, at denne handling ændrer følgende adgangskoder:',
+         change2: 'Adgangskode til weblogin',
+-        change3: 'Systemets root-adgangskode (SSH-loginadgangskode)',
++        change3: 'Systemets debian-adgangskode (SSH-loginadgangskode)',
+         change4: 'For at nulstille adgangskoderne skal du holde BOOT-knappen på NanoKVM nede.'
        }
      },
 @@ -100,7 +100,7 @@ const da = {
@@ -250,12 +250,12 @@ index eb65b15..f40eee2 100644
 --- a/web/src/i18n/locales/hu.ts
 +++ b/web/src/i18n/locales/hu.ts
 @@ -36,7 +36,7 @@ const hu = {
-         reset4: 'SSH default account:',
-         change1: 'Please note that this action will change the following passwords:',
-         change2: 'Web login password',
--        change3: 'System root password (SSH login password)',
-+        change3: 'System debian password (SSH login password)',
-         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+         reset4: 'Alapértelmezett SSH-fiók:',
+         change1: 'Vegye figyelembe, hogy ez a művelet a következő jelszavakat módosítja:',
+         change2: 'Webes bejelentkezési jelszó',
+-        change3: 'Rendszer root jelszava (SSH bejelentkezési jelszó)',
++        change3: 'Rendszer debian jelszava (SSH bejelentkezési jelszó)',
+         change4: 'A jelszavak visszaállításához tartsa lenyomva a BOOT gombot a NanoKVM-en.'
        }
      },
 @@ -102,7 +102,7 @@ const hu = {
@@ -272,12 +272,12 @@ index 800d18c..baee4f5 100644
 --- a/web/src/i18n/locales/id.ts
 +++ b/web/src/i18n/locales/id.ts
 @@ -35,7 +35,7 @@ const id = {
-         reset4: 'SSH default account:',
-         change1: 'Please note that this action will change the following passwords:',
-         change2: 'Web login password',
--        change3: 'System root password (SSH login password)',
-+        change3: 'System debian password (SSH login password)',
-         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+         reset4: 'Akun SSH default:',
+         change1: 'Perhatikan bahwa tindakan ini akan mengubah kata sandi berikut:',
+         change2: 'Kata sandi login web',
+-        change3: 'Kata sandi root sistem (kata sandi login SSH)',
++        change3: 'Kata sandi debian sistem (kata sandi login SSH)',
+         change4: 'Untuk mengatur ulang kata sandi, tekan dan tahan tombol BOOT pada NanoKVM.'
        }
      },
 @@ -101,7 +101,7 @@ const id = {
@@ -294,12 +294,12 @@ index 4d78232..80564e1 100644
 --- a/web/src/i18n/locales/it.ts
 +++ b/web/src/i18n/locales/it.ts
 @@ -36,7 +36,7 @@ const it = {
-         reset4: 'SSH default account:',
-         change1: 'Please note that this action will change the following passwords:',
-         change2: 'Web login password',
--        change3: 'System root password (SSH login password)',
-+        change3: 'System debian password (SSH login password)',
-         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+         reset4: 'Account SSH predefinito:',
+         change1: 'Tieni presente che questa azione modificherà le seguenti password:',
+         change2: 'Password di accesso web',
+-        change3: 'Password root di sistema (password di accesso SSH)',
++        change3: 'Password debian di sistema (password di accesso SSH)',
+         change4: 'Per reimpostare le password, tieni premuto il pulsante BOOT sul NanoKVM.'
        }
      },
 @@ -102,7 +102,7 @@ const it = {
@@ -321,9 +321,9 @@ index f889961..cec105c 100644
          change2: 'ウェブログインパスワード',
 -        change3: 'システム root パスワード（SSH ログインパスワード）',
 +        change3: 'システム debian パスワード（SSH ログインパスワード）',
-         change4: 'パスワードを忘れた場合は、NanoKVM の BOOT ボタンを長押ししてパスワードをリセットする必要があります。'
+         change4:
+           'パスワードを忘れた場合は、NanoKVM の BOOT ボタンを長押ししてパスワードをリセットする必要があります。'
        }
-     },
 @@ -102,7 +102,7 @@ const ja = {
          usb3: 'コンピュータ上で仮想ディスクを開き、イメージファイルを仮想ディスクのルートディレクトリにコピーします。',
          scp1: 'NanoKVM とコンピュータが同じローカルエリアネットワークに接続されていることを確認します；',
@@ -351,12 +351,12 @@ index e9e86d0..50dfa84 100644
 --- a/web/src/i18n/locales/nb.ts
 +++ b/web/src/i18n/locales/nb.ts
 @@ -36,7 +36,7 @@ const nb = {
-         reset4: 'SSH default account:',
-         change1: 'Please note that this action will change the following passwords:',
-         change2: 'Web login password',
--        change3: 'System root password (SSH login password)',
-+        change3: 'System debian password (SSH login password)',
-         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+         reset4: 'Standard SSH-konto:',
+         change1: 'Merk at denne handlingen endrer følgende passord:',
+         change2: 'Passord for webinnlogging',
+-        change3: 'Systemets root-passord (SSH-innloggingspassord)',
++        change3: 'Systemets debian-passord (SSH-innloggingspassord)',
+         change4: 'For å tilbakestille passordene holder du BOOT-knappen på NanoKVM inne.'
        }
      },
 @@ -101,7 +101,7 @@ const nb = {
@@ -378,9 +378,9 @@ index d6403e9..c98ead4 100644
          change2: 'Web login wachtwoord',
 -        change3: 'Systeem root-wachtwoord (SSH-inlogwachtwoord)',
 +        change3: 'Systeem debian-wachtwoord (SSH-inlogwachtwoord)',
-         change4: 'Om de wachtwoorden opnieuw in te stellen, houdt u de BOOT-knop op de NanoKVM ingedrukt.'
+         change4:
+           'Om de wachtwoorden opnieuw in te stellen, houdt u de BOOT-knop op de NanoKVM ingedrukt.'
        }
-     },
 @@ -102,7 +102,7 @@ const nl = {
          usb3: 'Open de virtuele schijf op uw computer en kopieer het imagebestand naar de hoofdmap van de virtuele schijf.',
          scp1: 'Zorg ervoor dat de NanoKVM en uw computer zich in hetzelfde lokale netwerk bevinden.',
@@ -395,12 +395,12 @@ index 1f510ac..cc8ac24 100644
 --- a/web/src/i18n/locales/pl.ts
 +++ b/web/src/i18n/locales/pl.ts
 @@ -36,7 +36,7 @@ const pl = {
-         reset4: 'SSH default account:',
-         change1: 'Please note that this action will change the following passwords:',
-         change2: 'Web login password',
--        change3: 'System root password (SSH login password)',
-+        change3: 'System debian password (SSH login password)',
-         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+         reset4: 'Domyślne konto SSH:',
+         change1: 'Pamiętaj, że ta operacja zmieni następujące hasła:',
+         change2: 'Hasło logowania web',
+-        change3: 'Hasło roota systemu (hasło logowania SSH)',
++        change3: 'Hasło debian systemu (hasło logowania SSH)',
+         change4: 'Aby zresetować hasła, naciśnij i przytrzymaj przycisk BOOT na NanoKVM.'
        }
      },
 @@ -93,7 +93,7 @@ const pl = {
@@ -444,7 +444,7 @@ index 906c01d..d8f7733 100644
          change2: 'Пароль для входу у веб-інтерфейс',
 -        change3: 'Системний root пароль (пароль для входу в систему по SSH)',
 +        change3: 'Системний debian пароль (пароль для входу в систему по SSH)',
-         change4: 'Щоб скинути паролі, натисніть та утримуйте кнопку "Завантаження" на Nanokvm.'
+         change4: 'Щоб скинути паролі, натисніть і утримуйте кнопку BOOT на NanoKVM.'
        }
      },
 @@ -102,7 +102,7 @@ const uk = {
@@ -461,12 +461,12 @@ index 7e36e70..27aa73e 100644
 --- a/web/src/i18n/locales/vi.ts
 +++ b/web/src/i18n/locales/vi.ts
 @@ -35,7 +35,7 @@ const vi = {
-         reset4: 'SSH default account:',
-         change1: 'Please note that this action will change the following passwords:',
-         change2: 'Web login password',
--        change3: 'System root password (SSH login password)',
-+        change3: 'System debian password (SSH login password)',
-         change4: 'To reset the passwords, press and hold the BOOT button on the NanoKVM.'
+         reset4: 'Tài khoản SSH mặc định:',
+         change1: 'Lưu ý rằng thao tác này sẽ thay đổi các mật khẩu sau:',
+         change2: 'Mật khẩu đăng nhập web',
+-        change3: 'Mật khẩu root hệ thống (mật khẩu đăng nhập SSH)',
++        change3: 'Mật khẩu debian hệ thống (mật khẩu đăng nhập SSH)',
+         change4: 'Để đặt lại mật khẩu, hãy nhấn và giữ nút BOOT trên NanoKVM.'
        }
      },
 @@ -100,7 +100,7 @@ const vi = {
