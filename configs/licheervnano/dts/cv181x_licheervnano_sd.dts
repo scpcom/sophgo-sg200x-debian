@@ -262,8 +262,9 @@
 		default-brightness-level = <4>;
 	};
 	*/
+};
 
-        wifisd:wifi-sd@4320000 {
+&wifisd {
                 compatible = "cvitek,cv181x-sdio";
                 bus-width = <4>;
                 reg = <0x0 0x4320000 0x0 0x1000>;
@@ -294,5 +295,4 @@
                 status = "okay";
                 interrupts = <38 IRQ_TYPE_LEVEL_HIGH>;
                 interrupt-parent = <&plic0>;
-        };
 };
