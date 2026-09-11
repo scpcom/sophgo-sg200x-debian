@@ -265,7 +265,7 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
 	else \
-		apt-get install -y gcc-riscv64-unknown-elf && \
+		apt-get install -y gcc-riscv64-linux-gnu gcc-riscv64-unknown-elf && \
 		cd / && /builder/replace-all-thead-toolchains.sh && \
 		rm -rf /host-tools/gcc/riscv64-elf-x86_64 ; \
 		[ "$(SDK_VER)" = "glibc_riscv64" ] || rm -rf $(CROSS_COMPILE_PATH_GLIBC_RISCV64) ; \
