@@ -12,6 +12,11 @@
 	/delete-node/ wifi_pin;
 	/delete-node/ bt_pin;
 
+	aliases {
+		mmc0 = &sd;
+		mmc1 = &wifisd;
+	};
+
 	leds {
 		compatible = "gpio-leds";
 		led0 {
