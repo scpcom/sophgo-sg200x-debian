@@ -88,6 +88,18 @@ endif
 
 BOARD_EXT ?= $(BOARD)
 
+SDK_KERNEL_VERSION ?= 5.10
+
+ifeq ($(SDK_KERNEL_VERSION),5.10)
+SDK_KERNEL_BRANCH = licheervnano-merged-$(SDK_KERNEL_VERSION).y
+SDK_KERNEL_GIT_REF = f5fb0ebf92bd26c244c37e8eddd6950ce0b3620d
+SDK_KERNEL_PATCHES = linux
+else
+SDK_KERNEL_BRANCH = sg200x-$(SDK_KERNEL_VERSION).y
+SDK_KERNEL_GIT_REF = dde1e28e98cf9a5ecd08dc8df831b97d3c3c9e54
+SDK_KERNEL_PATCHES = linux-$(SDK_KERNEL_VERSION)
+endif
+
 KERNEL_OUTPUT_DIR = $(BUILDDIR)/kernel/build/$(BOARD)-$(VARIANT)
 
 CHIP_VENDOR ?= cvitek
@@ -275,17 +287,17 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-checkout-stamp:
-	@echo "$(COLOUR_GREEN)Checking out Kernel for $(BOARD)$(END_COLOUR)"
+	@echo "$(COLOUR_GREEN)Checking out Kernel $(SDK_KERNEL_VERSION) for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) $(GIT_USER_URL)/linux.git $(BUILDDIR)/kernel
-	@cd $(BUILDDIR)/kernel && git checkout f5fb0eb
+	@git clone -b $(SDK_KERNEL_BRANCH) $(GIT_CLONE_OPTS) $(GIT_USER_URL)/linux.git $(BUILDDIR)/kernel
+	@cd $(BUILDDIR)/kernel && git checkout $(SDK_KERNEL_GIT_REF)
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/linux-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
-	@echo "$(COLOUR_GREEN)Patching Kernel for $(BOARD)$(END_COLOUR)"
-	@$(foreach file, $(wildcard /configs/common/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
-	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
-	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@echo "$(COLOUR_GREEN)Patching Kernel $(SDK_KERNEL_VERSION) for $(BOARD)$(END_COLOUR)"
+	@$(foreach file, $(wildcard /configs/common/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
 	@cp /configs/$(BOARD_CFG)/linux/defconfig $(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/configs/${BOARD}_defconfig
 	$(call copy_dts_action,$(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/boot/dts/$(CHIP_VENDOR))
 	@cp -p $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h $(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/boot/dts/$(CHIP_VENDOR)/cvi_board_memmap.h
