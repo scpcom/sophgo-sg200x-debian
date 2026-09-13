@@ -7,6 +7,11 @@
 / {
 	model = "Milk-V Duo256M";
 
+	aliases {
+		mmc0 = &sd;
+		mmc1 = &wifisd;
+	};
+
 	leds {
 		compatible = "gpio-leds";
 

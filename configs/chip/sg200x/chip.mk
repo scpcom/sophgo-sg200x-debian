@@ -88,6 +88,19 @@ endif
 
 BOARD_EXT ?= $(BOARD)
 
+SDK_KERNEL_VERSION ?= 5.10
+
+ifeq ($(SDK_KERNEL_VERSION),5.10)
+SDK_KERNEL_BRANCH = licheervnano-merged-$(SDK_KERNEL_VERSION).y
+SDK_KERNEL_GIT_REF = ef8ba1a092cd995d6933017c01b70fa919a14f59
+SDK_KERNEL_PATCHES = linux
+else
+# 6.12
+SDK_KERNEL_BRANCH = sg200x-$(SDK_KERNEL_VERSION).y
+SDK_KERNEL_GIT_REF = 722163ca34913aebe1bd838dceafccaa1b4c08e6
+SDK_KERNEL_PATCHES = linux-$(SDK_KERNEL_VERSION)
+endif
+
 KERNEL_OUTPUT_DIR = $(BUILDDIR)/kernel/build/$(BOARD)-$(VARIANT)
 
 CHIP_VENDOR ?= cvitek
@@ -265,7 +278,7 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
 	else \
-		apt-get install -y gcc-riscv64-unknown-elf && \
+		apt-get install -y gcc-riscv64-linux-gnu gcc-riscv64-unknown-elf && \
 		cd / && /builder/replace-all-thead-toolchains.sh && \
 		rm -rf /host-tools/gcc/riscv64-elf-x86_64 ; \
 		[ "$(SDK_VER)" = "glibc_riscv64" ] || rm -rf $(CROSS_COMPILE_PATH_GLIBC_RISCV64) ; \
@@ -275,17 +288,17 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-checkout-stamp:
-	@echo "$(COLOUR_GREEN)Checking out Kernel for $(BOARD)$(END_COLOUR)"
+	@echo "$(COLOUR_GREEN)Checking out Kernel $(SDK_KERNEL_VERSION) for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
-	@git clone -b licheervnano-merged-5.10.y $(GIT_CLONE_OPTS) $(GIT_USER_URL)/linux.git $(BUILDDIR)/kernel
-	@cd $(BUILDDIR)/kernel && git checkout f5fb0eb
+	@git clone -b $(SDK_KERNEL_BRANCH) $(GIT_CLONE_OPTS) $(GIT_USER_URL)/linux.git $(BUILDDIR)/kernel
+	@cd $(BUILDDIR)/kernel && git checkout $(SDK_KERNEL_GIT_REF)
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/linux-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
-	@echo "$(COLOUR_GREEN)Patching Kernel for $(BOARD)$(END_COLOUR)"
-	@$(foreach file, $(wildcard /configs/common/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
-	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
-	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/linux/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@echo "$(COLOUR_GREEN)Patching Kernel $(SDK_KERNEL_VERSION) for $(BOARD)$(END_COLOUR)"
+	@$(foreach file, $(wildcard /configs/common/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
+	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/$(SDK_KERNEL_PATCHES)/*.patch), cd $(BUILDDIR)/kernel && git apply --ignore-whitespace $(file);)
 	@cp /configs/$(BOARD_CFG)/linux/defconfig $(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/configs/${BOARD}_defconfig
 	$(call copy_dts_action,$(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/boot/dts/$(CHIP_VENDOR))
 	@cp -p $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h $(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/boot/dts/$(CHIP_VENDOR)/cvi_board_memmap.h
@@ -308,8 +321,8 @@ $(BUILDDIR)/linux-compile-stamp: $(BUILDDIR)/linux-prepare-configure-stamp
 
 $(BUILDDIR)/linux-package-stamp: $(BUILDDIR)/linux-compile-stamp
 	@echo "$(COLOUR_GREEN)Packaging linux-headers-$(CHIP_FAMILY) for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_TMP_IMAGE=$(KERNEL_OUTPUT_DIR)/debian/linux-image)
-	@$(eval KERNEL_DEB_TMP_HEADERS=$(KERNEL_OUTPUT_DIR)/debian/linux-headers)
+	@$(eval KERNEL_DEB_TMP_IMAGE=$(KERNEL_OUTPUT_DIR)/debian/linux-image*)
+	@$(eval KERNEL_DEB_TMP_HEADERS=$(KERNEL_OUTPUT_DIR)/debian/linux-headers*)
 	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@$(eval LINUXMETAVERSION=$(shell basename $(KERNEL_DEB_TMP_HEADERS)/usr/share/doc/linux-headers-* | cut -d '-' -f 3-))
 	@$(eval LINUX_HEADERS_META_DIR=$(BUILDDIR)/package/linux-headers-$(BOARD)-$(VARIANT)-$(LINUXMETAVERSION))
@@ -354,7 +367,7 @@ $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) $(GIT_USER_URL)/sophgo-osdrv.git $(BUILDDIR)/osdrv
-	@cd $(BUILDDIR)/osdrv && git checkout d267b53
+	@cd $(BUILDDIR)/osdrv && git checkout 567d978
 	@touch $@
 
 $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/osdrv-prepare-checkout-stamp $(BUILDDIR)/linux-compile-stamp
@@ -376,8 +389,8 @@ $(BUILDDIR)/osdrv-compile-stamp: $(BUILDDIR)/osdrv-prepare-configure-stamp
 
 $(BUILDDIR)/osdrv-package-stamp: $(BUILDDIR)/osdrv-compile-stamp
 	@echo "$(COLOUR_GREEN)Packaging OSdrv for $(BOARD)$(END_COLOUR)"
-	@$(eval KERNEL_DEB_TMP_IMAGE=$(KERNEL_OUTPUT_DIR)/debian/linux-image)
-	@$(eval KERNEL_DEB_TMP_HEADERS=$(KERNEL_OUTPUT_DIR)/debian/linux-headers)
+	@$(eval KERNEL_DEB_TMP_IMAGE=$(KERNEL_OUTPUT_DIR)/debian/linux-image*)
+	@$(eval KERNEL_DEB_TMP_HEADERS=$(KERNEL_OUTPUT_DIR)/debian/linux-headers*)
 	@$(eval KERNEL_DEB_ARCH=$(shell grep -m1 '^Architecture: ' $(KERNEL_OUTPUT_DIR)/debian/control | cut -d ' ' -f 2))
 	@$(eval KERNELRELEASE=$(shell basename $(KERNEL_DEB_TMP_HEADERS)/usr/share/doc/linux-headers-* | cut -d '-' -f 3-))
 	@$(eval OSDRV_PACKAGE_DIR=$(BUILDDIR)/package/$(CHIP_VENDOR)-osdrv-$(KERNELRELEASE)-$(OSDRVVERSION))
@@ -686,7 +699,7 @@ $(BUILDDIR)/uboot-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out U-Boot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) $(GIT_USER_URL)/u-boot $(BUILDDIR)/u-boot
-	@cd $(BUILDDIR)/u-boot && git checkout 23740b0
+	@cd $(BUILDDIR)/u-boot && git checkout 81360ac
 	@touch $@
 
 $(BUILDDIR)/uboot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/uboot-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
