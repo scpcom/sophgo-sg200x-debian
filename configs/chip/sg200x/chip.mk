@@ -97,7 +97,7 @@ SDK_KERNEL_PATCHES = linux
 else
 # 6.12
 SDK_KERNEL_BRANCH = sg200x-$(SDK_KERNEL_VERSION).y
-SDK_KERNEL_GIT_REF = 722163ca34913aebe1bd838dceafccaa1b4c08e6
+SDK_KERNEL_GIT_REF = 4e166977a4df573a965fbf275ca297e28222d199
 SDK_KERNEL_PATCHES = linux-$(SDK_KERNEL_VERSION)
 endif
 
@@ -302,6 +302,7 @@ $(BUILDDIR)/linux-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp
 	@cp /configs/$(BOARD_CFG)/linux/defconfig $(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/configs/${BOARD}_defconfig
 	$(call copy_dts_action,$(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/boot/dts/$(CHIP_VENDOR))
 	@cp -p $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h $(BUILDDIR)/kernel/arch/$(KERNEL_ARCH)/boot/dts/$(CHIP_VENDOR)/cvi_board_memmap.h
+	@cp -p $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h $(BUILDDIR)/kernel/scripts/dtc/include-prefixes/
 	@touch $@
 
 $(BUILDDIR)/linux-prepare-configure-stamp: $(BUILDDIR)/linux-prepare-patch-stamp
