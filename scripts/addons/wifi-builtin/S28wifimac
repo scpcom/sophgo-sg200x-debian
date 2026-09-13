@@ -20,8 +20,8 @@ then
 		new_wifimac=$(hex2mac 48da356a$(sha512sum /device_key_legacy  | head -c 4))
 	fi
 
-	#ifconfig wlan0 down
+	ifconfig wlan0 down
 	ip link set wlan0 address ${new_wifimac}
-	#ifconfig wlan0 up
+	ifconfig wlan0 up
 	echo "wifi mac address: ${new_wifimac}"
 fi
