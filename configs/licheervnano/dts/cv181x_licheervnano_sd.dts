@@ -213,6 +213,8 @@
 
 	spi4: spi4@gpio {
 		compatible = "spi-gpio";
+		#address-cells = <1>;
+		#size-cells = <0>;
 		sck-gpio = <&porta 22 0>;
 		miso-gpio = <&porta 23 0>;
 		mosi-gpio = <&porta 25 0>;
