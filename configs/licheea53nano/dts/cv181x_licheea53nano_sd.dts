@@ -208,6 +208,7 @@
 	aliases {
 		mmc0 = &sd;
 		mmc1 = &wifisd;
+		i2c5 = &i2c5;
 	};
 
 	spi4: spi4@gpio {
