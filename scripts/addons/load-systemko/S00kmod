@@ -1,5 +1,7 @@
 #!/bin/sh
 
+KO_DIRS="drivers/i2c drivers/input/touchscreen drivers/media/usb/gspca drivers/net/usb drivers/net/wireless drivers/pwm drivers/rtc drivers/spi drivers/staging/fbtft drivers/video/backlight fs/efivarfs net/ipv4 net/wireless"
+
 if [ "$1" = "start" ]
 then
 	KERNELRELEASE=$(uname -r)
@@ -13,6 +15,15 @@ then
 	. /etc/profile
 	printf "load kernel module: "
 	cd /mnt/system/ko/
+	for d in $(echo $KO_DIRS) ; do
+	    if [ -e /lib/modules/${KERNELRELEASE}/kernel/$d ]; then
+		mkdir -p ${KERNELRELEASE}
+		for f in $(find /lib/modules/${KERNELRELEASE}/kernel/$d/ -name '*.ko') ; do
+			b=$(basename $f)
+			[ -e ${KERNELRELEASE}/$b ] || ln -s $f ${KERNELRELEASE}/$b
+		done
+	    fi
+	done
 	if [ -e /lib/modules/${KERNELRELEASE}/kernel/drivers/osdrv/interdrv ]; then
 		mkdir -p ${KERNELRELEASE}
 		for f in $(find /lib/modules/${KERNELRELEASE}/kernel/drivers/osdrv/interdrv/ -name '*.ko') ; do
