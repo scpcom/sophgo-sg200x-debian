@@ -97,7 +97,7 @@ SDK_KERNEL_PATCHES = linux
 else
 # 6.12
 SDK_KERNEL_BRANCH = sg200x-$(SDK_KERNEL_VERSION).y
-SDK_KERNEL_GIT_REF = 586b80b5064fc707a3edcbcd5104590e9a26aa26
+SDK_KERNEL_GIT_REF = bb37a7fbc706a80d9638d975bc822f5c8cdaca0b
 SDK_KERNEL_PATCHES = linux-$(SDK_KERNEL_VERSION)
 endif
 
@@ -274,6 +274,8 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-toolchains.sh
 	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-thead-toolchains.sh
 	@if [ "$(UBOOT_ARCH)" = "arm" ]; then \
+		[ "$(DEB_ARCH)" != "arm64" -a "$(DEB_ARCH)" != "armhf" ] || apt-get install -y gcc-aarch64-linux-gnu && \
+		[ "$(DEB_ARCH)" != "armhf" ] || apt-get install -y gcc-arm-linux-gnueabihf && \
 		rm -rf /host-tools/gcc/riscv64-*/ && \
 		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
@@ -368,7 +370,7 @@ $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) $(GIT_USER_URL)/sophgo-osdrv.git $(BUILDDIR)/osdrv
-	@cd $(BUILDDIR)/osdrv && git checkout 567d978
+	@cd $(BUILDDIR)/osdrv && git checkout 29bcb18
 	@touch $@
 
 $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/osdrv-prepare-checkout-stamp $(BUILDDIR)/linux-compile-stamp
@@ -700,7 +702,7 @@ $(BUILDDIR)/uboot-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out U-Boot for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk-2021.10 $(GIT_CLONE_OPTS) $(GIT_USER_URL)/u-boot $(BUILDDIR)/u-boot
-	@cd $(BUILDDIR)/u-boot && git checkout 81360ac
+	@cd $(BUILDDIR)/u-boot && git checkout b9ac636
 	@touch $@
 
 $(BUILDDIR)/uboot-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/uboot-prepare-checkout-stamp $(BUILDDIR)/$(BOARD)-$(VARIANT)/cvi_board_memmap.h
