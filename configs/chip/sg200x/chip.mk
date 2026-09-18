@@ -274,6 +274,8 @@ $(BUILDDIR)/toolchain-prepare-patch-stamp:
 	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-arm-toolchains.sh
 	@[ "$(TOOLCHAIN_URL)" = "X" ] || sed -i 's|^tcurl=.*|tcurl=$(TOOLCHAIN_URL)|g' /builder/replace-all-thead-toolchains.sh
 	@if [ "$(UBOOT_ARCH)" = "arm" ]; then \
+		[ "$(DEB_ARCH)" != "arm64" -a "$(DEB_ARCH)" != "armhf" ] || apt-get install -y gcc-aarch64-linux-gnu && \
+		[ "$(DEB_ARCH)" != "armhf" ] || apt-get install -y gcc-arm-linux-gnueabihf && \
 		rm -rf /host-tools/gcc/riscv64-*/ && \
 		cd / && tcver=11.3.rel1 /builder/replace-all-arm-toolchains.sh && \
 		mv /ramdisk $(BUILDDIR)/ ; \
