@@ -24,6 +24,7 @@ else
 IMAGE_ADDITIONS += "maixcam2-python3"
 endif
 ifneq ("$(findstring ubuntu,$(DEB_URL))","")
+IMAGE_ADDITIONS += "nodesource-npm"
 PACKAGES += " ttyd"
 else
 IMAGE_ADDITIONS += "ttyd"
