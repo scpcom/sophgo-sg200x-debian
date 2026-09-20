@@ -67,6 +67,9 @@ HOST_COREPACK = $(HOST_NODEJS_BIN_ENV) corepack
 HOST_NPM = $(HOST_NODEJS_BIN_ENV) npm
 HOST_PNPM = $(HOST_NODEJS_BIN_ENV) pnpm
 
+NANOKVM_PRO_PNPM_VERSION = 10.29.3
+NANOKVM_PRO_PNPM_SHA_SUM = f7315fb659932216d489e3ed4c14f47bc58ec6c6
+
 $(BUILDDIR)/nanokvm-pro/nanokvm_pro_latest.json:
 	@mkdir -p $(BUILDDIR)/nanokvm-pro
 	@cd $(BUILDDIR)/nanokvm-pro ; wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_BASE_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)" || wget -q -O nanokvm_pro_latest.json "$(NANOKVM_PRO_ARCH_URL)/nanokvm_pro_latest.json?now=$(shell date +%s)"
@@ -119,7 +122,7 @@ $(BUILDDIR)/nanokvm-pro-package-prepare-stamp: $(BUILDDIR)/nanokvm-pro-prepare-s
 	else \
 		mkdir -p $(NANOKVM_PRO_XDG_HOME_DIR) && \
 		mv $(NANOKVM_PRO_BUILD_DIR)/web/node_modules/.npm $(NANOKVM_PRO_XDG_HOME_DIR)/ && \
-		$(HOST_NPM) install -g --offline pnpm && \
+		$(HOST_NPM) install -g --offline pnpm@$(NANOKVM_PRO_PNPM_VERSION)+sha1.$(NANOKVM_PRO_PNPM_SHA_SUM) || $(HOST_NPM) install -g pnpm@$(NANOKVM_PRO_PNPM_VERSION)+sha1.$(NANOKVM_PRO_PNPM_SHA_SUM) && \
 		rm -rf  $(NANOKVM_PRO_BUILD_DIR)/web/node_modules/corepack/ ; \
 	fi
 	@$(foreach file, $(wildcard /configs/common/patches/nanokvm-pro/*.patch), cd $(NANOKVM_PRO_BUILD_DIR) && git apply --ignore-whitespace $(file);)
