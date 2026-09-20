@@ -67,5 +67,7 @@ $(BUILDDIR)/python3-dev-uninstall-stamp: $(BUILDDIR)/image-customize-stamp
 endif
 
 $(BUILDDIR)/python3-stamp: $(BUILDDIR)/python3-install-stamp
+	@touch $@
 
 $(BUILDDIR)/python3-dev-stamp: $(BUILDDIR)/python3-dev-install-stamp
+	@touch $@
