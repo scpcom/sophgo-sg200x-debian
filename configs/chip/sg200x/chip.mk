@@ -1062,6 +1062,10 @@ $(BUILDDIR)/image-compile-stamp: $(BUILDDIR)/image-customize-stamp $(BUILDDIR)/i
 	@rm -rf /tmp/genimage/
 	@if [ "$(STORAGE_TYPE)" = "emmc" ]; then \
 		python3 /builder/python/raw2cimg.py -v $(BUILDDIR)/images/sdcard.img $(BUILDDIR)/images /configs/$(BOARD_CFG)/partition_emmc.xml; \
+		if [ "$$(head -c 4 $(BUILDDIR)/images/sdcard.img)" != "CIMG" ] ; then \
+			echo "Failed to create CIMG!" ; \
+			exit 1 ; \
+		fi ; \
 		mkdir -p /tmp/rom/; \
 		cp $(BUILDDIR)/images/sdcard.img /tmp/rom/; \
 		cp /configs/$(BOARD_CFG)/partition_emmc.xml /tmp/rom/; \
