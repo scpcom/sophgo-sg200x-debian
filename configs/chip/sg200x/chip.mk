@@ -97,7 +97,7 @@ SDK_KERNEL_PATCHES = linux
 else
 # 6.12
 SDK_KERNEL_BRANCH = sg200x-$(SDK_KERNEL_VERSION).y
-SDK_KERNEL_GIT_REF = c59504154314d1a51f30703fb228934be323117a
+SDK_KERNEL_GIT_REF = a942d87a4d2e75bec5a7148ce74216ac1e3b2299
 SDK_KERNEL_PATCHES = linux-$(SDK_KERNEL_VERSION)
 endif
 
@@ -370,7 +370,7 @@ $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) $(GIT_USER_URL)/sophgo-osdrv.git $(BUILDDIR)/osdrv
-	@cd $(BUILDDIR)/osdrv && git checkout 3885436
+	@cd $(BUILDDIR)/osdrv && git checkout 24c73bc
 	@touch $@
 
 $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/osdrv-prepare-checkout-stamp $(BUILDDIR)/linux-compile-stamp
@@ -584,7 +584,7 @@ $(BUILDDIR)/buildroot-prepare-clone-stamp:
 
 $(BUILDDIR)/buildroot-prepare-checkout-stamp: $(BUILDDIR)/buildroot-prepare-clone-stamp
 	@echo "$(COLOUR_GREEN)Checking out Buildroot for $(BOARD)$(END_COLOUR)"
-	@cd $(BR_DIR) && git checkout f71344b
+	@cd $(BR_DIR) && git checkout c391df1
 	@touch $@
 
 $(BUILDDIR)/buildroot-prepare-clone-dl-stamp: $(BUILDDIR)/buildroot-prepare-checkout-stamp
