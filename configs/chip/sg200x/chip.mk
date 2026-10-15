@@ -379,6 +379,8 @@ $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp
 	@$(foreach file, $(wildcard /configs/common/patches/osdrv/*.patch), cd $(BUILDDIR)/osdrv && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/chip/$(CHIP_CFG)/patches/osdrv/*.patch), cd $(BUILDDIR)/osdrv && git apply --ignore-whitespace $(file);)
 	@$(foreach file, $(wildcard /configs/$(BOARD_CFG)/patches/osdrv/*.patch), cd $(BUILDDIR)/osdrv && git apply --ignore-whitespace $(file);)
+	@cd $(BUILDDIR)/osdrv && sed -i 's| 25000000 // 0: default, other: target clock rate| '$(MMC_MAX_FREQUENCY)' // 0: default, other: target clock rate|g' extdrv/wireless/aic8800/aic8800_bsp/aic_bsp_driver.h
+	@cd $(BUILDDIR)/osdrv && sed -i 's| 50000000 // 0: default, other: target clock rate| '$(MMC_MAX_FREQUENCY)' // 0: default, other: target clock rate|g' extdrv/wireless/aic8800/aic8800_bsp/aic_bsp_driver.h
 	@touch $@
 
 $(BUILDDIR)/osdrv-prepare-configure-stamp: $(BUILDDIR)/osdrv-prepare-patch-stamp
