@@ -88,6 +88,16 @@ init_beta_pcie_hw(){
 
   echo 1 > /sys/class/gpio/gpio${PCIe_HDMI_RST_Pin}/value    # rst key
 
+  devmem 0x0300104C 32 0x3  # GPIOA26 / WiFi_EN
+  echo ${WiFi_EN_Pin} > /sys/class/gpio/export  # WiFi_EN
+  echo out > /sys/class/gpio/gpio${WiFi_EN_Pin}/direction
+  echo 0 > /sys/class/gpio/gpio${WiFi_EN_Pin}/value
+
+  sleep 1
+
+  echo 1 > /sys/class/gpio/gpio${WiFi_EN_Pin}/value
+  echo ${WiFi_EN_Pin} > /sys/class/gpio/unexport  # WiFi_EN
+
   rmmod /mnt/system/ko/i2c-gpio.ko
   rmmod /mnt/system/ko/i2c-algo-bit.ko
   insmod /mnt/system/ko/i2c-algo-bit.ko
