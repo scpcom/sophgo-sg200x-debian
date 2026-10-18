@@ -11,24 +11,6 @@ diff --git a/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp b/su
 index b9f7d6e..43c673b 100644
 --- a/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp
 +++ b/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp
-@@ -190,8 +190,6 @@ void new_app_init(void)
- 			system("reboot");
- 		} else {
- 			system("sync");
--			system("/etc/init.d/S15kvmhwd start");
--			system("/etc/init.d/S95nanokvm restart");
- 		}
- 	} else {
- 		if((RW_Data_0[0] != '/') && (RW_Data_1[0] != '/')){
-@@ -200,8 +198,6 @@ void new_app_init(void)
- 			system("reboot");
- 		} else {
- 			system("sync");
--			system("/etc/init.d/S15kvmhwd start");
--			system("/etc/init.d/S95nanokvm restart");
- 		}
- 	}
- 
 @@ -210,10 +206,6 @@ void new_app_init(void)
  	}	
  	
