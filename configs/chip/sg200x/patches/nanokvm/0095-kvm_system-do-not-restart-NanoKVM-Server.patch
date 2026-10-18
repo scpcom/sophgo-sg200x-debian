@@ -1,0 +1,45 @@
+From 4c500c291c508c9d83eb863feb32345fc2df38af Mon Sep 17 00:00:00 2001
+From: scpcom <scpcom@gmx.de>
+Date: Sun, 18 Oct 2026 03:08:00 +0200
+Subject: [PATCH] kvm_system: do not restart NanoKVM-Server
+
+---
+ .../kvm_system/main/lib/system_init/system_init.cpp       | 8 --------
+ 1 file changed, 8 deletions(-)
+
+diff --git a/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp b/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp
+index b9f7d6e..43c673b 100644
+--- a/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp
++++ b/support/sg2002/kvm_system/main/lib/system_init/system_init.cpp
+@@ -190,8 +190,6 @@ void new_app_init(void)
+ 			system("reboot");
+ 		} else {
+ 			system("sync");
+-			system("/etc/init.d/S15kvmhwd start");
+-			system("/etc/init.d/S95nanokvm restart");
+ 		}
+ 	} else {
+ 		if((RW_Data_0[0] != '/') && (RW_Data_1[0] != '/')){
+@@ -200,8 +198,6 @@ void new_app_init(void)
+ 			system("reboot");
+ 		} else {
+ 			system("sync");
+-			system("/etc/init.d/S15kvmhwd start");
+-			system("/etc/init.d/S95nanokvm restart");
+ 		}
+ 	}
+ 
+@@ -210,10 +206,6 @@ void new_app_init(void)
+ 	}	
+ 	
+ 	system("sync");
+-	system("killall NanoKVM-Server");
+-	system("rm -r /tmp/server");
+-	system("cp -r /kvmapp/server /tmp/");
+-	system("/tmp/server/NanoKVM-Server &");
+ }
+ 
+ void build_complete_resolv(void)
+-- 
+2.34.1
+
