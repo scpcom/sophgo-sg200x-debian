@@ -97,7 +97,7 @@ SDK_KERNEL_PATCHES = linux
 else
 # 6.12
 SDK_KERNEL_BRANCH = sg200x-$(SDK_KERNEL_VERSION).y
-SDK_KERNEL_GIT_REF = 52ed966d25bc76e9b9798b094b1005557182b51c
+SDK_KERNEL_GIT_REF = 13a9fe0102f306b9983368b284aa0eb1c53cb281
 SDK_KERNEL_PATCHES = linux-$(SDK_KERNEL_VERSION)
 endif
 
@@ -370,7 +370,7 @@ $(BUILDDIR)/osdrv-prepare-checkout-stamp:
 	@echo "$(COLOUR_GREEN)Checking out OSdrv for $(BOARD)$(END_COLOUR)"
 	@mkdir -p $(BUILDDIR)
 	@git clone -b licheervnano-cvisdk $(GIT_CLONE_OPTS) $(GIT_USER_URL)/sophgo-osdrv.git $(BUILDDIR)/osdrv
-	@cd $(BUILDDIR)/osdrv && git checkout c7f4605
+	@cd $(BUILDDIR)/osdrv && git checkout 47efe4d
 	@touch $@
 
 $(BUILDDIR)/osdrv-prepare-patch-stamp: $(BUILDDIR)/toolchain-prepare-patch-stamp $(BUILDDIR)/osdrv-prepare-checkout-stamp $(BUILDDIR)/linux-compile-stamp
