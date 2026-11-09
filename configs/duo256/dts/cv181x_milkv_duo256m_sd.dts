@@ -24,6 +24,7 @@
 
 &mipi_rx {
 	snsr-reset = <&portc 17 GPIO_ACTIVE_LOW>, <&portc 17 GPIO_ACTIVE_LOW>, <&portc 17 GPIO_ACTIVE_LOW>;
+	snsr-reset-gpios = <&portc 17 GPIO_ACTIVE_LOW>, <&portc 17 GPIO_ACTIVE_LOW>, <&portc 17 GPIO_ACTIVE_LOW>;
 };
 
 &i2c0 {

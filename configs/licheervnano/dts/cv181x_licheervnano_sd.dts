@@ -187,6 +187,7 @@
 
 &mipi_rx {
         snsr-reset = <&porte 1 GPIO_ACTIVE_LOW>;
+        snsr-reset-gpios = <&porte 1 GPIO_ACTIVE_LOW>;
 };
 
 &soc_thermal_0 {
