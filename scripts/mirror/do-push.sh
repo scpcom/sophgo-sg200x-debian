@@ -14,6 +14,7 @@ fi
 
 checkoutbranches=true
 pushtags=true
+resumeat=-
 while [ "$#" -gt 0 ]; do
 	case "$1" in
 	--no-checkout)
@@ -22,6 +23,10 @@ while [ "$#" -gt 0 ]; do
 		;;
 	--no-tags)
 		pushtags=false
+		shift
+		;;
+	--resume-at=*)
+		resumeat=$(echo $1 | cut -d '=' -f 2-)
 		shift
 		;;
 	*)
@@ -55,6 +60,8 @@ cd $d
 for f in */.git ; do
   d=$(dirname $f)
   #echo $d
+  [ "${resumeat}" != "${d}" ] || resumeat=-
+  [ "${resumeat}" = "-" ] || continue
   cd $d
   u=$(git remote get-url origin | sed s/'\.git$'/''/g).git
   s=$u
