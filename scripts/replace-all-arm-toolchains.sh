@@ -3,7 +3,8 @@ d=`dirname $0`
 cd $d ; d=`pwd` ; cd - > /dev/null
 
 tcurl=$1
-[ "X${tcurl}" = "X" ] && tcurl=https://developer.arm.com/-/media/Files/downloads/gnu
+#[ "X${tcurl}" = "X" ] && tcurl=https://developer.arm.com/-/media/Files/downloads/gnu
+[ "X${tcurl}" = "X" ] && tcurl=https://gitlab.arm.com/api/v4/projects/tooling%2Fgnu-toolchains-for-arm/packages/generic/gnu-toolchain
 
 [ "X${tcver}" != "X" ] || tcver=12.2.rel1
 [ "X${tcdat}" != "X" -o "X${tcver}" != "X12.2.rel1" ] || tcdat=2022.12
@@ -23,13 +24,13 @@ for gctgt in $gctgts ; do
   gctar=arm-gnu-toolchain-${gcver}-${harch}-${gctgt}.tar.xz
   srtar=none
   if [ ! -e ${gctar} ]; then
-    wget -N ${tcurl}/${tcver}/binrel/${gctar}
+    wget -N ${tcurl}/${tcver}/binrel/${gctar} || wget -N ${tcurl}/${tcver}/${gctar}
   fi
   #rttar=runtime-arm-gnu-toolchain-${gcver}-${gctgt}.tar.xz
   if echo ${gctgt} | grep -q linux ; then
     srtar=sysroot-glibc-arm-${lcver}-${tcdat}-${gctgt}.tar.xz
     if [ ! -e ${srtar} ]; then
-      wget -N ${tcurl}/${tcver}/binrel/${srtar} || true
+      wget -N ${tcurl}/${tcver}/binrel/${srtar} || wget -N ${tcurl}/${tcver}/${srtar} || true
     fi
   fi
   if [ -e ${tcset}.sha256 ]; then
